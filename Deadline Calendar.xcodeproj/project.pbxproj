@@ -20,6 +20,7 @@
 		DD6A586E2DAD9A23006A064E /* TriggersView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD6A586D2DAD9A23006A064E /* TriggersView.swift */; };
 		DD6A58702DADB64D006A064E /* BackupRestoreView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD6A586F2DADB64D006A064E /* BackupRestoreView.swift */; };
 		DD6A58722DADB712006A064E /* BackupManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD6A58712DADB711006A064E /* BackupManager.swift */; };
+		DD6D9F462DC3E5E300D9FC9B /* SwiftSoup in Frameworks */ = {isa = PBXBuildFile; productRef = DD6D9F452DC3E5E300D9FC9B /* SwiftSoup */; };
 		DDF73AFC2CC0378000833720 /* Deadline_CalendarApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = DDF73AFB2CC0378000833720 /* Deadline_CalendarApp.swift */; };
 		DDF73AFE2CC0378000833720 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DDF73AFD2CC0378000833720 /* ContentView.swift */; };
 		DDF73B002CC0378100833720 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = DDF73AFF2CC0378100833720 /* Assets.xcassets */; };
@@ -27,7 +28,6 @@
 		DDF73B0D2CC0378100833720 /* Deadline_CalendarTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DDF73B0C2CC0378100833720 /* Deadline_CalendarTests.swift */; };
 		DDF73B172CC0378100833720 /* Deadline_CalendarUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DDF73B162CC0378100833720 /* Deadline_CalendarUITests.swift */; };
 		DDF73B192CC0378100833720 /* Deadline_CalendarUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DDF73B182CC0378100833720 /* Deadline_CalendarUITestsLaunchTests.swift */; };
-		DDF73B272CC0425B00833720 /* SwiftSoup in Frameworks */ = {isa = PBXBuildFile; productRef = DDF73B262CC0425B00833720 /* SwiftSoup */; };
 		DDF73B682CC04F5C00833720 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = DDF73B672CC04F5C00833720 /* WidgetKit.framework */; };
 		DDF73B6A2CC04F5C00833720 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = DDF73B692CC04F5C00833720 /* SwiftUI.framework */; };
 		DDF73B6D2CC04F5C00833720 /* DeadlineCalendarWidgetBundle.swift in Sources */ = {isa = PBXBuildFile; fileRef = DDF73B6C2CC04F5C00833720 /* DeadlineCalendarWidgetBundle.swift */; };
@@ -37,7 +37,6 @@
 		DDF73B792CC04F5D00833720 /* DeadlineCalendarWidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = DDF73B652CC04F5C00833720 /* DeadlineCalendarWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		DDF73B832CC053F300833720 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = DDF73B822CC053F300833720 /* Models.swift */; };
 		DDF73B842CC0540300833720 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = DDF73B822CC053F300833720 /* Models.swift */; };
-		DDF73B862CC0541D00833720 /* SwiftSoup in Frameworks */ = {isa = PBXBuildFile; productRef = DDF73B852CC0541D00833720 /* SwiftSoup */; };
 		DDF73B8B2CC0551400833720 /* DeadlineWidgetEntryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DDF73B892CC0550B00833720 /* DeadlineWidgetEntryView.swift */; };
 		DDF73B8C2CC0551700833720 /* DeadlineProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = DDF73B872CC054DC00833720 /* DeadlineProvider.swift */; };
 /* End PBXBuildFile section */
@@ -124,7 +123,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				DDF73B272CC0425B00833720 /* SwiftSoup in Frameworks */,
+				DD6D9F462DC3E5E300D9FC9B /* SwiftSoup in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -148,7 +147,6 @@
 			files = (
 				DDF73B6A2CC04F5C00833720 /* SwiftUI.framework in Frameworks */,
 				DDF73B682CC04F5C00833720 /* WidgetKit.framework in Frameworks */,
-				DDF73B862CC0541D00833720 /* SwiftSoup in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -272,7 +270,7 @@
 			);
 			name = "Deadline Calendar";
 			packageProductDependencies = (
-				DDF73B262CC0425B00833720 /* SwiftSoup */,
+				DD6D9F452DC3E5E300D9FC9B /* SwiftSoup */,
 			);
 			productName = "Deadline Calendar";
 			productReference = DDF73AF82CC0378000833720 /* Deadline Calendar.app */;
@@ -328,7 +326,6 @@
 			);
 			name = DeadlineCalendarWidgetExtension;
 			packageProductDependencies = (
-				DDF73B852CC0541D00833720 /* SwiftSoup */,
 			);
 			productName = DeadlineCalendarWidgetExtension;
 			productReference = DDF73B652CC04F5C00833720 /* DeadlineCalendarWidgetExtension.appex */;
@@ -864,14 +861,8 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		DDF73B262CC0425B00833720 /* SwiftSoup */ = {
+		DD6D9F452DC3E5E300D9FC9B /* SwiftSoup */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = DDF73B252CC0425B00833720 /* XCRemoteSwiftPackageReference "SwiftSoup" */;
-			productName = SwiftSoup;
-		};
-		DDF73B852CC0541D00833720 /* SwiftSoup */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = DDF73B252CC0425B00833720 /* XCRemoteSwiftPackageReference "SwiftSoup" */;
 			productName = SwiftSoup;
 		};
 /* End XCSwiftPackageProductDependency section */
