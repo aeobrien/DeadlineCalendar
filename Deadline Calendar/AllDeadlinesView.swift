@@ -23,6 +23,11 @@ struct AllDeadlinesView: View {
     @State private var selectedProjectID: UUID?
     @State private var navigateToProject = false
 
+    // --- NEW STATE ---
+    // State variable to control the display format (days remaining vs. due date)
+    @State private var showDueDate: Bool = false 
+    // --- END NEW STATE ---
+
     // Computed property to generate the flat list of deadlines
     private var allDeadlinesSorted: [DeadlineListItem] {
         var items: [DeadlineListItem] = []
@@ -75,23 +80,23 @@ struct AllDeadlinesView: View {
                                 // Combined Project and Task Title
                                 Text("\(item.projectName) \(item.subDeadlineTitle)")
                                     .fontWeight(.medium) // Adjust font weight if desired
-                                    // Removed old project name text
-                                    // Removed old checkmark image
+                                    // Apply the date color logic to the task title as well
+                                    .foregroundColor(dateColor(for: item.subDeadlineDate, isCompleted: item.isSubDeadlineCompleted))
                                 
-                                Spacer() // Pushes days remaining to the right
+                                Spacer() // Pushes date info to the right
                                 
-                                // Days Remaining Text
-                                Text(daysRemainingText(for: item.subDeadlineDate))
+                                // Conditionally display either days remaining or the formatted due date
+                                Text(showDueDate ? formattedDate(item.subDeadlineDate) : daysRemainingText(for: item.subDeadlineDate))
                                     .font(.subheadline)
-                                    .foregroundColor(dateColor(for: item.subDeadlineDate, isCompleted: item.isSubDeadlineCompleted)) // Keep existing color logic for text
+                                    // This already uses the dateColor logic
+                                    .foregroundColor(dateColor(for: item.subDeadlineDate, isCompleted: item.isSubDeadlineCompleted))
                                     .lineLimit(1) // Prevent wrapping
-                                    .frame(minWidth: 80, alignment: .trailing) // Ensure enough space and align right
+                                    // Use a flexible frame to allow text to grow/shrink
+                                    .frame(minWidth: 80, alignment: .trailing)
                             }
                             .padding(.vertical, 4) // Add slight vertical padding to the HStack content
                         }
                          .buttonStyle(.plain) // Use plain button style for list rows
-                         // Strikethrough is no longer needed as completed items are filtered out
-                         // .strikethrough(item.isSubDeadlineCompleted, color: .gray)
                          
                          // --- Swipe Actions ---
                          .swipeActions(edge: .leading, allowsFullSwipe: true) {
@@ -124,6 +129,20 @@ struct AllDeadlinesView: View {
             }
             .navigationTitle("All Deadlines")
             .preferredColorScheme(.dark) // Keep consistent theme
+            // --- NEW TOOLBAR ---
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button {
+                        // Toggle the state variable on button tap
+                        showDueDate.toggle() 
+                        print("AllDeadlinesView: Toggled showDueDate to \(showDueDate)") // Debugging print
+                    } label: {
+                        // Change button label based on the current state
+                        Text(showDueDate ? "Show Days Left" : "Show Due Date")
+                    }
+                }
+            }
+            // --- END NEW TOOLBAR ---
         }
         // Ensure NavigationViewStyle allows detail view to replace correctly on iPad/macOS if needed
         .navigationViewStyle(.stack) // Use stack style for phone-like navigation
@@ -148,7 +167,6 @@ struct AllDeadlinesView: View {
         } else if Calendar.current.isDateInToday(date) {
             return .orange // Orange if due today
         }
-        // Potentially add yellow for tomorrow/soon?
         return .primary // Default color
     }
     
@@ -185,15 +203,24 @@ struct AllDeadlinesView: View {
         let days = daysRemaining(until: date)
         
         if days < 0 {
-            return "Overdue by \(abs(days)) \(abs(days) == 1 ? "day" : "days")"
+             return "\(abs(days)) \(abs(days) == 1 ? "day" : "days")"
         } else if days == 0 {
             return "Due Today"
         } else if days == 1 {
-             return "1 day left"
+             return "1 day" // Reverted from "1 day left" just in case, adjust if needed
         } else {
-            return "\(days) days left"
+            return "\(days) days" // Reverted from "X days left", adjust if needed
         }
     }
+
+    // --- NEW HELPER FUNCTION ---
+    // Formats the date into a readable string (e.g., "Jun 23, 2024")
+    private func formattedDate(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "MMM d, yyyy" // Example format, adjust as needed
+        return formatter.string(from: date)
+    }
+    // --- END NEW HELPER FUNCTION ---
     
     // MARK: - Action Handlers
     
@@ -248,12 +275,11 @@ struct AllDeadlinesView_Previews: PreviewProvider {
              // Add subdeadlines to sampleProject2...
              // previewViewModel.addProject(sampleProject1)
              // previewViewModel.addProject(sampleProject2)
-            // Note: Need the actual addProject function and SubDeadline creation logic here
-            // For now, relying on DeadlineViewModel.preview potentially having data
+             // previewViewModel.addProject(Project(title: "Due Today Project", finalDeadlineDate: Date())) // Example for today
         }
-
-        AllDeadlinesView(viewModel: previewViewModel)
-            .preferredColorScheme(.dark)
+        
+        return AllDeadlinesView(viewModel: previewViewModel)
+             .preferredColorScheme(.dark)
     }
 }
 

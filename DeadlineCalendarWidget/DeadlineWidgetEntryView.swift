@@ -10,64 +10,36 @@ struct DeadlineWidgetEntryView: View {
     // Environment variable to detect the widget's size.
     @Environment(\.widgetFamily) var family
 
+    // --- TEMPORARY SIMPLIFIED BODY for Debugging ---
     var body: some View {
-        ZStack {
-            VStack(alignment: .leading, spacing: widgetSpacing) { // Adjust spacing based on family
-                // Widget Title
-                Text("Upcoming Tasks")
-                    .font(.system(size: titleFontSize, weight: .semibold))
-                    .foregroundColor(.white)
-                    .frame(maxWidth: .infinity, alignment: .center)
-                    .padding(.bottom, 4)
-
-                // Check if there are any sub-deadlines to display.
-                if entry.upcomingSubDeadlines.isEmpty {
-                    // Message shown when there are no upcoming tasks.
-                    VStack {
-                        Spacer()
-                        Text("All clear! ✨") // More engaging empty state message
-                            .font(.system(size: emptyStateFontSize))
-                            .multilineTextAlignment(.center)
-                            .foregroundColor(.gray)
-                        Spacer()
-                    }
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                } else {
-                    // Display the list of upcoming sub-deadlines.
-                    VStack(alignment: .leading, spacing: rowSpacing) { // Consistent spacing between rows
-                        // Iterate over the sub-deadlines, limited by the widget size.
-                        ForEach(entry.upcomingSubDeadlines.prefix(numberOfItemsToShow())) { subDeadlineInfo in
-                            // Use the new SubDeadlineRow view.
-                            SubDeadlineRow(subDeadlineInfo: subDeadlineInfo)
-                        }
-                    }
-                }
-                
-                // Ensure content pushes to the top, allowing timestamp at bottom
-                if family != .systemSmall { // Small family might not have space for spacer + timestamp
-                     Spacer(minLength: 0)
-                }
-                
-                 // Timestamp for the last update (only if there's enough space)
-                if family != .systemSmall { // Don't show on small widgets
-                     Text("Updated: \(entry.date, style: .time)")
-                         .font(.system(size: timestampFontSize))
-                         .foregroundColor(.gray)
-                         .frame(maxWidth: .infinity, alignment: .center)
-                         .padding(.top, 2) // Add slight padding above timestamp
-                }
+        VStack(alignment: .leading) {
+            Text("Debug Info")
+                .font(.headline)
+            Text("Entry Date: \(entry.date, style: .time)")
+            Text("SubDeadline Count: \(entry.upcomingSubDeadlines.count)")
+            if let first = entry.upcomingSubDeadlines.first {
+                Text("First Title: \(first.title)")
+                Text("First Project: \(first.projectTitle)")
+                Text(first.date, style: .date)
+            } else {
+                Text("No upcoming deadlines.")
             }
-            // Apply overall padding to the VStack content.
-            .padding(widgetPadding)
+            Spacer() // Keep spacer to see layout behavior
         }
+        .padding() // Basic padding
         // Use the modern containerBackground API
         .containerBackground(for: .widget) {
-            // Set the background color within the containerBackground
-            Color.black
+            // Set a simple background color within the containerBackground
+            Color.blue.opacity(0.3) // Use a distinct color for testing
         }
     }
+    // --- END TEMPORARY BODY ---
 
-    // --- Layout Helper Functions/Properties ---
+    /* --- ORIGINAL BODY COMMENTED OUT ---
+    // ... original body code lines 19-92 ...
+     */ // --- END ORIGINAL BODY ---
+
+    // --- Layout Helper Functions/Properties --- (Keep these for now, though unused by temp body)
 
     // Determines the number of items to show based on widget family.
     func numberOfItemsToShow() -> Int {
