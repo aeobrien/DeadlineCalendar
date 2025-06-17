@@ -2,6 +2,8 @@
 
 import WidgetKit
 import SwiftUI
+import Foundation
+
 
 // MARK: - Widget Data Structures
 
@@ -60,10 +62,6 @@ struct SubDeadlineEntry: TimelineEntry {
 
 struct DeadlineProvider: TimelineProvider {
     typealias Entry = SubDeadlineEntry
-    
-    // Key for accessing project data in UserDefaults.
-    // MUST match the key used in the main app's ViewModel.
-    private let projectsKey = "projects_v2_key"
 
     // Provides a placeholder view for the widget gallery.
     func placeholder(in context: Context) -> SubDeadlineEntry {
@@ -97,11 +95,13 @@ struct DeadlineProvider: TimelineProvider {
     // Provides the timeline (entries) for the widget.
     func getTimeline(in context: Context, completion: @escaping (Timeline<SubDeadlineEntry>) -> Void) {
         print("Widget Provider: Providing timeline.")
+        
+        // Load data directly
         let subDeadlines = loadUpcomingSubDeadlines()
         
         // Create a single timeline entry for the immediate future.
         let entry = SubDeadlineEntry(date: Date(),
-                                     upcomingSubDeadlines: subDeadlines) // Use loaded data (or empty if loading failed)
+                                     upcomingSubDeadlines: subDeadlines)
 
         // Define when the next timeline update should occur.
         // Refresh more frequently if desired, e.g., every 15-30 minutes.
@@ -114,107 +114,63 @@ struct DeadlineProvider: TimelineProvider {
         print("Widget Provider: Timeline generated with \(entry.upcomingSubDeadlines.count) sub-deadlines. Next update around \(nextUpdateDate).")
         completion(timeline)
     }
-
-    // --- Helper Function to Load and Process Data ---
     
-    // Loads projects from UserDefaults and extracts upcoming sub-deadlines.
+    // Load upcoming sub-deadlines from shared UserDefaults
     private func loadUpcomingSubDeadlines() -> [WidgetSubDeadlineInfo] {
-        print("WIDGET_LOG: --- Starting loadUpcomingSubDeadlines ---") // START MARKER
-
-        // --- 1. Access UserDefaults ---
+        let projectsKey = "projects_v2_key"
+        
+        // Access shared UserDefaults
         guard let userDefaults = UserDefaults(suiteName: "group.com.yourapp.deadlines") else {
-            print("WIDGET_LOG: Error - Failed to access shared UserDefaults suite 'group.com.yourapp.deadlines'. Returning empty.") // ERROR 1
+            print("Widget: Failed to access shared UserDefaults")
             return []
         }
-        print("WIDGET_LOG: Successfully accessed shared UserDefaults.") // SUCCESS 1
-
-        // --- 2. Retrieve Data ---
+        
+        // Get projects data
         guard let data = userDefaults.data(forKey: projectsKey) else {
-            print("WIDGET_LOG: No data found in UserDefaults for key '\(projectsKey)'. Returning empty.") // ERROR 2
+            print("Widget: No projects data found")
             return []
         }
-        print("WIDGET_LOG: Found data for key '\(projectsKey)'. Size: \(data.count) bytes.") // SUCCESS 2
-
-        // --- 3. Decode Data ---
-        var allProjects: [Project] = []
-        let decoder = JSONDecoder()
+        
+        // Decode projects using the shared Project model
         do {
-            allProjects = try decoder.decode([Project].self, from: data)
-            print("WIDGET_LOG: Successfully decoded \(allProjects.count) projects.") // SUCCESS 3
-            // Optional: Log project titles if needed for debugging, but be mindful of log size
-            // print("WIDGET_LOG: Decoded Project Titles: \(allProjects.map { $0.title })")
+            let projects = try JSONDecoder().decode([Project].self, from: data)
+            return getUpcomingSubDeadlines(from: projects, limit: 5)
         } catch {
-            print("WIDGET_LOG: Error - Failed to decode projects data from UserDefaults.") // ERROR 3 Start
-            print("  Key: '\(projectsKey)'")
-            print("  Error Details: \(error)")
-            // Log detailed decoding error
-            if let decodingError = error as? DecodingError {
-                switch decodingError {
-                case .typeMismatch(let type, let context):
-                    print("  Decoding Error: TypeMismatch - Expected '\(type)', Path: \(context.codingPath.map { $0.stringValue }.joined(separator: ".")), Context: \(context.debugDescription)")
-                case .valueNotFound(let type, let context):
-                    print("  Decoding Error: ValueNotFound - Expected '\(type)', Path: \(context.codingPath.map { $0.stringValue }.joined(separator: ".")), Context: \(context.debugDescription)")
-                case .keyNotFound(let key, let context):
-                    print("  Decoding Error: KeyNotFound - Missing key '\(key.stringValue)', Path: \(context.codingPath.map { $0.stringValue }.joined(separator: ".")), Context: \(context.debugDescription)")
-                case .dataCorrupted(let context):
-                    print("  Decoding Error: DataCorrupted - Path: \(context.codingPath.map { $0.stringValue }.joined(separator: ".")), Context: \(context.debugDescription)")
-                @unknown default:
-                    print("  Decoding Error: Unknown DecodingError occurred.")
+            print("Widget: Failed to decode projects: \(error)")
+            return []
+        }
+    }
+    
+    // Extract upcoming sub-deadlines from projects
+    private func getUpcomingSubDeadlines(from projects: [Project], limit: Int) -> [WidgetSubDeadlineInfo] {
+        let today = Date()
+        var upcomingSubDeadlines: [WidgetSubDeadlineInfo] = []
+        
+        // Get all active projects
+        let activeProjects = projects.filter { !$0.isFullyCompleted }
+        
+        // Collect all upcoming sub-deadlines
+        for project in activeProjects {
+            let projectTitle = project.title
+            for subDeadline in project.subDeadlines {
+                // Only include sub-deadlines that are not completed
+                if !subDeadline.isCompleted {
+                    upcomingSubDeadlines.append(WidgetSubDeadlineInfo(
+                        id: subDeadline.id,
+                        title: subDeadline.title,
+                        date: subDeadline.date,
+                        projectTitle: projectTitle,
+                        isCompleted: subDeadline.isCompleted
+                    ))
                 }
             }
-            print("WIDGET_LOG: --- END DECODING ERROR --- Returning empty.") // ERROR 3 End
-            return []
         }
-
-        // --- 4. Filter Active Projects ---
-        let activeProjects = allProjects.filter { !$0.isFullyCompleted }
-        print("WIDGET_LOG: Found \(activeProjects.count) active (non-completed) projects.") // STEP 4
-
-        // --- 5. Extract Upcoming SubDeadlines ---
-        let upcomingSubDeadlines = activeProjects.flatMap { project -> [WidgetSubDeadlineInfo] in
-            // Log project being processed
-            // print("WIDGET_LOG: Processing project '\(project.title)' (\(project.subDeadlines.count) total subdeadlines)")
-            
-            // --- OPTIMIZATION: Extract title before mapping subdeadlines ---
-            let currentProjectTitle = project.title 
-            
-            let projectSubDeadlines = project.subDeadlines
-                .filter { subDeadline in
-                    let isUpcoming = Calendar.current.compare(subDeadline.date, to: Date(), toGranularity: .day) != .orderedAscending
-                    let keep = !subDeadline.isCompleted && isUpcoming
-                    // Optional: Log filtering decision per subdeadline
-                    // print("WIDGET_LOG:   - SubDeadline '\(subDeadline.title)' (\(subDeadline.date)): isCompleted=\(subDeadline.isCompleted), isUpcoming=\(isUpcoming) -> Keep=\(keep)")
-                    return keep
-                }
-                .map { subDeadline -> WidgetSubDeadlineInfo in // Explicit return type
-                    // --- OPTIMIZATION: Use extracted title, avoid capturing 'project' here ---
-                    WidgetSubDeadlineInfo(
-                        id: subDeadline.id, 
-                        title: subDeadline.title, 
-                        date: subDeadline.date, 
-                        projectTitle: currentProjectTitle, // Use extracted title
-                        isCompleted: subDeadline.isCompleted
-                    )
-                }
-            // Optional: Log how many upcoming were found for this project
-            // if !projectSubDeadlines.isEmpty { print("WIDGET_LOG:   -> Found \(projectSubDeadlines.count) upcoming for '\(project.title)'") }
-            return projectSubDeadlines
-        }
-        print("WIDGET_LOG: Extracted \(upcomingSubDeadlines.count) upcoming sub-deadlines from active projects.") // STEP 5
-
-        // --- 6. Sort SubDeadlines ---
-        let sortedSubDeadlines = upcomingSubDeadlines.sorted { $0.date < $1.date }
-        print("WIDGET_LOG: Sorted \(sortedSubDeadlines.count) sub-deadlines.") // STEP 6
-        // Optional: Log sorted deadlines
-        // print("WIDGET_LOG: Sorted Titles & Dates: \(sortedSubDeadlines.map { "\($0.title) (\($0.date))" })")
-
-        // --- 7. Limit Results ---
-        let limit = 4 // Define the limit clearly
-        let deadlinesToShow = Array(sortedSubDeadlines.prefix(limit))
-        print("WIDGET_LOG: Limited to top \(deadlinesToShow.count) sub-deadlines (limit was \(limit)).") // STEP 7
-
-        // --- 8. Return Results ---
-        print("WIDGET_LOG: --- Finished loadUpcomingSubDeadlines. Returning \(deadlinesToShow.count) items. ---") // END MARKER
-        return deadlinesToShow
+        
+        // Sort by date and limit results
+        return upcomingSubDeadlines
+            .sorted { $0.date < $1.date }
+            .prefix(limit)
+            .map { $0 }
     }
+
 }

@@ -203,13 +203,14 @@ struct AllDeadlinesView: View {
         let days = daysRemaining(until: date)
         
         if days < 0 {
-             return "\(abs(days)) \(abs(days) == 1 ? "day" : "days")"
+            let dayString = abs(days) == 1 ? "day" : "days"
+            return "\(abs(days)) \(dayString) overdue"
         } else if days == 0 {
             return "Due Today"
         } else if days == 1 {
-             return "1 day" // Reverted from "1 day left" just in case, adjust if needed
+            return "Tomorrow"
         } else {
-            return "\(days) days" // Reverted from "X days left", adjust if needed
+            return "\(days) days"
         }
     }
 

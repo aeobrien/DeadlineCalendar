@@ -2,6 +2,7 @@
 
 import SwiftUI
 import Combine
+import UserNotifications
 // Removed unused imports like SwiftSoup, UIKit if not needed by new views yet
 import WidgetKit // Keep for ViewModel's reloadWidgets()
 
@@ -42,6 +43,9 @@ class DeadlineViewModel: ObservableObject {
             print("ViewModel Init: Failed to get shared UserDefaults. Using standard.")
             self.userDefaults = UserDefaults.standard
         }
+        // Request notification permissions and schedule daily notifications
+        requestNotificationPermissions()
+        scheduleDailyNotifications()
     }
 
     // New function to load data asynchronously
@@ -204,6 +208,7 @@ class DeadlineViewModel: ObservableObject {
             userDefaults.set(encoded, forKey: projectsKey)
             print("ViewModel: saveProjects() completed. (\(projects.count) projects)")
             reloadWidgets()
+            updateNotifications()
         } else {
             print("ViewModel Error: Failed to encode projects for saving.")
         }
@@ -783,6 +788,107 @@ class DeadlineViewModel: ObservableObject {
         // If trigger exists but wasn't found (shouldn't happen), treat as inactive.
         print("ViewModel Warning: Trigger ID \(triggerID) linked to sub-deadline '\(subDeadline.title)' not found. Treating as inactive.")
         return false
+    }
+    
+    // MARK: - Notification Functions
+    
+    // Request notification permissions from the user
+    private func requestNotificationPermissions() {
+        UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge]) { granted, error in
+            if granted {
+                print("ViewModel: Notification permissions granted")
+            } else if let error = error {
+                print("ViewModel: Notification permission error: \(error.localizedDescription)")
+            } else {
+                print("ViewModel: Notification permissions denied")
+            }
+        }
+    }
+    
+    // Schedule daily notifications at 9:30 AM
+    private func scheduleDailyNotifications() {
+        let center = UNUserNotificationCenter.current()
+        
+        // Remove any existing notifications for this identifier
+        center.removePendingNotificationRequests(withIdentifiers: ["daily-deadline-reminder"])
+        
+        // Create date components for 9:30 AM
+        var dateComponents = DateComponents()
+        dateComponents.hour = 9
+        dateComponents.minute = 30
+        
+        // Create the notification content
+        let content = UNMutableNotificationContent()
+        content.title = "Daily Deadline Reminder"
+        content.sound = .default
+        
+        // Get the next 5 upcoming deadlines
+        let upcomingDeadlines = getUpcomingDeadlines(limit: 5)
+        
+        if upcomingDeadlines.isEmpty {
+            content.body = "No upcoming deadlines today. Great job staying on top of your projects!"
+        } else {
+            var bodyText = "Upcoming deadlines:\n\n"
+            for (index, deadline) in upcomingDeadlines.enumerated() {
+                let daysRemaining = Calendar.current.dateComponents([.day], from: Date(), to: deadline.date).day ?? 0
+                let daysText = daysRemaining == 0 ? "Due today" : 
+                              daysRemaining == 1 ? "Due tomorrow" : 
+                              "Due in \(daysRemaining) days"
+                bodyText += "\(index + 1). \(deadline.title) (\(deadline.projectTitle)) - \(daysText)\n"
+            }
+            content.body = bodyText
+        }
+        
+        // Create the trigger to fire daily at 9:30 AM
+        let trigger = UNCalendarNotificationTrigger(dateMatching: dateComponents, repeats: true)
+        
+        // Create the request
+        let request = UNNotificationRequest(identifier: "daily-deadline-reminder", content: content, trigger: trigger)
+        
+        // Schedule the notification
+        center.add(request) { error in
+            if let error = error {
+                print("ViewModel: Error scheduling daily notification: \(error.localizedDescription)")
+            } else {
+                print("ViewModel: Daily notification scheduled for 9:30 AM")
+            }
+        }
+    }
+    
+    // Get upcoming deadlines sorted by date
+    private func getUpcomingDeadlines(limit: Int) -> [(title: String, date: Date, projectTitle: String)] {
+        let today = Date()
+        var upcomingDeadlines: [(title: String, date: Date, projectTitle: String)] = []
+        
+        // Get all active projects
+        let activeProjects = projects.filter { !$0.isFullyCompleted }
+        
+        // Collect all upcoming sub-deadlines
+        for project in activeProjects {
+            for subDeadline in project.subDeadlines {
+                // Only include active sub-deadlines that are not completed and are today or in the future
+                if !subDeadline.isCompleted && 
+                   Calendar.current.compare(subDeadline.date, to: today, toGranularity: .day) != .orderedAscending &&
+                   isSubDeadlineActive(subDeadline) {
+                    upcomingDeadlines.append((
+                        title: subDeadline.title,
+                        date: subDeadline.date,
+                        projectTitle: project.title
+                    ))
+                }
+            }
+        }
+        
+        // Sort by date and limit results
+        return upcomingDeadlines
+            .sorted { $0.date < $1.date }
+            .prefix(limit)
+            .map { $0 }
+    }
+    
+    // Update notifications when projects are modified
+    func updateNotifications() {
+        scheduleDailyNotifications()
     }
 }
 

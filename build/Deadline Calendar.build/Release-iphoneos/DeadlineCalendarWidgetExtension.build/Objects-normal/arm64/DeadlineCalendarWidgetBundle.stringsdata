@@ -1,0 +1,24 @@
+{
+  "source": "/Users/aidan/Documents/XCode/Deadline Calendar/DeadlineCalendarWidget/DeadlineCalendarWidgetBundle.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Upcoming Tasks",
+        "location": {
+          "startingColumn": 35,
+          "startingLine": 32
+        }
+      },
+      {
+        "comment": "",
+        "key": "Shows upcoming sub-deadlines from your projects.",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 33
+        }
+      }
+    ]
+  },
+  "version": 1
+}

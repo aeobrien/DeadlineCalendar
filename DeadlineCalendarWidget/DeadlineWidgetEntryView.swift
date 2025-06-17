@@ -10,30 +10,67 @@ struct DeadlineWidgetEntryView: View {
     // Environment variable to detect the widget's size.
     @Environment(\.widgetFamily) var family
 
-    // --- TEMPORARY SIMPLIFIED BODY for Debugging ---
     var body: some View {
-        VStack(alignment: .leading) {
-            Text("Debug Info")
-                .font(.headline)
-            Text("Entry Date: \(entry.date, style: .time)")
-            Text("SubDeadline Count: \(entry.upcomingSubDeadlines.count)")
-            if let first = entry.upcomingSubDeadlines.first {
-                Text("First Title: \(first.title)")
-                Text("First Project: \(first.projectTitle)")
-                Text(first.date, style: .date)
-            } else {
-                Text("No upcoming deadlines.")
+        VStack(alignment: .leading, spacing: widgetSpacing) {
+            // Widget Header
+            HStack {
+                Text("Upcoming Deadlines")
+                    .font(.system(size: titleFontSize, weight: .bold))
+                    .foregroundColor(.white)
+                Spacer()
+                // Show current time (optional)
+                Text(entry.date, style: .time)
+                    .font(.system(size: timestampFontSize))
+                    .foregroundColor(.gray)
             }
-            Spacer() // Keep spacer to see layout behavior
+            
+            // Main Content
+            if entry.upcomingSubDeadlines.isEmpty {
+                // Empty State
+                VStack(spacing: 4) {
+                    Image(systemName: "checkmark.circle.fill")
+                        .font(.system(size: 32))
+                        .foregroundColor(.green)
+                    Text("No upcoming deadlines!")
+                        .font(.system(size: emptyStateFontSize, weight: .medium))
+                        .foregroundColor(.white)
+                    Text("Great job staying on track.")
+                        .font(.system(size: emptyStateFontSize - 2))
+                        .foregroundColor(.gray)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .multilineTextAlignment(.center)
+            } else {
+                // List of Sub-Deadlines
+                VStack(alignment: .leading, spacing: rowSpacing) {
+                    ForEach(Array(entry.upcomingSubDeadlines.prefix(numberOfItemsToShow()).enumerated()), id: \.element.id) { index, subDeadlineInfo in
+                        SubDeadlineRow(subDeadlineInfo: subDeadlineInfo)
+                    }
+                    
+                    // Show count if there are more items
+                    if entry.upcomingSubDeadlines.count > numberOfItemsToShow() {
+                        Text("+ \(entry.upcomingSubDeadlines.count - numberOfItemsToShow()) more")
+                            .font(.system(size: emptyStateFontSize, weight: .medium))
+                            .foregroundColor(.gray)
+                            .padding(.top, 2)
+                    }
+                }
+            }
+            
+            Spacer() // Push content to top
         }
-        .padding() // Basic padding
-        // Use the modern containerBackground API
+        .padding(widgetPadding)
         .containerBackground(for: .widget) {
-            // Set a simple background color within the containerBackground
-            Color.blue.opacity(0.3) // Use a distinct color for testing
+            LinearGradient(
+                gradient: Gradient(colors: [
+                    Color("WidgetBackground").opacity(0.9),
+                    Color.black.opacity(0.8)
+                ]),
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
         }
     }
-    // --- END TEMPORARY BODY ---
 
     /* --- ORIGINAL BODY COMMENTED OUT ---
     // ... original body code lines 19-92 ...
@@ -139,7 +176,8 @@ struct SubDeadlineRow: View {
         let days = daysRemaining
         if days < 0 {
             // Format for overdue tasks.
-            return "\(abs(days))d overdue"
+            let dayString = abs(days) == 1 ? "day" : "days"
+            return "\(abs(days)) \(dayString) overdue"
         } else if days == 0 {
             // Format for tasks due today.
             return "Today"
