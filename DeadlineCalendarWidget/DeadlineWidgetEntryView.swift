@@ -108,19 +108,20 @@ struct DeadlineWidgetEntryView: View {
     }
 
     // Dynamic font sizes
-    var titleFontSize: CGFloat { return family == .systemSmall ? 14 : 16 }
-    var emptyStateFontSize: CGFloat { return family == .systemSmall ? 12 : 14 }
-    var timestampFontSize: CGFloat { return 10 } // Keep timestamp small
-}
+        var titleFontSize: CGFloat { return family == .systemSmall ? 14 : 16 }
+        var emptyStateFontSize: CGFloat { return family == .systemSmall ? 12 : 14 }
+        var timestampFontSize: CGFloat { return 10 } // Keep timestamp small
+    }
 
 
-// MARK: - SubDeadline Row View
+    // MARK: - SubDeadline Row View
 
 // A view representing a single row for an upcoming sub-deadline.
 struct SubDeadlineRow: View {
-    // The sub-deadline data to display.
+    /// The sub-deadline data to display.
     let subDeadlineInfo: WidgetSubDeadlineInfo
-    @Environment(\.widgetFamily) var family // Access family for potential adjustments
+    /// Access widget family for layout tweaks.
+    @Environment(\.widgetFamily) var family
 
     var body: some View {
         HStack(alignment: .center, spacing: 6) {
@@ -131,16 +132,10 @@ struct SubDeadlineRow: View {
 
             // Main content (Title, Project, Date)
             VStack(alignment: .leading, spacing: 2) {
-                // Sub-deadline Title
-                Text(subDeadlineInfo.title)
+                // Combined Project and Sub-deadline Title to match the main app
+                Text("\(subDeadlineInfo.projectTitle) \(subDeadlineInfo.title)")
                     .font(.system(size: titleFontSize, weight: .medium))
                     .foregroundColor(.white)
-                    .lineLimit(1) // Prevent long titles from wrapping excessively
-
-                // Parent Project Title (Subtle)
-                Text(subDeadlineInfo.projectTitle)
-                    .font(.system(size: projectFontSize))
-                    .foregroundColor(.gray)
                     .lineLimit(1)
             }
             
@@ -166,31 +161,7 @@ struct SubDeadlineRow: View {
         let calendar = Calendar.current
         // Compare start of today with start of the deadline day.
         let startOfToday = calendar.startOfDay(for: Date())
-        let startOfDeadlineDay = calendar.startOfDay(for: subDeadlineInfo.date)
-        let components = calendar.dateComponents([.day], from: startOfToday, to: startOfDeadlineDay)
-        return components.day ?? 0 // Default to 0 if calculation fails
-    }
-
-    // Provides a user-friendly string for days remaining.
-    var displayDaysRemaining: String {
-        let days = daysRemaining
-        if days < 0 {
-            // Format for overdue tasks.
-            let dayString = abs(days) == 1 ? "day" : "days"
-            return "\(abs(days)) \(dayString) overdue"
-        } else if days == 0 {
-            // Format for tasks due today.
-            return "Today"
-        } else if days == 1 {
-            // Format for tasks due tomorrow.
-            return "Tomorrow"
-        } else if days <= 7 {
-            // Format for tasks due within a week (just days).
-             return "In \(days)d"
-        } else {
-            // Format for tasks further out (short date).
-            let formatter = DateFormatter()
-            formatter.dateFormat = "MMM d" // e.g., "Oct 26"
+@@ -194,51 +189,50 @@ struct SubDeadlineRow: View {
             return formatter.string(from: subDeadlineInfo.date)
         }
     }
@@ -216,7 +187,6 @@ struct SubDeadlineRow: View {
     
     // --- Layout Helpers for Row ---
     var titleFontSize: CGFloat { return family == .systemSmall ? 12 : 14 }
-    var projectFontSize: CGFloat { return family == .systemSmall ? 10 : 12 }
     var dateFontSize: CGFloat { return family == .systemSmall ? 11 : 13 }
     var rowVerticalPadding: CGFloat { return family == .systemSmall ? 3 : 5 }
     var rowHorizontalPadding: CGFloat { return family == .systemSmall ? 6 : 8 }

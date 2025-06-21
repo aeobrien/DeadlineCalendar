@@ -21,6 +21,8 @@
 		DD6A58702DADB64D006A064E /* BackupRestoreView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD6A586F2DADB64D006A064E /* BackupRestoreView.swift */; };
 		DD6A58722DADB712006A064E /* BackupManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD6A58712DADB711006A064E /* BackupManager.swift */; };
 		DD6D9F462DC3E5E300D9FC9B /* SwiftSoup in Frameworks */ = {isa = PBXBuildFile; productRef = DD6D9F452DC3E5E300D9FC9B /* SwiftSoup */; };
+		DDD880182E06DC7700CBF567 /* Package.swift in Sources */ = {isa = PBXBuildFile; fileRef = DDD880172E06DC7500CBF567 /* Package.swift */; };
+		DDD8801A2E06DC9500CBF567 /* .gitignore in Resources */ = {isa = PBXBuildFile; fileRef = DDD880192E06DC9000CBF567 /* .gitignore */; };
 		DDF73AFC2CC0378000833720 /* Deadline_CalendarApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = DDF73AFB2CC0378000833720 /* Deadline_CalendarApp.swift */; };
 		DDF73AFE2CC0378000833720 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DDF73AFD2CC0378000833720 /* ContentView.swift */; };
 		DDF73B002CC0378100833720 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = DDF73AFF2CC0378100833720 /* Assets.xcassets */; };
@@ -92,6 +94,8 @@
 		DD6A586D2DAD9A23006A064E /* TriggersView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = TriggersView.swift; path = "Deadline Calendar/TriggersView.swift"; sourceTree = "<group>"; };
 		DD6A586F2DADB64D006A064E /* BackupRestoreView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = BackupRestoreView.swift; path = "Deadline Calendar/BackupRestoreView.swift"; sourceTree = "<group>"; };
 		DD6A58712DADB711006A064E /* BackupManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = BackupManager.swift; sourceTree = "<group>"; };
+		DDD880172E06DC7500CBF567 /* Package.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Package.swift; sourceTree = "<group>"; };
+		DDD880192E06DC9000CBF567 /* .gitignore */ = {isa = PBXFileReference; lastKnownFileType = text; path = .gitignore; sourceTree = "<group>"; };
 		DDF73AF82CC0378000833720 /* Deadline Calendar.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Deadline Calendar.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		DDF73AFB2CC0378000833720 /* Deadline_CalendarApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Deadline_CalendarApp.swift; sourceTree = "<group>"; };
 		DDF73AFD2CC0378000833720 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
@@ -156,6 +160,8 @@
 		DDF73AEF2CC0378000833720 = {
 			isa = PBXGroup;
 			children = (
+				DDD880192E06DC9000CBF567 /* .gitignore */,
+				DDD880172E06DC7500CBF567 /* Package.swift */,
 				DD6A58712DADB711006A064E /* BackupManager.swift */,
 				DD6A586F2DADB64D006A064E /* BackupRestoreView.swift */,
 				DD6A586D2DAD9A23006A064E /* TriggersView.swift */,
@@ -387,6 +393,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				DDF73B032CC0378100833720 /* Preview Assets.xcassets in Resources */,
+				DDD8801A2E06DC9500CBF567 /* .gitignore in Resources */,
 				DDF73B002CC0378100833720 /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -425,6 +432,7 @@
 				DDF73B832CC053F300833720 /* Models.swift in Sources */,
 				DD6A586A2DAD8A37006A064E /* AllDeadlinesView.swift in Sources */,
 				DDF73AFE2CC0378000833720 /* ContentView.swift in Sources */,
+				DDD880182E06DC7700CBF567 /* Package.swift in Sources */,
 				DD6A58602DAD8431006A064E /* TemplateSubDeadlineEditorRow.swift in Sources */,
 				DD6A585C2DAD7FF7006A064E /* AddProjectView.swift in Sources */,
 				DD6A58622DAD8453006A064E /* TemplateEditorView.swift in Sources */,

@@ -115,62 +115,74 @@ struct DeadlineProvider: TimelineProvider {
         completion(timeline)
     }
     
-    // Load upcoming sub-deadlines from shared UserDefaults
     private func loadUpcomingSubDeadlines() -> [WidgetSubDeadlineInfo] {
-        let projectsKey = "projects_v2_key"
-        
-        // Access shared UserDefaults
-        guard let userDefaults = UserDefaults(suiteName: "group.com.yourapp.deadlines") else {
-            print("Widget: Failed to access shared UserDefaults")
-            return []
-        }
-        
-        // Get projects data
-        guard let data = userDefaults.data(forKey: projectsKey) else {
-            print("Widget: No projects data found")
-            return []
-        }
-        
-        // Decode projects using the shared Project model
-        do {
-            let projects = try JSONDecoder().decode([Project].self, from: data)
-            return getUpcomingSubDeadlines(from: projects, limit: 5)
-        } catch {
-            print("Widget: Failed to decode projects: \(error)")
-            return []
-        }
-    }
-    
-    // Extract upcoming sub-deadlines from projects
-    private func getUpcomingSubDeadlines(from projects: [Project], limit: Int) -> [WidgetSubDeadlineInfo] {
-        let today = Date()
-        var upcomingSubDeadlines: [WidgetSubDeadlineInfo] = []
-        
-        // Get all active projects
-        let activeProjects = projects.filter { !$0.isFullyCompleted }
-        
-        // Collect all upcoming sub-deadlines
-        for project in activeProjects {
-            let projectTitle = project.title
-            for subDeadline in project.subDeadlines {
-                // Only include sub-deadlines that are not completed
-                if !subDeadline.isCompleted {
-                    upcomingSubDeadlines.append(WidgetSubDeadlineInfo(
-                        id: subDeadline.id,
-                        title: subDeadline.title,
-                        date: subDeadline.date,
-                        projectTitle: projectTitle,
-                        isCompleted: subDeadline.isCompleted
-                    ))
-                }
+            let projectsKey = "projects_v2_key"
+            
+            // Access shared UserDefaults
+            guard let userDefaults = UserDefaults(suiteName: "group.com.yourapp.deadlines") else {
+                print("Widget: Failed to access shared UserDefaults")
+                return []
+            }
+            
+            // Get projects data
+            guard let data = userDefaults.data(forKey: projectsKey) else {
+                print("Widget: No projects data found")
+                return []
+            }
+            
+            // Decode projects using the shared Project model
+            do {
+                let projects = try JSONDecoder().decode([Project].self, from: data)
+                return getUpcomingSubDeadlines(from: projects, limit: 5)
+            } catch {
+                print("Widget: Failed to decode projects: \(error)")
+                return []
             }
         }
-        
-        // Sort by date and limit results
-        return upcomingSubDeadlines
-            .sorted { $0.date < $1.date }
-            .prefix(limit)
-            .map { $0 }
-    }
+    
+    // Extract upcoming sub-deadlines from projects while matching the app's filtering logic
+        private func getUpcomingSubDeadlines(from projects: [Project], limit: Int) -> [WidgetSubDeadlineInfo] {
+            let today = Date()
+            var upcomingSubDeadlines: [WidgetSubDeadlineInfo] = []
 
-}
+            // Filter to active projects
+            let activeProjects = projects.filter { !$0.isFullyCompleted }
+
+            for project in activeProjects {
+                let projectTitle = project.title
+                for subDeadline in project.subDeadlines {
+                    // Match the same conditions used in the main app
+                    if !subDeadline.isCompleted,
+                       Calendar.current.compare(subDeadline.date, to: today, toGranularity: .day) != .orderedAscending,
+                       isSubDeadlineActive(subDeadline, in: project) {
+                        upcomingSubDeadlines.append(
+                            WidgetSubDeadlineInfo(
+                                id: subDeadline.id,
+                                title: subDeadline.title,
+                                date: subDeadline.date,
+                                projectTitle: projectTitle,
+                                isCompleted: subDeadline.isCompleted
+                            )
+                        )
+                    }
+                }
+            }
+
+            return upcomingSubDeadlines
+                .sorted { $0.date < $1.date }
+                .prefix(limit)
+                .map { $0 }
+        }
+
+        // Determine if a sub-deadline should be visible based on its trigger status
+        private func isSubDeadlineActive(_ subDeadline: SubDeadline, in project: Project) -> Bool {
+            guard let triggerID = subDeadline.triggerID else {
+                return true
+            }
+            if let trigger = project.triggers.first(where: { $0.id == triggerID }) {
+                return trigger.isActive
+            }
+            return false
+        }
+
+    }
