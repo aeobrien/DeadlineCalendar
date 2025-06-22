@@ -61,14 +61,7 @@ struct DeadlineWidgetEntryView: View {
         }
         .padding(widgetPadding)
         .containerBackground(for: .widget) {
-            LinearGradient(
-                gradient: Gradient(colors: [
-                    Color("WidgetBackground").opacity(0.9),
-                    Color.black.opacity(0.8)
-                ]),
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
+            Color.black
         }
     }
 
@@ -159,21 +152,50 @@ struct SubDeadlineRow: View {
     // Calculates the number of days remaining until the sub-deadline.
     var daysRemaining: Int {
         let calendar = Calendar.current
-        // Compare start of today with start of the deadline day.
         let startOfToday = calendar.startOfDay(for: Date())
-@@ -194,51 +189,50 @@ struct SubDeadlineRow: View {
+        let startOfDeadlineDay = calendar.startOfDay(for: subDeadlineInfo.date)
+        let components = calendar.dateComponents([.day], from: startOfToday, to: startOfDeadlineDay)
+        return components.day ?? 0
+    }
+
+    private var displayDate: String {
+        let calendar = Calendar.current
+        if calendar.isDate(subDeadlineInfo.date, inSameDayAs: Date()) {
+            return "Today"
+        } else {
+            let formatter = DateFormatter()
+            formatter.dateStyle = .short
             return formatter.string(from: subDeadlineInfo.date)
+        }
+    }
+
+    private var displayDaysRemaining: String {
+        switch daysRemaining {
+        case ..<0:
+            return displayDate
+        case 0:
+            return "Today"
+        case 1:
+            return "Tomorrow"
+        case 2...7:
+            return "\(daysRemaining) days"
+        default:
+            return displayDate
         }
     }
 
     // Determines the color based on urgency (days remaining).
     var colorForDeadline: Color {
         let days = daysRemaining
-        if days < 0 { return .red } // Overdue
-        else if days == 0 { return .red } // Due today
-        else if days <= 3 { return .orange } // Due very soon
-        else if days <= 7 { return .yellow } // Due within a week
-        else { return .green } // Due later
+        if days < 0 {
+            return .red // Overdue
+        } else if days < 7 {
+            return .red // Less than a week
+        } else if days <= 21 {
+            return .orange // 1 to 3 weeks
+        } else {
+            return .green // More than 3 weeks
+        }
     }
     
     // Determines the color for the days remaining text.

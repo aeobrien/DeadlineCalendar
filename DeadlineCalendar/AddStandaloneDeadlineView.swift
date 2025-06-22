@@ -61,19 +61,16 @@ struct AddStandaloneDeadlineView: View {
         }
         
         // Create the new standalone deadline instance.
-        // Note: projectID is nil, indicating it's standalone.
         let newDeadline = SubDeadline(
             title: trimmedTitle,
             date: date,
             isCompleted: false, // Starts as not completed.
             subtasks: [], // Standalone deadlines don't have subtasks initially.
             templateSubDeadlineID: nil, // Not from a template.
-            triggerID: nil, // Standalone deadlines don't use triggers.
-            projectID: nil // Explicitly nil for standalone.
+            triggerID: nil // Standalone deadlines don't use triggers.
         )
         
         // Add the deadline using the view model.
-        // Explicitly use self. to potentially resolve compiler ambiguity.
         self.viewModel.addStandaloneDeadline(newDeadline)
         
         print("AddStandaloneDeadlineView: Saved standalone deadline '\(newDeadline.title)' for date \(newDeadline.date)")
@@ -87,6 +84,7 @@ struct AddStandaloneDeadlineView: View {
 struct AddStandaloneDeadlineView_Previews: PreviewProvider {
     static var previews: some View {
         // Provide a dummy ViewModel for the preview.
+        // Assuming DeadlineViewModel has a preview instance.
         AddStandaloneDeadlineView(viewModel: DeadlineViewModel.preview)
             .preferredColorScheme(.dark) // Match the app's theme in preview.
     }

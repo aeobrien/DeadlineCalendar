@@ -16,6 +16,10 @@ class DeadlineViewModel: ObservableObject {
     @Published var triggers: [Trigger] = []
     @Published var isLoading = true // <-- Add loading state flag
 
+    // --- ADDED for Standalone Deadlines ---
+    // Define a static ID for the standalone project to ensure it's always the same.
+    static let standaloneProjectID: UUID = UUID(uuidString: "00000000-0000-0000-0000-000000000001")!
+
     // --- UPDATED STORAGE KEYS ---
     // Unique keys for storing projects and templates in UserDefaults.
     private let projectsKey = "projects_v2_key" // Use a new key to avoid conflicts with old data structure
@@ -285,6 +289,30 @@ class DeadlineViewModel: ObservableObject {
 
 
     // --- SUB-DEADLINE OPERATIONS ---
+
+    // Adds a new standalone sub-deadline by finding or creating a special project to house it.
+    func addStandaloneDeadline(_ deadline: SubDeadline) {
+        let standaloneProjectName = "Standalone Deadlines"
+        
+        // Check if the standalone project already exists.
+        if let projectIndex = projects.firstIndex(where: { $0.id == DeadlineViewModel.standaloneProjectID }) {
+            // Project exists, add the deadline to it.
+            projects[projectIndex].subDeadlines.append(deadline)
+            projects[projectIndex].subDeadlines.sort { $0.date < $1.date }
+            print("ViewModel: Added standalone deadline '\(deadline.title)' to existing project '\(standaloneProjectName)'.")
+            saveProjects() // Save the updated projects list.
+        } else {
+            // Project doesn't exist, create a new one with this deadline.
+            let newProject = Project(
+                id: DeadlineViewModel.standaloneProjectID,
+                title: standaloneProjectName,
+                finalDeadlineDate: Date.distantFuture, // A sensible default for a container project.
+                subDeadlines: [deadline] // Start with the new deadline.
+            )
+            addProject(newProject) // addProject handles appending and saving.
+            print("ViewModel: Created new project '\(standaloneProjectName)' for standalone deadline '\(deadline.title)'.")
+        }
+    }
 
     // Updates a specific sub-deadline within a project.
     func updateSubDeadline(_ subDeadline: SubDeadline, in project: Project) {

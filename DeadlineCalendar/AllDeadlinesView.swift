@@ -15,6 +15,13 @@ struct DeadlineListItem: Identifiable, Hashable {
     // let isFinalDeadline: Bool = false 
 }
 
+// Add an Identifiable struct to hold the parameters for the sheet
+struct EditSheetParameters: Identifiable {
+    let id = UUID()
+    let projectID: UUID
+    let subDeadlineID: UUID?
+}
+
 struct AllDeadlinesView: View {
     // Observe the shared ViewModel
     @ObservedObject var viewModel: DeadlineViewModel
@@ -22,6 +29,9 @@ struct AllDeadlinesView: View {
     // State to trigger navigation to project detail
     @State private var selectedProjectID: UUID?
     @State private var navigateToProject = false
+    
+    // Replace multiple state variables with a single one for the sheet
+    @State private var editSheetParameters: EditSheetParameters?
 
     // --- NEW STATE ---
     // State variable to control the display format (days remaining vs. due date)
@@ -65,38 +75,40 @@ struct AllDeadlinesView: View {
                 // List displaying all deadlines
                 List {
                     ForEach(allDeadlinesSorted) { item in
-                        // Use a NavigationLink to go to the project detail when tapped
-                        Button(action: {
-                            // Set the selected project ID to trigger navigation
-                            selectedProjectID = item.projectID
-                            navigateToProject = true 
-                        }) {
-                            HStack(spacing: 12) { // Add spacing between elements
-                                // Vertical Color Strip based on due date
-                                Capsule()
-                                    .fill(stripColor(for: item.subDeadlineDate))
-                                    .frame(width: 5) // Adjust width as needed
-                                
-                                // Combined Project and Task Title
-                                Text("\(item.projectName) \(item.subDeadlineTitle)")
-                                    .fontWeight(.medium) // Adjust font weight if desired
-                                    // Apply the date color logic to the task title as well
-                                    .foregroundColor(dateColor(for: item.subDeadlineDate, isCompleted: item.isSubDeadlineCompleted))
-                                
-                                Spacer() // Pushes date info to the right
-                                
-                                // Conditionally display either days remaining or the formatted due date
-                                Text(showDueDate ? formattedDate(item.subDeadlineDate) : daysRemainingText(for: item.subDeadlineDate))
-                                    .font(.subheadline)
-                                    // This already uses the dateColor logic
-                                    .foregroundColor(dateColor(for: item.subDeadlineDate, isCompleted: item.isSubDeadlineCompleted))
-                                    .lineLimit(1) // Prevent wrapping
-                                    // Use a flexible frame to allow text to grow/shrink
-                                    .frame(minWidth: 80, alignment: .trailing)
-                            }
-                            .padding(.vertical, 4) // Add slight vertical padding to the HStack content
+                    HStack(spacing: 12) {
+                            // Vertical Color Strip based on due date
+                            Capsule()
+                                .fill(stripColor(for: item.subDeadlineDate))
+                                .frame(width: 5)
+
+                            // Combined Project and Task Title
+                            Text("\(item.projectName) \(item.subDeadlineTitle)")
+                                .fontWeight(.medium)
+                                .foregroundColor(dateColor(for: item.subDeadlineDate, isCompleted: item.isSubDeadlineCompleted))
+
+                            Spacer()
+
+                            // Days remaining or formatted due date
+                            Text(showDueDate ? formattedDate(item.subDeadlineDate) : daysRemainingText(for: item.subDeadlineDate))
+                                .font(.subheadline)
+                                .foregroundColor(dateColor(for: item.subDeadlineDate, isCompleted: item.isSubDeadlineCompleted))
+                                .lineLimit(1)
+                                .frame(minWidth: 80, alignment: .trailing)
                         }
-                         .buttonStyle(.plain) // Use plain button style for list rows
+                        .padding(.vertical, 4)
+                        .contextMenu {
+                            Button("View Project") {
+                                selectedProjectID = item.projectID
+                                navigateToProject = true
+                            }
+                            Button("Edit Deadline") {
+                                // Set the parameters for the sheet
+                                editSheetParameters = EditSheetParameters(
+                                    projectID: item.projectID,
+                                    subDeadlineID: item.subDeadlineID
+                                )
+                            }
+                        }
                          
                          // --- Swipe Actions ---
                          .swipeActions(edge: .leading, allowsFullSwipe: true) {
@@ -133,11 +145,8 @@ struct AllDeadlinesView: View {
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button {
-                        // Toggle the state variable on button tap
-                        showDueDate.toggle() 
-                        print("AllDeadlinesView: Toggled showDueDate to \(showDueDate)") // Debugging print
+                        showDueDate.toggle()
                     } label: {
-                        // Change button label based on the current state
                         Text(showDueDate ? "Show Days Left" : "Show Due Date")
                     }
                 }
@@ -146,6 +155,11 @@ struct AllDeadlinesView: View {
         }
         // Ensure NavigationViewStyle allows detail view to replace correctly on iPad/macOS if needed
         .navigationViewStyle(.stack) // Use stack style for phone-like navigation
+        .sheet(item: $editSheetParameters) { params in
+            ProjectEditorView(viewModel: viewModel,
+                              projectToEditID: params.projectID,
+                              scrollToSubDeadlineID: params.subDeadlineID)
+        }
     }
     
     // Helper function to determine font weight based on date proximity and completion

@@ -17,7 +17,7 @@ struct ProjectDetailView: View {
     private let dateFormatter: DateFormatter = {
         let formatter = DateFormatter()
         formatter.dateStyle = .medium // e.g., "Oct 26, 2023"
-        formatter.timeStyle = .short  // e.g., "9:41 AM"
+        formatter.timeStyle = .none   // only date, no time
         return formatter
     }()
 
@@ -54,7 +54,7 @@ struct ProjectDetailView: View {
                     // Need to use indices if we want to modify via ViewModel
                     ForEach(project.subDeadlines.indices, id: \.self) { index in
                         let subDeadline = project.subDeadlines[index]
-                        HStack {
+                        VStack(alignment: .leading, spacing: 2) {
                             // Completion Toggle Button
                             Button {
                                 // Find the actual index in the viewModel's array if necessary
@@ -69,12 +69,18 @@ struct ProjectDetailView: View {
                             .buttonStyle(BorderlessButtonStyle()) // Allow interaction within the row
 
                             // Sub-deadline Details
-                            VStack(alignment: .leading) {
+                            VStack(alignment: .leading, spacing: 2) {
                                 Text(subDeadline.title)
-                                    .strikethrough(subDeadline.isCompleted, color: .gray) // Strikethrough if completed
-                                Text(subDeadline.date, formatter: dateFormatter)
-                                    .font(.caption)
-                                    .foregroundColor(.gray)
+                                    .strikethrough(subDeadline.isCompleted, color: .gray)
+                                HStack(spacing: 4) {
+                                    Text(dateFormatter.string(from: subDeadline.date))
+                                    if let original = originalDate(for: subDeadline), original != subDeadline.date {
+                                        Text("(originally \(dateFormatter.string(from: original)))")
+                                            .foregroundColor(.red)
+                                    }
+                                }
+                                .font(.caption)
+                                .foregroundColor(.gray)
                             }
                             Spacer() // Push content to the left
                         }
@@ -94,10 +100,9 @@ struct ProjectDetailView: View {
             }
         }
         // Sheet presentation for the editor
-        .sheet(isPresented: $showingEditSheet) {
-            // Present the ProjectEditorView (needs to be created)
-            // Pass the ViewModel and the project ID (or a binding if using that approach)
-            ProjectEditorView(viewModel: viewModel, projectToEditID: project.id)
+        .sheet(isPresented: $showingEditSheet, onDismiss: updateLocalProject) {
+            ProjectEditorView(viewModel: viewModel,
+                              projectToEditID: project.id)
         }
     }
 
@@ -134,6 +139,26 @@ struct ProjectDetailView: View {
     }
 }
 
+// MARK: - ProjectDetailView Helpers
+extension ProjectDetailView {
+    /// Refreshes the local project state after editing completes.
+    private func updateLocalProject() {
+        if let updated = viewModel.projects.first(where: { $0.id == project.id }) {
+            project = updated
+        }
+    }
+
+    /// Calculates the original template-based date for a sub-deadline, if defined.
+    private func originalDate(for subDeadline: SubDeadline) -> Date? {
+        guard let templateID = project.templateID,
+              let template = viewModel.templates.first(where: { $0.id == templateID }),
+              let templateSubID = subDeadline.templateSubDeadlineID,
+              let templateDef = template.subDeadlines.first(where: { $0.id == templateSubID }) else {
+            return nil
+        }
+        return try? templateDef.offset.calculateDate(from: project.finalDeadlineDate)
+    }
+}
 // MARK: - Preview Provider
 struct ProjectDetailView_Previews: PreviewProvider {
     // Helper function to create a sample project for previewing

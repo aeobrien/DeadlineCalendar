@@ -7,29 +7,31 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		DD29ACAD2CC06BAE001FEBDE /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = DDF73AFF2CC0378100833720 /* Assets.xcassets */; };
-		DD6A585C2DAD7FF7006A064E /* AddProjectView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD6A585B2DAD7FF7006A064E /* AddProjectView.swift */; };
-		DD6A585E2DAD81CE006A064E /* TemplateManagerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD6A585D2DAD81CE006A064E /* TemplateManagerView.swift */; };
-		DD6A58602DAD8431006A064E /* TemplateSubDeadlineEditorRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD6A585F2DAD8431006A064E /* TemplateSubDeadlineEditorRow.swift */; };
-		DD6A58622DAD8453006A064E /* TemplateEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD6A58612DAD8453006A064E /* TemplateEditorView.swift */; };
-		DD6A58662DAD852C006A064E /* ProjectDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD6A58632DAD852C006A064E /* ProjectDetailView.swift */; };
-		DD6A58672DAD852C006A064E /* ProjectRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD6A58642DAD852C006A064E /* ProjectRow.swift */; };
-		DD6A58682DAD852C006A064E /* CompletedProjectsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD6A58652DAD852C006A064E /* CompletedProjectsView.swift */; };
-		DD6A586A2DAD8A37006A064E /* AllDeadlinesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD6A58692DAD8A37006A064E /* AllDeadlinesView.swift */; };
-		DD6A586C2DAD8C34006A064E /* ProjectEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD6A586B2DAD8C34006A064E /* ProjectEditorView.swift */; };
-		DD6A586E2DAD9A23006A064E /* TriggersView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD6A586D2DAD9A23006A064E /* TriggersView.swift */; };
-		DD6A58702DADB64D006A064E /* BackupRestoreView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD6A586F2DADB64D006A064E /* BackupRestoreView.swift */; };
 		DD6A58722DADB712006A064E /* BackupManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD6A58712DADB711006A064E /* BackupManager.swift */; };
-		DD6D9F462DC3E5E300D9FC9B /* SwiftSoup in Frameworks */ = {isa = PBXBuildFile; productRef = DD6D9F452DC3E5E300D9FC9B /* SwiftSoup */; };
-		DDD880182E06DC7700CBF567 /* Package.swift in Sources */ = {isa = PBXBuildFile; fileRef = DDD880172E06DC7500CBF567 /* Package.swift */; };
+		DD75C8F42E06F6CB00AA393B /* DeadlineRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD75C8F02E06F6CB00AA393B /* DeadlineRow.swift */; };
+		DD75C9152E06F75000AA393B /* BackupRestoreView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD75C9082E06F75000AA393B /* BackupRestoreView.swift */; };
+		DD75C9162E06F75000AA393B /* ProjectEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD75C90E2E06F75000AA393B /* ProjectEditorView.swift */; };
+		DD75C9172E06F75000AA393B /* TriggersView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD75C9132E06F75000AA393B /* TriggersView.swift */; };
+		DD75C9182E06F75000AA393B /* Deadline_CalendarApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD75C90B2E06F75000AA393B /* Deadline_CalendarApp.swift */; };
+		DD75C9192E06F75000AA393B /* AddStandaloneDeadlineView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD75C9052E06F75000AA393B /* AddStandaloneDeadlineView.swift */; };
+		DD75C91A2E06F75000AA393B /* TemplateManagerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD75C9112E06F75000AA393B /* TemplateManagerView.swift */; };
+		DD75C91B2E06F75000AA393B /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD75C90A2E06F75000AA393B /* ContentView.swift */; };
+		DD75C91C2E06F75000AA393B /* TemplateSubDeadlineEditorRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD75C9122E06F75000AA393B /* TemplateSubDeadlineEditorRow.swift */; };
+		DD75C91D2E06F75000AA393B /* ProjectRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD75C90F2E06F75000AA393B /* ProjectRow.swift */; };
+		DD75C91E2E06F75000AA393B /* AddProjectView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD75C9042E06F75000AA393B /* AddProjectView.swift */; };
+		DD75C91F2E06F75000AA393B /* CompletedProjectsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD75C9092E06F75000AA393B /* CompletedProjectsView.swift */; };
+		DD75C9202E06F75000AA393B /* AllDeadlinesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD75C9062E06F75000AA393B /* AllDeadlinesView.swift */; };
+		DD75C9212E06F75000AA393B /* TemplateEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD75C9102E06F75000AA393B /* TemplateEditorView.swift */; };
+		DD75C9222E06F75000AA393B /* ProjectDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD75C90D2E06F75000AA393B /* ProjectDetailView.swift */; };
+		DD75C9232E06F75000AA393B /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = DD75C9072E06F75000AA393B /* Assets.xcassets */; };
+		DD75C9242E06F75000AA393B /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = DD75C9022E06F75000AA393B /* Preview Assets.xcassets */; };
+		DDB898CC2E06F84A00A24E47 /* SwiftSoup in Frameworks */ = {isa = PBXBuildFile; productRef = DDB898CB2E06F84A00A24E47 /* SwiftSoup */; };
+		DDB898CE2E06F8D700A24E47 /* XCTest.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = DDB898CD2E06F8D700A24E47 /* XCTest.framework */; platformFilter = ios; };
+		DDB898CF2E06F8D700A24E47 /* XCTest.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = DDB898CD2E06F8D700A24E47 /* XCTest.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		DDB898D12E06F8FF00A24E47 /* Deadline_CalendarUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD75C9282E06F7C900AA393B /* Deadline_CalendarUITestsLaunchTests.swift */; };
+		DDB898D22E06F91D00A24E47 /* Deadline_CalendarUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD75C9272E06F7C900AA393B /* Deadline_CalendarUITests.swift */; };
+		DDB898D32E06F94200A24E47 /* Deadline_CalendarTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD75C9252E06F7C900AA393B /* Deadline_CalendarTests.swift */; };
 		DDD8801A2E06DC9500CBF567 /* .gitignore in Resources */ = {isa = PBXBuildFile; fileRef = DDD880192E06DC9000CBF567 /* .gitignore */; };
-		DDF73AFC2CC0378000833720 /* Deadline_CalendarApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = DDF73AFB2CC0378000833720 /* Deadline_CalendarApp.swift */; };
-		DDF73AFE2CC0378000833720 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DDF73AFD2CC0378000833720 /* ContentView.swift */; };
-		DDF73B002CC0378100833720 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = DDF73AFF2CC0378100833720 /* Assets.xcassets */; };
-		DDF73B032CC0378100833720 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = DDF73B022CC0378100833720 /* Preview Assets.xcassets */; };
-		DDF73B0D2CC0378100833720 /* Deadline_CalendarTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DDF73B0C2CC0378100833720 /* Deadline_CalendarTests.swift */; };
-		DDF73B172CC0378100833720 /* Deadline_CalendarUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DDF73B162CC0378100833720 /* Deadline_CalendarUITests.swift */; };
-		DDF73B192CC0378100833720 /* Deadline_CalendarUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DDF73B182CC0378100833720 /* Deadline_CalendarUITestsLaunchTests.swift */; };
 		DDF73B682CC04F5C00833720 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = DDF73B672CC04F5C00833720 /* WidgetKit.framework */; };
 		DDF73B6A2CC04F5C00833720 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = DDF73B692CC04F5C00833720 /* SwiftUI.framework */; };
 		DDF73B6D2CC04F5C00833720 /* DeadlineCalendarWidgetBundle.swift in Sources */ = {isa = PBXBuildFile; fileRef = DDF73B6C2CC04F5C00833720 /* DeadlineCalendarWidgetBundle.swift */; };
@@ -68,6 +70,17 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
+		DDB898D02E06F8D700A24E47 /* Embed Frameworks */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+				DDB898CF2E06F8D700A24E47 /* XCTest.framework in Embed Frameworks */,
+			);
+			name = "Embed Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		DDF73B7D2CC04F5D00833720 /* Embed Foundation Extensions */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
@@ -82,30 +95,33 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		DD6A585B2DAD7FF7006A064E /* AddProjectView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = AddProjectView.swift; path = "Deadline Calendar/AddProjectView.swift"; sourceTree = "<group>"; };
-		DD6A585D2DAD81CE006A064E /* TemplateManagerView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = TemplateManagerView.swift; path = "Deadline Calendar/TemplateManagerView.swift"; sourceTree = "<group>"; };
-		DD6A585F2DAD8431006A064E /* TemplateSubDeadlineEditorRow.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = TemplateSubDeadlineEditorRow.swift; path = "Deadline Calendar/TemplateSubDeadlineEditorRow.swift"; sourceTree = "<group>"; };
-		DD6A58612DAD8453006A064E /* TemplateEditorView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = TemplateEditorView.swift; path = "Deadline Calendar/TemplateEditorView.swift"; sourceTree = "<group>"; };
-		DD6A58632DAD852C006A064E /* ProjectDetailView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = ProjectDetailView.swift; path = "Deadline Calendar/ProjectDetailView.swift"; sourceTree = "<group>"; };
-		DD6A58642DAD852C006A064E /* ProjectRow.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = ProjectRow.swift; path = "Deadline Calendar/ProjectRow.swift"; sourceTree = "<group>"; };
-		DD6A58652DAD852C006A064E /* CompletedProjectsView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = CompletedProjectsView.swift; path = "Deadline Calendar/CompletedProjectsView.swift"; sourceTree = "<group>"; };
-		DD6A58692DAD8A37006A064E /* AllDeadlinesView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = AllDeadlinesView.swift; path = "Deadline Calendar/AllDeadlinesView.swift"; sourceTree = "<group>"; };
-		DD6A586B2DAD8C34006A064E /* ProjectEditorView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = ProjectEditorView.swift; path = "Deadline Calendar/ProjectEditorView.swift"; sourceTree = "<group>"; };
-		DD6A586D2DAD9A23006A064E /* TriggersView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = TriggersView.swift; path = "Deadline Calendar/TriggersView.swift"; sourceTree = "<group>"; };
-		DD6A586F2DADB64D006A064E /* BackupRestoreView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = BackupRestoreView.swift; path = "Deadline Calendar/BackupRestoreView.swift"; sourceTree = "<group>"; };
 		DD6A58712DADB711006A064E /* BackupManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = BackupManager.swift; sourceTree = "<group>"; };
-		DDD880172E06DC7500CBF567 /* Package.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Package.swift; sourceTree = "<group>"; };
+		DD75C8F02E06F6CB00AA393B /* DeadlineRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeadlineRow.swift; sourceTree = "<group>"; };
+		DD75C9022E06F75000AA393B /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
+		DD75C9042E06F75000AA393B /* AddProjectView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddProjectView.swift; sourceTree = "<group>"; };
+		DD75C9052E06F75000AA393B /* AddStandaloneDeadlineView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddStandaloneDeadlineView.swift; sourceTree = "<group>"; };
+		DD75C9062E06F75000AA393B /* AllDeadlinesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AllDeadlinesView.swift; sourceTree = "<group>"; };
+		DD75C9072E06F75000AA393B /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		DD75C9082E06F75000AA393B /* BackupRestoreView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackupRestoreView.swift; sourceTree = "<group>"; };
+		DD75C9092E06F75000AA393B /* CompletedProjectsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompletedProjectsView.swift; sourceTree = "<group>"; };
+		DD75C90A2E06F75000AA393B /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		DD75C90B2E06F75000AA393B /* Deadline_CalendarApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Deadline_CalendarApp.swift; sourceTree = "<group>"; };
+		DD75C90C2E06F75000AA393B /* DeadlineCalendar.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = DeadlineCalendar.entitlements; sourceTree = "<group>"; };
+		DD75C90D2E06F75000AA393B /* ProjectDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectDetailView.swift; sourceTree = "<group>"; };
+		DD75C90E2E06F75000AA393B /* ProjectEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectEditorView.swift; sourceTree = "<group>"; };
+		DD75C90F2E06F75000AA393B /* ProjectRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectRow.swift; sourceTree = "<group>"; };
+		DD75C9102E06F75000AA393B /* TemplateEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TemplateEditorView.swift; sourceTree = "<group>"; };
+		DD75C9112E06F75000AA393B /* TemplateManagerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TemplateManagerView.swift; sourceTree = "<group>"; };
+		DD75C9122E06F75000AA393B /* TemplateSubDeadlineEditorRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TemplateSubDeadlineEditorRow.swift; sourceTree = "<group>"; };
+		DD75C9132E06F75000AA393B /* TriggersView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TriggersView.swift; sourceTree = "<group>"; };
+		DD75C9252E06F7C900AA393B /* Deadline_CalendarTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Deadline_CalendarTests.swift; sourceTree = "<group>"; };
+		DD75C9272E06F7C900AA393B /* Deadline_CalendarUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Deadline_CalendarUITests.swift; sourceTree = "<group>"; };
+		DD75C9282E06F7C900AA393B /* Deadline_CalendarUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Deadline_CalendarUITestsLaunchTests.swift; sourceTree = "<group>"; };
+		DDB898CD2E06F8D700A24E47 /* XCTest.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = XCTest.framework; path = Platforms/iPhoneOS.platform/Developer/Library/Frameworks/XCTest.framework; sourceTree = DEVELOPER_DIR; };
 		DDD880192E06DC9000CBF567 /* .gitignore */ = {isa = PBXFileReference; lastKnownFileType = text; path = .gitignore; sourceTree = "<group>"; };
 		DDF73AF82CC0378000833720 /* Deadline Calendar.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Deadline Calendar.app"; sourceTree = BUILT_PRODUCTS_DIR; };
-		DDF73AFB2CC0378000833720 /* Deadline_CalendarApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Deadline_CalendarApp.swift; sourceTree = "<group>"; };
-		DDF73AFD2CC0378000833720 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
-		DDF73AFF2CC0378100833720 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
-		DDF73B022CC0378100833720 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 		DDF73B082CC0378100833720 /* Deadline CalendarTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "Deadline CalendarTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
-		DDF73B0C2CC0378100833720 /* Deadline_CalendarTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Deadline_CalendarTests.swift; sourceTree = "<group>"; };
 		DDF73B122CC0378100833720 /* Deadline CalendarUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "Deadline CalendarUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
-		DDF73B162CC0378100833720 /* Deadline_CalendarUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Deadline_CalendarUITests.swift; sourceTree = "<group>"; };
-		DDF73B182CC0378100833720 /* Deadline_CalendarUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Deadline_CalendarUITestsLaunchTests.swift; sourceTree = "<group>"; };
 		DDF73B652CC04F5C00833720 /* DeadlineCalendarWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = DeadlineCalendarWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		DDF73B672CC04F5C00833720 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
 		DDF73B692CC04F5C00833720 /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
@@ -115,7 +131,6 @@
 		DDF73B722CC04F5C00833720 /* AppIntent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppIntent.swift; sourceTree = "<group>"; };
 		DDF73B742CC04F5D00833720 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		DDF73B762CC04F5D00833720 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		DDF73B7E2CC04FBE00833720 /* Deadline Calendar.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = "Deadline Calendar.entitlements"; sourceTree = "<group>"; };
 		DDF73B7F2CC0500100833720 /* DeadlineCalendarWidgetExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = DeadlineCalendarWidgetExtension.entitlements; sourceTree = "<group>"; };
 		DDF73B822CC053F300833720 /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
 		DDF73B872CC054DC00833720 /* DeadlineProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeadlineProvider.swift; sourceTree = "<group>"; };
@@ -127,7 +142,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				DD6D9F462DC3E5E300D9FC9B /* SwiftSoup in Frameworks */,
+				DDB898CC2E06F84A00A24E47 /* SwiftSoup in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -142,6 +157,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				DDB898CE2E06F8D700A24E47 /* XCTest.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -157,31 +173,69 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		DD75C9032E06F75000AA393B /* Preview Content */ = {
+			isa = PBXGroup;
+			children = (
+				DD75C9022E06F75000AA393B /* Preview Assets.xcassets */,
+			);
+			path = "Preview Content";
+			sourceTree = "<group>";
+		};
+		DD75C9142E06F75000AA393B /* DeadlineCalendar */ = {
+			isa = PBXGroup;
+			children = (
+				DD75C9032E06F75000AA393B /* Preview Content */,
+				DD75C9042E06F75000AA393B /* AddProjectView.swift */,
+				DD75C9052E06F75000AA393B /* AddStandaloneDeadlineView.swift */,
+				DD75C9062E06F75000AA393B /* AllDeadlinesView.swift */,
+				DD75C9072E06F75000AA393B /* Assets.xcassets */,
+				DD75C9082E06F75000AA393B /* BackupRestoreView.swift */,
+				DD75C9092E06F75000AA393B /* CompletedProjectsView.swift */,
+				DD75C90A2E06F75000AA393B /* ContentView.swift */,
+				DD75C90B2E06F75000AA393B /* Deadline_CalendarApp.swift */,
+				DD75C90C2E06F75000AA393B /* DeadlineCalendar.entitlements */,
+				DD75C90D2E06F75000AA393B /* ProjectDetailView.swift */,
+				DD75C90E2E06F75000AA393B /* ProjectEditorView.swift */,
+				DD75C90F2E06F75000AA393B /* ProjectRow.swift */,
+				DD75C9102E06F75000AA393B /* TemplateEditorView.swift */,
+				DD75C9112E06F75000AA393B /* TemplateManagerView.swift */,
+				DD75C9122E06F75000AA393B /* TemplateSubDeadlineEditorRow.swift */,
+				DD75C9132E06F75000AA393B /* TriggersView.swift */,
+			);
+			path = DeadlineCalendar;
+			sourceTree = "<group>";
+		};
+		DD75C9262E06F7C900AA393B /* DeadlineCalendarTests */ = {
+			isa = PBXGroup;
+			children = (
+				DD75C9252E06F7C900AA393B /* Deadline_CalendarTests.swift */,
+			);
+			path = DeadlineCalendarTests;
+			sourceTree = "<group>";
+		};
+		DD75C9292E06F7C900AA393B /* DeadlineCalendarUITests */ = {
+			isa = PBXGroup;
+			children = (
+				DD75C9272E06F7C900AA393B /* Deadline_CalendarUITests.swift */,
+				DD75C9282E06F7C900AA393B /* Deadline_CalendarUITestsLaunchTests.swift */,
+			);
+			path = DeadlineCalendarUITests;
+			sourceTree = "<group>";
+		};
 		DDF73AEF2CC0378000833720 = {
 			isa = PBXGroup;
 			children = (
+				DD75C9262E06F7C900AA393B /* DeadlineCalendarTests */,
+				DD75C9292E06F7C900AA393B /* DeadlineCalendarUITests */,
+				DD75C9142E06F75000AA393B /* DeadlineCalendar */,
+				DD75C8F02E06F6CB00AA393B /* DeadlineRow.swift */,
 				DDD880192E06DC9000CBF567 /* .gitignore */,
-				DDD880172E06DC7500CBF567 /* Package.swift */,
 				DD6A58712DADB711006A064E /* BackupManager.swift */,
-				DD6A586F2DADB64D006A064E /* BackupRestoreView.swift */,
-				DD6A586D2DAD9A23006A064E /* TriggersView.swift */,
-				DD6A585B2DAD7FF7006A064E /* AddProjectView.swift */,
-				DD6A58692DAD8A37006A064E /* AllDeadlinesView.swift */,
-				DD6A58652DAD852C006A064E /* CompletedProjectsView.swift */,
-				DDF73AFA2CC0378000833720 /* Deadline Calendar */,
-				DDF73B0B2CC0378100833720 /* Deadline CalendarTests */,
-				DDF73B152CC0378100833720 /* Deadline CalendarUITests */,
 				DDF73B6B2CC04F5C00833720 /* DeadlineCalendarWidget */,
 				DDF73B7F2CC0500100833720 /* DeadlineCalendarWidgetExtension.entitlements */,
 				DDF73B662CC04F5C00833720 /* Frameworks */,
 				DDF73B822CC053F300833720 /* Models.swift */,
 				DDF73AF92CC0378000833720 /* Products */,
-				DD6A58632DAD852C006A064E /* ProjectDetailView.swift */,
-				DD6A586B2DAD8C34006A064E /* ProjectEditorView.swift */,
-				DD6A58642DAD852C006A064E /* ProjectRow.swift */,
-				DD6A58612DAD8453006A064E /* TemplateEditorView.swift */,
-				DD6A585D2DAD81CE006A064E /* TemplateManagerView.swift */,
-				DD6A585F2DAD8431006A064E /* TemplateSubDeadlineEditorRow.swift */,
 			);
 			sourceTree = "<group>";
 		};
@@ -196,46 +250,10 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
-		DDF73AFA2CC0378000833720 /* Deadline Calendar */ = {
-			isa = PBXGroup;
-			children = (
-				DDF73B7E2CC04FBE00833720 /* Deadline Calendar.entitlements */,
-				DDF73AFB2CC0378000833720 /* Deadline_CalendarApp.swift */,
-				DDF73AFD2CC0378000833720 /* ContentView.swift */,
-				DDF73AFF2CC0378100833720 /* Assets.xcassets */,
-				DDF73B012CC0378100833720 /* Preview Content */,
-			);
-			path = "Deadline Calendar";
-			sourceTree = "<group>";
-		};
-		DDF73B012CC0378100833720 /* Preview Content */ = {
-			isa = PBXGroup;
-			children = (
-				DDF73B022CC0378100833720 /* Preview Assets.xcassets */,
-			);
-			path = "Preview Content";
-			sourceTree = "<group>";
-		};
-		DDF73B0B2CC0378100833720 /* Deadline CalendarTests */ = {
-			isa = PBXGroup;
-			children = (
-				DDF73B0C2CC0378100833720 /* Deadline_CalendarTests.swift */,
-			);
-			path = "Deadline CalendarTests";
-			sourceTree = "<group>";
-		};
-		DDF73B152CC0378100833720 /* Deadline CalendarUITests */ = {
-			isa = PBXGroup;
-			children = (
-				DDF73B162CC0378100833720 /* Deadline_CalendarUITests.swift */,
-				DDF73B182CC0378100833720 /* Deadline_CalendarUITestsLaunchTests.swift */,
-			);
-			path = "Deadline CalendarUITests";
-			sourceTree = "<group>";
-		};
 		DDF73B662CC04F5C00833720 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				DDB898CD2E06F8D700A24E47 /* XCTest.framework */,
 				DDF73B672CC04F5C00833720 /* WidgetKit.framework */,
 				DDF73B692CC04F5C00833720 /* SwiftUI.framework */,
 			);
@@ -276,7 +294,7 @@
 			);
 			name = "Deadline Calendar";
 			packageProductDependencies = (
-				DD6D9F452DC3E5E300D9FC9B /* SwiftSoup */,
+				DDB898CB2E06F84A00A24E47 /* SwiftSoup */,
 			);
 			productName = "Deadline Calendar";
 			productReference = DDF73AF82CC0378000833720 /* Deadline Calendar.app */;
@@ -307,6 +325,7 @@
 				DDF73B0E2CC0378100833720 /* Sources */,
 				DDF73B0F2CC0378100833720 /* Frameworks */,
 				DDF73B102CC0378100833720 /* Resources */,
+				DDB898D02E06F8D700A24E47 /* Embed Frameworks */,
 			);
 			buildRules = (
 			);
@@ -363,7 +382,7 @@
 					};
 				};
 			};
-			buildConfigurationList = DDF73AF32CC0378000833720 /* Build configuration list for PBXProject "Deadline Calendar" */;
+			buildConfigurationList = DDF73AF32CC0378000833720 /* Build configuration list for PBXProject "DeadlineCalendar" */;
 			compatibilityVersion = "Xcode 14.0";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
@@ -392,9 +411,9 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				DDF73B032CC0378100833720 /* Preview Assets.xcassets in Resources */,
+				DD75C9232E06F75000AA393B /* Assets.xcassets in Resources */,
+				DD75C9242E06F75000AA393B /* Preview Assets.xcassets in Resources */,
 				DDD8801A2E06DC9500CBF567 /* .gitignore in Resources */,
-				DDF73B002CC0378100833720 /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -416,7 +435,6 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				DD29ACAD2CC06BAE001FEBDE /* Assets.xcassets in Resources */,
 				DDF73B752CC04F5D00833720 /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -428,22 +446,23 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				DD6A58682DAD852C006A064E /* CompletedProjectsView.swift in Sources */,
+				DD75C8F42E06F6CB00AA393B /* DeadlineRow.swift in Sources */,
 				DDF73B832CC053F300833720 /* Models.swift in Sources */,
-				DD6A586A2DAD8A37006A064E /* AllDeadlinesView.swift in Sources */,
-				DDF73AFE2CC0378000833720 /* ContentView.swift in Sources */,
-				DDD880182E06DC7700CBF567 /* Package.swift in Sources */,
-				DD6A58602DAD8431006A064E /* TemplateSubDeadlineEditorRow.swift in Sources */,
-				DD6A585C2DAD7FF7006A064E /* AddProjectView.swift in Sources */,
-				DD6A58622DAD8453006A064E /* TemplateEditorView.swift in Sources */,
-				DD6A586E2DAD9A23006A064E /* TriggersView.swift in Sources */,
-				DD6A586C2DAD8C34006A064E /* ProjectEditorView.swift in Sources */,
-				DD6A585E2DAD81CE006A064E /* TemplateManagerView.swift in Sources */,
-				DD6A58672DAD852C006A064E /* ProjectRow.swift in Sources */,
-				DDF73AFC2CC0378000833720 /* Deadline_CalendarApp.swift in Sources */,
-				DD6A58662DAD852C006A064E /* ProjectDetailView.swift in Sources */,
+				DD75C9152E06F75000AA393B /* BackupRestoreView.swift in Sources */,
+				DD75C9162E06F75000AA393B /* ProjectEditorView.swift in Sources */,
+				DD75C9172E06F75000AA393B /* TriggersView.swift in Sources */,
+				DD75C9182E06F75000AA393B /* Deadline_CalendarApp.swift in Sources */,
+				DD75C9192E06F75000AA393B /* AddStandaloneDeadlineView.swift in Sources */,
+				DD75C91A2E06F75000AA393B /* TemplateManagerView.swift in Sources */,
+				DD75C91B2E06F75000AA393B /* ContentView.swift in Sources */,
+				DD75C91C2E06F75000AA393B /* TemplateSubDeadlineEditorRow.swift in Sources */,
+				DD75C91D2E06F75000AA393B /* ProjectRow.swift in Sources */,
+				DD75C91E2E06F75000AA393B /* AddProjectView.swift in Sources */,
+				DD75C91F2E06F75000AA393B /* CompletedProjectsView.swift in Sources */,
+				DD75C9202E06F75000AA393B /* AllDeadlinesView.swift in Sources */,
+				DD75C9212E06F75000AA393B /* TemplateEditorView.swift in Sources */,
+				DD75C9222E06F75000AA393B /* ProjectDetailView.swift in Sources */,
 				DD6A58722DADB712006A064E /* BackupManager.swift in Sources */,
-				DD6A58702DADB64D006A064E /* BackupRestoreView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -451,7 +470,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				DDF73B0D2CC0378100833720 /* Deadline_CalendarTests.swift in Sources */,
+				DDB898D32E06F94200A24E47 /* Deadline_CalendarTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -459,8 +478,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				DDF73B192CC0378100833720 /* Deadline_CalendarUITestsLaunchTests.swift in Sources */,
-				DDF73B172CC0378100833720 /* Deadline_CalendarUITests.swift in Sources */,
+				DDB898D12E06F8FF00A24E47 /* Deadline_CalendarUITestsLaunchTests.swift in Sources */,
+				DDB898D22E06F91D00A24E47 /* Deadline_CalendarUITests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -620,13 +639,12 @@
 		DDF73B1D2CC0378100833720 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGN_ENTITLEMENTS = "Deadline Calendar/Deadline Calendar.entitlements";
+				CODE_SIGN_ENTITLEMENTS = DeadlineCalendar/DeadlineCalendar.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_ASSET_PATHS = "\"Deadline Calendar/Preview Content\"";
+				DEVELOPMENT_ASSET_PATHS = "\"DeadlineCalendar/Preview Content\"";
 				DEVELOPMENT_TEAM = 5R2D4Y969H;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -651,13 +669,12 @@
 		DDF73B1E2CC0378100833720 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGN_ENTITLEMENTS = "Deadline Calendar/Deadline Calendar.entitlements";
+				CODE_SIGN_ENTITLEMENTS = DeadlineCalendar/DeadlineCalendar.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_ASSET_PATHS = "\"Deadline Calendar/Preview Content\"";
+				DEVELOPMENT_ASSET_PATHS = "\"DeadlineCalendar/Preview Content\"";
 				DEVELOPMENT_TEAM = 5R2D4Y969H;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -682,7 +699,6 @@
 		DDF73B202CC0378100833720 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
@@ -701,7 +717,6 @@
 		DDF73B212CC0378100833720 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
@@ -720,7 +735,6 @@
 		DDF73B232CC0378100833720 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -737,7 +751,6 @@
 		DDF73B242CC0378100833720 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -810,7 +823,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		DDF73AF32CC0378000833720 /* Build configuration list for PBXProject "Deadline Calendar" */ = {
+		DDF73AF32CC0378000833720 /* Build configuration list for PBXProject "DeadlineCalendar" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				DDF73B1A2CC0378100833720 /* Debug */,
@@ -869,7 +882,7 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		DD6D9F452DC3E5E300D9FC9B /* SwiftSoup */ = {
+		DDB898CB2E06F84A00A24E47 /* SwiftSoup */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = SwiftSoup;
 		};

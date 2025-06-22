@@ -4,19 +4,43 @@ import SwiftUI
 struct ProjectEditorView: View {
     @ObservedObject var viewModel: DeadlineViewModel
     let projectToEditID: UUID // ID of the project being edited
+    /// Optional sub-deadline ID to scroll to when the editor appears.
+    let scrollToSubDeadlineID: UUID?
+
     @Environment(\.dismiss) var dismiss
 
     // State for editable properties
-    @State private var projectTitle: String = ""
-    @State private var finalDeadlineDate: Date = Date()
-    @State private var subDeadlines: [SubDeadline] = []
+    @State private var projectTitle: String
+    @State private var finalDeadlineDate: Date
+    @State private var subDeadlines: [SubDeadline]
     
     // Internal state to hold the original project data once loaded
-    @State private var originalProject: Project? = nil
+    @State private var originalProject: Project?
     
     // State for creating a trigger from the dedicated section
     @State private var showingAddTriggerAlert = false
     @State private var newTriggerSectionName: String = ""
+    
+    init(viewModel: DeadlineViewModel, projectToEditID: UUID, scrollToSubDeadlineID: UUID? = nil) {
+        self.viewModel = viewModel
+        self.projectToEditID = projectToEditID
+        self.scrollToSubDeadlineID = scrollToSubDeadlineID
+
+        // Find the project and initialize state here
+        if let project = viewModel.projects.first(where: { $0.id == projectToEditID }) {
+            _projectTitle = State(initialValue: project.title)
+            _finalDeadlineDate = State(initialValue: project.finalDeadlineDate)
+            _subDeadlines = State(initialValue: project.subDeadlines)
+            _originalProject = State(initialValue: project)
+        } else {
+            // Fallback for when project is not found. The view will dismiss on appear.
+            _projectTitle = State(initialValue: "")
+            _finalDeadlineDate = State(initialValue: Date())
+            _subDeadlines = State(initialValue: [])
+            _originalProject = State(initialValue: nil)
+            print("ProjectEditorView Error: Project with ID \(projectToEditID) not found during init.")
+        }
+    }
     
     // Computed property to check if the form is valid
     private var isFormValid: Bool {
@@ -26,129 +50,133 @@ struct ProjectEditorView: View {
 
     var body: some View {
         NavigationView {
-            // Use a Form for standard editing UI elements
-            Form {
-                // Section for Project Details
-                Section("Project Details") {
-                    TextField("Project Title", text: $projectTitle)
-                    DatePicker("Final Deadline", selection: $finalDeadlineDate, displayedComponents: .date)
-                }
+            ScrollViewReader { proxy in
+                Form {
+                    // Section for Project Details
+                    Section("Project Details") {
+                        TextField("Project Title", text: $projectTitle)
+                        DatePicker("Final Deadline", selection: $finalDeadlineDate, displayedComponents: .date)
+                    }
 
-                // --- Section for Managing Project Triggers ---
-                Section("Project Triggers") {
-                    // List existing triggers for this project
-                    let projectTriggers = viewModel.triggers(for: projectToEditID)
-                    if projectTriggers.isEmpty {
-                        Text("No triggers defined for this project yet.")
-                            .foregroundColor(.gray)
-                    } else {
-                        ForEach(projectTriggers) { trigger in
-                            HStack {
-                                Text(trigger.name)
-                                Spacer()
-                                // Show status (optional)
-                                if trigger.isActive {
-                                    Image(systemName: "checkmark.circle.fill")
-                                        .foregroundColor(.green)
-                                } else {
-                                     Image(systemName: "circle")
-                                        .foregroundColor(.gray)
+                    // --- Section for Managing Project Triggers ---
+                    Section("Project Triggers") {
+                        // List existing triggers for this project
+                        let projectTriggers = viewModel.triggers(for: projectToEditID)
+                        if projectTriggers.isEmpty {
+                            Text("No triggers defined for this project yet.")
+                                .foregroundColor(.gray)
+                        } else {
+                            ForEach(projectTriggers) { trigger in
+                                HStack {
+                                    Text(trigger.name)
+                                    Spacer()
+                                    // Show status (optional)
+                                    if trigger.isActive {
+                                        Image(systemName: "checkmark.circle.fill")
+                                            .foregroundColor(.green)
+                                    } else {
+                                         Image(systemName: "circle")
+                                            .foregroundColor(.gray)
+                                    }
                                 }
                             }
+                            .onDelete(perform: deleteTriggerInSection)
                         }
-                        .onDelete(perform: deleteTriggerInSection)
-                    }
 
-                    // Button to add a new trigger directly
-                    Button {
-                        newTriggerSectionName = "" // Clear field before showing
-                        showingAddTriggerAlert = true
-                    } label: {
-                        HStack {
-                            Image(systemName: "plus.circle.fill")
-                            Text("Add New Trigger")
+                        // Button to add a new trigger directly
+                        Button {
+                            newTriggerSectionName = "" // Clear field before showing
+                            showingAddTriggerAlert = true
+                        } label: {
+                            HStack {
+                                Image(systemName: "plus.circle.fill")
+                                Text("Add New Trigger")
+                            }
                         }
+                        .buttonStyle(.borderless)
                     }
-                    .buttonStyle(.borderless)
+                    // Alert for adding trigger from the dedicated section
+                    .alert("Add Project Trigger", isPresented: $showingAddTriggerAlert, actions: {
+                        TextField("Trigger Name", text: $newTriggerSectionName)
+                        Button("Add") {
+                            if !newTriggerSectionName.isEmpty {
+                                let newTrigger = Trigger(name: newTriggerSectionName, projectID: projectToEditID)
+                                viewModel.addTrigger(newTrigger)
+                                newTriggerSectionName = "" // Reset
+                            } // else: Handle empty name?
+                        }
+                        Button("Cancel", role: .cancel) { newTriggerSectionName = "" }
+                    }, message: {
+                         Text("Enter the name for the new trigger needed by this project.")
+                    })
+
+                    // Section for Sub-deadlines
+                    Section("Sub-deadlines") {
+                        // The List is now directly inside the section.
+                        List {
+                            ForEach($subDeadlines) { $subDeadline in
+                                EditableSubDeadlineRow(subDeadline: $subDeadline,
+                                                        viewModel: viewModel,
+                                                        projectID: projectToEditID)
+                                    .id(subDeadline.id) // The ID for the ScrollViewReader
+                            }
+                            .onDelete(perform: deleteSubDeadline)
+                        }
+                        
+                        // Button to add a new sub-deadline manually
+                        Button {
+                            addNewSubDeadline()
+                        } label: {
+                            HStack {
+                                Image(systemName: "plus.circle.fill")
+                                Text("Add Manual Sub-deadline")
+                            }
+                        }
+                        .buttonStyle(.borderless)
+                    }
                 }
-                // Alert for adding trigger from the dedicated section
-                .alert("Add Project Trigger", isPresented: $showingAddTriggerAlert, actions: {
-                    TextField("Trigger Name", text: $newTriggerSectionName)
-                    Button("Add") {
-                        if !newTriggerSectionName.isEmpty {
-                            let newTrigger = Trigger(name: newTriggerSectionName, projectID: projectToEditID)
-                            viewModel.addTrigger(newTrigger)
-                            newTriggerSectionName = "" // Reset
-                        } // else: Handle empty name?
-                    }
-                    Button("Cancel", role: .cancel) { newTriggerSectionName = "" }
-                }, message: {
-                     Text("Enter the name for the new trigger needed by this project.")
-                })
-
-                // Section for Sub-deadlines
-                Section("Sub-deadlines") {
-                    List {
-                        ForEach($subDeadlines) { $subDeadline in
-                            // Pass ViewModel and projectID to the row
-                            EditableSubDeadlineRow(subDeadline: $subDeadline, viewModel: viewModel, projectID: projectToEditID)
+                .navigationTitle("Edit Project")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    // Cancel Button
+                    ToolbarItem(placement: .navigationBarLeading) {
+                        Button("Cancel") {
+                            dismiss()
                         }
-                        .onDelete(perform: deleteSubDeadline)
+                    }
+                    // Save Button
+                    ToolbarItem(placement: .navigationBarTrailing) {
+                        Button("Save") {
+                            saveProjectChanges()
+                            dismiss()
+                        }
+                        .disabled(!isFormValid)
+                    }
+                }
+                .onAppear {
+                    // Handle initial setup and scrolling here
+                    if self.originalProject == nil {
+                        print("ProjectEditorView: Dismissing on appear because original project was not found on init.")
+                        dismiss()
+                        return // Early exit
                     }
                     
-                    // Button to add a new sub-deadline manually
-                    Button {
-                        addNewSubDeadline()
-                    } label: {
-                        HStack {
-                            Image(systemName: "plus.circle.fill")
-                            Text("Add Manual Sub-deadline")
+                    // Scroll to the target sub-deadline if an ID was provided
+                    if let targetID = scrollToSubDeadlineID {
+                        // Use a slight delay to ensure the list has rendered its rows
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                            withAnimation {
+                                proxy.scrollTo(targetID, anchor: .top)
+                            }
                         }
                     }
-                    .buttonStyle(.borderless)
                 }
+                .preferredColorScheme(.dark)
             }
-            .navigationTitle("Edit Project")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                // Cancel Button
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Button("Cancel") {
-                        dismiss()
-                    }
-                }
-                // Save Button
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Save") {
-                        saveProjectChanges()
-                        dismiss()
-                    }
-                    .disabled(!isFormValid)
-                }
-            }
-            .onAppear(perform: loadProjectData) // Load data when view appears
-            .preferredColorScheme(.dark)
         }
     }
 
     // MARK: - Data Handling
-
-    private func loadProjectData() {
-        // Find the project in the ViewModel using the ID
-        guard let project = viewModel.projects.first(where: { $0.id == projectToEditID }) else {
-            print("ProjectEditorView Error: Project with ID \(projectToEditID) not found.")
-            // Dismiss or show an error message?
-            dismiss()
-            return
-        }
-        // Store the original project
-        originalProject = project
-        // Populate state variables with the project's current data
-        projectTitle = project.title
-        finalDeadlineDate = project.finalDeadlineDate
-        subDeadlines = project.subDeadlines // Load existing sub-deadlines
-        print("ProjectEditorView: Loaded data for project '\(project.title)'.")
-    }
 
     private func addNewSubDeadline() {
         // Create a new SubDeadline instance. 
