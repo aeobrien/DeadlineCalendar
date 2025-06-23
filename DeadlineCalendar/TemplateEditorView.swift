@@ -24,6 +24,12 @@ struct TemplateEditorView: View {
     @State private var templateTriggers: [TemplateTrigger] = []
     @State private var showingAddTemplateTriggerAlert = false
     @State private var newTemplateTriggerName: String = ""
+    
+    // State for managing sub-deadline addition modal
+    @State private var showingAddSubDeadlineModal = false
+    @State private var newSubDeadlineTitle: String = ""
+    @State private var newSubDeadlineOffset = TimeOffset(value: 7, unit: .days, before: true)
+    @State private var newSubDeadlineTriggerID: UUID? = nil
 
     // Computed property to determine if editing an existing template
     private var isEditing: Bool {
@@ -39,6 +45,16 @@ struct TemplateEditorView: View {
     private var isFormValid: Bool {
         !templateName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
         // Add more validation if needed (e.g., at least one sub-deadline?)
+    }
+    
+    // Computed property to get sorted sub-deadlines by calculated date
+    private var sortedSubDeadlines: [TemplateSubDeadline] {
+        let referenceDate = Date() // Use current date as reference for sorting
+        return subDeadlines.sorted { first, second in
+            let firstDate = (try? first.offset.calculateDate(from: referenceDate)) ?? referenceDate
+            let secondDate = (try? second.offset.calculateDate(from: referenceDate)) ?? referenceDate
+            return firstDate < secondDate
+        }
     }
 
     var body: some View {
@@ -94,6 +110,9 @@ struct TemplateEditorView: View {
                                 subDeadline: $subDeadline,
                                 availableTemplateTriggers: $templateTriggers // Pass available triggers
                             )
+                            .onChange(of: subDeadline.offset) { _ in
+                                sortSubDeadlinesByDate()
+                            }
                         }
                         .onDelete(perform: deleteSubDeadline)
                         // .onMove(perform: moveSubDeadline) // Optional: Reordering
@@ -101,7 +120,11 @@ struct TemplateEditorView: View {
 
                     // Button to add a new sub-deadline
                     Button {
-                        addNewSubDeadline()
+                        // Reset modal fields
+                        newSubDeadlineTitle = ""
+                        newSubDeadlineOffset = TimeOffset(value: 7, unit: .days, before: true)
+                        newSubDeadlineTriggerID = nil
+                        showingAddSubDeadlineModal = true
                     } label: {
                         HStack {
                             Image(systemName: "plus.circle.fill")
@@ -157,6 +180,75 @@ struct TemplateEditorView: View {
                 Text("Do you want to update all projects created using the template '\\(savedTemplate.name)' with these changes?")
             }
             .preferredColorScheme(.dark) // Consistent theme
+            .sheet(isPresented: $showingAddSubDeadlineModal) {
+                NavigationView {
+                    Form {
+                        Section("Sub-deadline Details") {
+                            TextField("Title", text: $newSubDeadlineTitle)
+                            
+                            // Offset configuration
+                            HStack(spacing: 5) {
+                                TextField("Value", value: $newSubDeadlineOffset.value, formatter: {
+                                    let formatter = NumberFormatter()
+                                    formatter.numberStyle = .decimal
+                                    formatter.minimum = 1
+                                    return formatter
+                                }())
+                                .frame(width: 50)
+                                .keyboardType(.numberPad)
+                                
+                                Picker("Unit", selection: $newSubDeadlineOffset.unit) {
+                                    ForEach(TimeOffsetUnit.allCases) { unit in
+                                        Text(unit.rawValue.capitalized).tag(unit)
+                                    }
+                                }
+                                .pickerStyle(.menu)
+                                
+                                Picker("Before/After", selection: $newSubDeadlineOffset.before) {
+                                    Text("Before").tag(true)
+                                    Text("After").tag(false)
+                                }
+                                .pickerStyle(.segmented)
+                                .frame(width: 120)
+                            }
+                            
+                            // Trigger selector
+                            Picker("Requires Trigger", selection: $newSubDeadlineTriggerID) {
+                                Text("None").tag(nil as UUID?)
+                                ForEach(templateTriggers) { trigger in
+                                    Text(trigger.name).tag(trigger.id as UUID?)
+                                }
+                            }
+                            .pickerStyle(.menu)
+                        }
+                    }
+                    .navigationTitle("New Sub-deadline")
+                    .navigationBarTitleDisplayMode(.inline)
+                    .toolbar {
+                        ToolbarItem(placement: .navigationBarLeading) {
+                            Button("Cancel") {
+                                showingAddSubDeadlineModal = false
+                            }
+                        }
+                        ToolbarItem(placement: .navigationBarTrailing) {
+                            Button("Add") {
+                                if !newSubDeadlineTitle.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                                    let newSubDeadline = TemplateSubDeadline(
+                                        title: newSubDeadlineTitle.trimmingCharacters(in: .whitespacesAndNewlines),
+                                        offset: newSubDeadlineOffset,
+                                        templateTriggerID: newSubDeadlineTriggerID
+                                    )
+                                    subDeadlines.append(newSubDeadline)
+                                    sortSubDeadlinesByDate()
+                                    showingAddSubDeadlineModal = false
+                                }
+                            }
+                            .disabled(newSubDeadlineTitle.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                        }
+                    }
+                    .preferredColorScheme(.dark)
+                }
+            }
         }
     }
 
@@ -171,6 +263,7 @@ struct TemplateEditorView: View {
             templateTriggers = template.templateTriggers // <-- Load template triggers
             // Store a copy of the original data for diffing later
             originalTemplateData = template 
+            sortSubDeadlinesByDate() // Sort sub-deadlines after loading
             print("TemplateEditorView: Loaded data for template: '\(template.name)' (\(templateTriggers.count) triggers).")
         } else {
             // Creating new: Set defaults
@@ -186,7 +279,18 @@ struct TemplateEditorView: View {
     private func addNewSubDeadline() {
         let newSubDeadline = TemplateSubDeadline() // Creates with default values
         subDeadlines.append(newSubDeadline)
+        sortSubDeadlinesByDate()
         print("TemplateEditorView: Added new sub-deadline step.")
+    }
+    
+    // Sort sub-deadlines by their calculated dates
+    private func sortSubDeadlinesByDate() {
+        let referenceDate = Date() // Use current date as reference for sorting
+        subDeadlines.sort { first, second in
+            let firstDate = (try? first.offset.calculateDate(from: referenceDate)) ?? referenceDate
+            let secondDate = (try? second.offset.calculateDate(from: referenceDate)) ?? referenceDate
+            return firstDate < secondDate
+        }
     }
 
     // Delete sub-deadlines from the list

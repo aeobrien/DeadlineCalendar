@@ -756,6 +756,25 @@ class DeadlineViewModel: ObservableObject {
             print("ViewModel Warning: Attempted to activate a trigger (ID: \(triggerID)) that does not exist.")
         }
     }
+    
+    // Deactivates a trigger (allows re-activation later)
+    func deactivateTrigger(triggerID: UUID) {
+        if let index = triggers.firstIndex(where: { $0.id == triggerID }) {
+            if triggers[index].isActive { // Only deactivate if currently active
+                triggers[index].isActive = false
+                // Keep activationDate for history
+                let triggerName = triggers[index].name
+                print("ViewModel: Deactivated trigger '\(triggerName)' (ID: \(triggerID)).")
+                saveTriggers()
+                // Notify observers things have changed
+                objectWillChange.send()
+            } else {
+                print("ViewModel Info: Trigger ID \(triggerID) was already inactive.")
+            }
+        } else {
+            print("ViewModel Warning: Attempted to deactivate a trigger (ID: \(triggerID)) that does not exist.")
+        }
+    }
 
     // Deletes a trigger and unlinks associated sub-deadlines.
     func deleteTrigger(triggerID: UUID) {
@@ -1062,46 +1081,51 @@ private struct ProjectsListView: View {
                 .background(Color.black)
 
                 // --- Bottom Button Bar ---
-                HStack(spacing: 20) { // Spacing between buttons
-                    // Button to show completed projects
+                HStack {
+                    // Button to show completed projects (left)
                     Button {
                         showingCompletedProjectsSheet = true
                     } label: {
                         Label("Completed", systemImage: "checkmark.circle.fill")
+                            .labelStyle(.iconOnly)
                     }
+                    .frame(width: 60)
                     .sheet(isPresented: $showingCompletedProjectsSheet) {
                          CompletedProjectsView(viewModel: viewModel)
                     }
                     
-                    Spacer() // Pushes Add button to center
+                    Spacer()
 
-                    // Button to add a new project
+                    // Button to add a new project (center)
                     Button {
                         showingAddProjectSheet = true
                     } label: {
                         Image(systemName: "plus.circle.fill")
                             .resizable()
-                            .frame(width: 40, height: 40) // Larger central button
+                            .frame(width: 44, height: 44) // Larger central button
                     }
+                    .frame(maxWidth: .infinity)
                     .sheet(isPresented: $showingAddProjectSheet) {
                         AddProjectView(viewModel: viewModel)
                     }
                     
-                    Spacer() // Pushes Template button to the right
+                    Spacer()
 
-                    // Button to manage templates
+                    // Button to manage templates (right)
                     Button {
                         showingTemplateManagerSheet = true
                     } label: {
                         Label("Templates", systemImage: "doc.plaintext")
+                            .labelStyle(.iconOnly)
                     }
+                    .frame(width: 60)
                     .sheet(isPresented: $showingTemplateManagerSheet) {
                         TemplateManagerView(viewModel: viewModel)
                     }
                 }
-                .padding(.horizontal, 30) // Generous horizontal padding
-                .padding(.vertical, 15) // Vertical padding
-                .background(Color.black.opacity(0.9)) // Slightly transparent background for the bar
+                .padding(.horizontal, 20)
+                .padding(.vertical, 12)
+                .background(Color.black.opacity(0.9))
                 
             }
             .navigationBarHidden(true) // Hide the navigation bar as we have a custom header

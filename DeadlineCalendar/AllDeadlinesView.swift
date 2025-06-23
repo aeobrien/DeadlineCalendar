@@ -1,12 +1,12 @@
 import SwiftUI
 
-// MARK: - Helper Models
+// MARK: - Helper Models
 
 /// A flattened representation of every visible deadline (project sub‑deadlines *and* standalone ones).
 struct DeadlineListItem: Identifiable, Hashable {
     let id = UUID()                                   // Row identity only – *not* the sub‑deadline ID
     let projectID: UUID                               // Owning project (stand‑ins included)
-    let projectName: String                           // Display name for project or "Standalone Deadlines"
+    let projectName: String                           // Display name for project
     let subDeadlineID: UUID                           // Actual SubDeadline ID – used for editing actions
     let subDeadlineTitle: String                      // Title shown in the list
     let subDeadlineDate: Date                         // When it is due
@@ -20,7 +20,7 @@ struct EditSheetParameters: Identifiable {
     let subDeadlineID: UUID?
 }
 
-// MARK: - All Deadlines View
+// MARK: - All Deadlines View
 
 struct AllDeadlinesView: View {
     // Shared state
@@ -32,11 +32,12 @@ struct AllDeadlinesView: View {
     @State private var editSheetParameters: EditSheetParameters?
 
     // Display toggles
-    @State private var showDueDate = false                       // "Days left" ⇄ "Due date" toggle
+    @State private var showDueDate = false                       // "Days left" ⇄ "Due date" toggle
 
-    // Sheet toggles – **NEW**
+    // Sheet toggles
     @State private var showingAddStandaloneDeadlineSheet = false // Presents `AddStandaloneDeadlineView`
     @State private var showingAddProjectSheet = false            // Presents `AddProjectView`
+    @State private var showingCompletedDeadlinesSheet = false     // Presents completed deadlines view
 
     // MARK: – Derived data
 
@@ -62,7 +63,7 @@ struct AllDeadlinesView: View {
 
     var body: some View {
         NavigationView {
-            VStack {
+            VStack(spacing: 0) {
                 // ---------- DEADLINE LIST ----------
                 List {
                     ForEach(allDeadlinesSorted) { item in
@@ -75,40 +76,47 @@ struct AllDeadlinesView: View {
                 NavigationLink(destination: projectDetailDestination(), isActive: $navigateToProject) {
                     EmptyView()
                 }
-            }
-            .navigationTitle("All Deadlines")
-            .preferredColorScheme(.dark)
-            .toolbar {
-                //------------------------------------------------------------------
-                //  LEADING:  new «+» menu  (Standalone Deadline | New Project)
-                //------------------------------------------------------------------
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Menu {
-                        Button {
-                            showingAddStandaloneDeadlineSheet = true
-                        } label: {
-                            Label("Standalone Deadline", systemImage: "calendar.badge.plus")
-                        }
-                        Button {
-                            showingAddProjectSheet = true
-                        } label: {
-                            Label("New Project", systemImage: "folder.badge.plus")
-                        }
+                
+                // --- Bottom Button Bar ---
+                HStack {
+                    // Button to show completed deadlines (left)
+                    Button {
+                        showingCompletedDeadlinesSheet = true
                     } label: {
-                        Image(systemName: "plus.circle")
-                            .accessibilityLabel("Add")
+                        Label("Completed", systemImage: "checkmark.circle.fill")
+                            .labelStyle(.iconOnly)
                     }
-                }
-
-                //------------------------------------------------------------------
-                //  TRAILING:  existing date‑display toggle
-                //------------------------------------------------------------------
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button(showDueDate ? "Show Days Left" : "Show Due Date") {
+                    .frame(width: 60)
+                    
+                    Spacer()
+                    
+                    // Button to add a new standalone deadline (center)
+                    Button {
+                        showingAddStandaloneDeadlineSheet = true
+                    } label: {
+                        Image(systemName: "plus.circle.fill")
+                            .resizable()
+                            .frame(width: 44, height: 44) // Larger central button
+                    }
+                    .frame(maxWidth: .infinity)
+                    
+                    Spacer()
+                    
+                    // Button to toggle date display (right)
+                    Button {
                         showDueDate.toggle()
+                    } label: {
+                        Image(systemName: showDueDate ? "calendar" : "calendar.badge.clock")
+                            .font(.title2)
                     }
+                    .frame(width: 60)
                 }
+                .padding(.horizontal, 20)
+                .padding(.vertical, 12)
+                .background(Color.black.opacity(0.9))
             }
+            .navigationTitle("All Deadlines")
+            .preferredColorScheme(.dark)
         }
         .navigationViewStyle(.stack)
         //------------------------------------------------------------------
@@ -119,6 +127,9 @@ struct AllDeadlinesView: View {
         }
         .sheet(isPresented: $showingAddProjectSheet) {
             AddProjectView(viewModel: viewModel)
+        }
+        .sheet(isPresented: $showingCompletedDeadlinesSheet) {
+            CompletedDeadlinesView(viewModel: viewModel)
         }
         .sheet(item: $editSheetParameters) { params in
             ProjectEditorView(viewModel: viewModel,
@@ -137,7 +148,7 @@ struct AllDeadlinesView: View {
                 .frame(width: 5)
 
             // title
-            Text("\(item.projectName) \(item.subDeadlineTitle)")
+            Text(item.projectID == DeadlineViewModel.standaloneProjectID ? item.subDeadlineTitle : "\(item.projectName) \(item.subDeadlineTitle)")
                 .fontWeight(.medium)
                 .foregroundColor(dateColor(for: item.subDeadlineDate, isCompleted: item.isSubDeadlineCompleted))
 
@@ -151,11 +162,11 @@ struct AllDeadlinesView: View {
         }
         .padding(.vertical, 4)
         .contextMenu {
-            Button("View Project") {
+            Button("View Project") {
                 selectedProjectID = item.projectID
                 navigateToProject = true
             }
-            Button("Edit Deadline") {
+            Button("Edit Deadline") {
                 editSheetParameters = EditSheetParameters(projectID: item.projectID, subDeadlineID: item.subDeadlineID)
             }
         }
@@ -224,16 +235,16 @@ struct AllDeadlinesView: View {
     private func daysRemainingText(for date: Date) -> String {
         let days = daysRemaining(until: date)
         switch days {
-        case ..<0:  return "\(-days) day" + (abs(days) == 1 ? " overdue" : "s overdue")
-        case 0:     return "Due Today"
+        case ..<0:  return "\(-days) day" + (abs(days) == 1 ? " overdue" : "s overdue")
+        case 0:     return "Due Today"
         case 1:     return "Tomorrow"
-        default:    return "\(days) days"
+        default:    return "\(days) days"
         }
     }
 
     private func formattedDate(_ date: Date) -> String {
         let df = DateFormatter()
-        df.dateFormat = "MMM d, yyyy"
+        df.dateFormat = "MMM d, yyyy"
         return df.string(from: date)
     }
 }
