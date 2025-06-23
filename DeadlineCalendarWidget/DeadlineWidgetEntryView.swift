@@ -169,20 +169,23 @@ struct SubDeadlineRow: View {
         }
     }
 
+    // Shows “X days”, “Tomorrow”, “Due Today”, or “N days overdue” – never a calendar date.
     private var displayDaysRemaining: String {
-        switch daysRemaining {
-        case ..<0:
-            return displayDate
-        case 0:
-            return "Today"
-        case 1:
+        let days = daysRemaining
+
+        if days < 0 {
+            let unit = abs(days) == 1 ? "day" : "days"
+            return "\(abs(days)) \(unit) overdue"
+        } else if days == 0 {
+            return "Due Today"
+        } else if days == 1 {
             return "Tomorrow"
-        case 2...7:
-            return "\(daysRemaining) days"
-        default:
-            return displayDate
+        } else {
+            let unit = days == 1 ? "day" : "days"
+            return "\(days) \(unit)"
         }
     }
+
 
     // Determines the color based on urgency (days remaining).
     var colorForDeadline: Color {

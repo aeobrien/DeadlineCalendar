@@ -47,6 +47,29 @@ struct ProjectEditorView: View {
         !projectTitle.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
         // Add other validation if needed
     }
+    
+    /// Always returns the latest version of the project we’re editing.
+    private var currentProject: Project? {
+        viewModel.projects.first { $0.id == projectToEditID }
+    }
+    
+    private var sortedProjectTriggers: [Trigger] {
+        guard
+            let project = currentProject,
+            let templateID = project.templateID,
+            let tpl = viewModel.templates.first(where: { $0.id == templateID })
+        else { return currentProject?.triggers ?? [] }
+
+        let order: [UUID: Int] = Dictionary(
+            uniqueKeysWithValues: tpl.templateTriggers.enumerated().map { ($0.element.id, $0.offset) }
+        )
+
+        return project.triggers.sorted {
+            (order[$0.originatingTemplateTriggerID ?? UUID()] ?? Int.max)
+          < (order[$1.originatingTemplateTriggerID ?? UUID()] ?? Int.max)
+        }
+    }
+
 
     var body: some View {
         NavigationView {
@@ -61,12 +84,12 @@ struct ProjectEditorView: View {
                     // --- Section for Managing Project Triggers ---
                     Section("Project Triggers") {
                         // List existing triggers for this project
-                        let projectTriggers = viewModel.triggers(for: projectToEditID)
+                        let projectTriggers = sortedProjectTriggers
                         if projectTriggers.isEmpty {
                             Text("No triggers defined for this project yet.")
                                 .foregroundColor(.gray)
                         } else {
-                            ForEach(projectTriggers) { trigger in
+                            ForEach(sortedProjectTriggers) { trigger in
                                 HStack {
                                     Text(trigger.name)
                                     Spacer()
@@ -199,7 +222,7 @@ struct ProjectEditorView: View {
 
     private func deleteTriggerInSection(at offsets: IndexSet) {
         // Get the actual triggers for the current project to map offsets correctly
-        let projectTriggers = viewModel.triggers(for: projectToEditID)
+        let projectTriggers = sortedProjectTriggers
         // Get the IDs of the triggers to delete based on the IndexSet
         let triggersToDelete = offsets.map { projectTriggers[$0] }
 

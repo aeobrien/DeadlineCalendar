@@ -49,21 +49,31 @@ struct TemplateEditorView: View {
                     TextField("Enter template name", text: $templateName)
                 }
 
-                // Section for Template Triggers
-                Section("Template Triggers") {
-                    List {
-                        if templateTriggers.isEmpty {
-                            Text("No triggers defined for this template.")
-                                .foregroundColor(.gray)
-                        } else {
-                            ForEach(templateTriggers) { triggerDef in
-                                Text(triggerDef.name)
-                            }
-                            .onDelete(perform: deleteTemplateTrigger)
+                // MARK: - Template Triggers  (now re-orderable)
+                Section(
+                    header: HStack {
+                        Text("Template Triggers")
+                        Spacer()
+                        EditButton()                       // ← lives right here
+                    }
+                ) {
+                    if templateTriggers.isEmpty {
+                        Text("No triggers yet. Tap + to add one.")
+                            .foregroundColor(.gray)
+                    } else {
+                        // Editable rows, drag-reorder enabled
+                        ForEach($templateTriggers) { $trigger in
+                            TextField("Trigger Name", text: $trigger.name)
+                        }
+                        .onDelete(perform: deleteTemplateTrigger)
+                        .onMove { indices, newOffset in
+                            templateTriggers.move(fromOffsets: indices, toOffset: newOffset)
                         }
                     }
+
+                    // Add-new button (unchanged)
                     Button {
-                        newTemplateTriggerName = "" // Clear before show
+                        newTemplateTriggerName = ""
                         showingAddTemplateTriggerAlert = true
                     } label: {
                         HStack {
@@ -72,29 +82,8 @@ struct TemplateEditorView: View {
                         }
                     }
                     .buttonStyle(.borderless)
-                }
-                .alert("Add Template Trigger", isPresented: $showingAddTemplateTriggerAlert, actions: {
-                    TextField("Trigger Definition Name", text: $newTemplateTriggerName)
-                    
-                    Button("Add", action: {
-                        if !newTemplateTriggerName.isEmpty {
-                            if !templateTriggers.contains(where: { $0.name.lowercased() == newTemplateTriggerName.lowercased() }) {
-                                 let newTriggerDef = TemplateTrigger(name: newTemplateTriggerName)
-                                 templateTriggers.append(newTriggerDef)
-                                 newTemplateTriggerName = ""
-                            } else {
-                                 print("TemplateEditorView Warning: Template trigger name already exists.")
-                                 // TODO: Show feedback alert
-                            }
-                        }
-                    })
-                    
-                    Button("Cancel", role: .cancel, action: {
-                        newTemplateTriggerName = "" 
-                    })
-                }, message: {
-                    Text("Enter a name for the type of event that can trigger sub-deadlines (e.g., 'Assets Received', 'Client Approval').")
-                })
+                }                       // keep the existing .alert(…) call immediately after this
+
 
                 // Section for Sub-deadlines
                 Section("Sub-deadlines") {
@@ -125,6 +114,8 @@ struct TemplateEditorView: View {
             .navigationTitle(editorTitle)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
+                
+
                 // Cancel Button
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button("Cancel") {
@@ -140,6 +131,7 @@ struct TemplateEditorView: View {
                     }
                     .disabled(!isFormValid) // Disable save if form is invalid
                 }
+                
             }
             .onAppear(perform: loadTemplateData) // Load data when the view appears
             .alert("Update Projects?", isPresented: $showingUpdateAlert, presenting: templateJustSaved) { savedTemplate in

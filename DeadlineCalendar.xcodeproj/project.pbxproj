@@ -31,6 +31,8 @@
 		DDB898D12E06F8FF00A24E47 /* Deadline_CalendarUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD75C9282E06F7C900AA393B /* Deadline_CalendarUITestsLaunchTests.swift */; };
 		DDB898D22E06F91D00A24E47 /* Deadline_CalendarUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD75C9272E06F7C900AA393B /* Deadline_CalendarUITests.swift */; };
 		DDB898D32E06F94200A24E47 /* Deadline_CalendarTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD75C9252E06F7C900AA393B /* Deadline_CalendarTests.swift */; };
+		DDB89A562E08710E00A24E47 /* ProjectTriggersView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DDB89A552E08710B00A24E47 /* ProjectTriggersView.swift */; };
+		DDB89A582E087F1000A24E47 /* TriggerProjectRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = DDB89A572E087F0D00A24E47 /* TriggerProjectRow.swift */; };
 		DDD8801A2E06DC9500CBF567 /* .gitignore in Resources */ = {isa = PBXBuildFile; fileRef = DDD880192E06DC9000CBF567 /* .gitignore */; };
 		DDF73B682CC04F5C00833720 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = DDF73B672CC04F5C00833720 /* WidgetKit.framework */; };
 		DDF73B6A2CC04F5C00833720 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = DDF73B692CC04F5C00833720 /* SwiftUI.framework */; };
@@ -118,6 +120,8 @@
 		DD75C9272E06F7C900AA393B /* Deadline_CalendarUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Deadline_CalendarUITests.swift; sourceTree = "<group>"; };
 		DD75C9282E06F7C900AA393B /* Deadline_CalendarUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Deadline_CalendarUITestsLaunchTests.swift; sourceTree = "<group>"; };
 		DDB898CD2E06F8D700A24E47 /* XCTest.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = XCTest.framework; path = Platforms/iPhoneOS.platform/Developer/Library/Frameworks/XCTest.framework; sourceTree = DEVELOPER_DIR; };
+		DDB89A552E08710B00A24E47 /* ProjectTriggersView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectTriggersView.swift; sourceTree = "<group>"; };
+		DDB89A572E087F0D00A24E47 /* TriggerProjectRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TriggerProjectRow.swift; sourceTree = "<group>"; };
 		DDD880192E06DC9000CBF567 /* .gitignore */ = {isa = PBXFileReference; lastKnownFileType = text; path = .gitignore; sourceTree = "<group>"; };
 		DDF73AF82CC0378000833720 /* Deadline Calendar.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Deadline Calendar.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		DDF73B082CC0378100833720 /* Deadline CalendarTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "Deadline CalendarTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -184,7 +188,6 @@
 		DD75C9142E06F75000AA393B /* DeadlineCalendar */ = {
 			isa = PBXGroup;
 			children = (
-				DD75C9032E06F75000AA393B /* Preview Content */,
 				DD75C9042E06F75000AA393B /* AddProjectView.swift */,
 				DD75C9052E06F75000AA393B /* AddStandaloneDeadlineView.swift */,
 				DD75C9062E06F75000AA393B /* AllDeadlinesView.swift */,
@@ -194,12 +197,15 @@
 				DD75C90A2E06F75000AA393B /* ContentView.swift */,
 				DD75C90B2E06F75000AA393B /* Deadline_CalendarApp.swift */,
 				DD75C90C2E06F75000AA393B /* DeadlineCalendar.entitlements */,
+				DD75C9032E06F75000AA393B /* Preview Content */,
 				DD75C90D2E06F75000AA393B /* ProjectDetailView.swift */,
 				DD75C90E2E06F75000AA393B /* ProjectEditorView.swift */,
 				DD75C90F2E06F75000AA393B /* ProjectRow.swift */,
+				DDB89A552E08710B00A24E47 /* ProjectTriggersView.swift */,
 				DD75C9102E06F75000AA393B /* TemplateEditorView.swift */,
 				DD75C9112E06F75000AA393B /* TemplateManagerView.swift */,
 				DD75C9122E06F75000AA393B /* TemplateSubDeadlineEditorRow.swift */,
+				DDB89A572E087F0D00A24E47 /* TriggerProjectRow.swift */,
 				DD75C9132E06F75000AA393B /* TriggersView.swift */,
 			);
 			path = DeadlineCalendar;
@@ -453,7 +459,9 @@
 				DD75C9172E06F75000AA393B /* TriggersView.swift in Sources */,
 				DD75C9182E06F75000AA393B /* Deadline_CalendarApp.swift in Sources */,
 				DD75C9192E06F75000AA393B /* AddStandaloneDeadlineView.swift in Sources */,
+				DDB89A562E08710E00A24E47 /* ProjectTriggersView.swift in Sources */,
 				DD75C91A2E06F75000AA393B /* TemplateManagerView.swift in Sources */,
+				DDB89A582E087F1000A24E47 /* TriggerProjectRow.swift in Sources */,
 				DD75C91B2E06F75000AA393B /* ContentView.swift in Sources */,
 				DD75C91C2E06F75000AA393B /* TemplateSubDeadlineEditorRow.swift in Sources */,
 				DD75C91D2E06F75000AA393B /* ProjectRow.swift in Sources */,
