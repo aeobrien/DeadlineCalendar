@@ -2,6 +2,7 @@ import SwiftUI
 
 struct TriggersView: View {
     @ObservedObject var viewModel: DeadlineViewModel
+    @State private var showingCompletedTriggersSheet = false
 
     /// Only projects that still have at least one inactive trigger
     private var projectsWithPending: [Project] {
@@ -20,7 +21,8 @@ struct TriggersView: View {
 
     var body: some View {
         NavigationView {
-            List {
+            VStack(spacing: 0) {
+                List {
                 if projectsWithPending.isEmpty {
                     Text("No pending triggers.")
                         .foregroundColor(.gray)
@@ -38,9 +40,34 @@ struct TriggersView: View {
                 }
             }
             .listStyle(.plain)
+            
+            // Bottom button bar
+            HStack {
+                Spacer()
+                
+                Button {
+                    showingCompletedTriggersSheet = true
+                } label: {
+                    Label("Completed Triggers", systemImage: "checkmark.circle.fill")
+                        .font(.body)
+                }
+                .padding(.horizontal, 20)
+                .padding(.vertical, 10)
+                .background(Color.gray.opacity(0.2))
+                .cornerRadius(10)
+                
+                Spacer()
+            }
+            .padding(.horizontal, 20)
+            .padding(.vertical, 12)
+            .background(Color.black.opacity(0.9))
+            }
             .navigationTitle("Pending Triggers")
             .preferredColorScheme(.dark)
         }
         .navigationViewStyle(.stack)
+        .sheet(isPresented: $showingCompletedTriggersSheet) {
+            CompletedTriggersView(viewModel: viewModel)
+        }
     }
 }

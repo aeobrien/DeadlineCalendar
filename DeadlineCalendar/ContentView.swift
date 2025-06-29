@@ -866,24 +866,38 @@ class DeadlineViewModel: ObservableObject {
         
         // Create the notification content
         let content = UNMutableNotificationContent()
-        content.title = "Daily Deadline Reminder"
+        content.title = "Deadlines"
         content.sound = .default
         
         // Get the next 5 upcoming deadlines
         let upcomingDeadlines = getUpcomingDeadlines(limit: 5)
         
         if upcomingDeadlines.isEmpty {
-            content.body = "No upcoming deadlines today. Great job staying on top of your projects!"
+            content.body = "No upcoming deadlines"
         } else {
-            var bodyText = "Upcoming deadlines:\n\n"
-            for (index, deadline) in upcomingDeadlines.enumerated() {
+            // More concise format for better readability in notifications
+            var bodyText = ""
+            let maxItems = min(3, upcomingDeadlines.count) // Show only first 3 to save space
+            
+            for deadline in upcomingDeadlines.prefix(maxItems) {
                 let daysRemaining = Calendar.current.dateComponents([.day], from: Date(), to: deadline.date).day ?? 0
-                let daysText = daysRemaining == 0 ? "Due today" : 
-                              daysRemaining == 1 ? "Due tomorrow" : 
-                              "Due in \(daysRemaining) days"
-                bodyText += "\(index + 1). \(deadline.title) (\(deadline.projectTitle)) - \(daysText)\n"
+                let timeText = daysRemaining < 0 ? "OVERDUE (\(-daysRemaining)d)" :
+                              daysRemaining == 0 ? "TODAY" : 
+                              daysRemaining == 1 ? "TOMORROW" : 
+                              "\(daysRemaining)d"
+                
+                // Truncate long titles to fit better
+                let truncatedTitle = deadline.title.count > 20 ? 
+                    String(deadline.title.prefix(17)) + "..." : deadline.title
+                
+                bodyText += "• \(timeText): \(truncatedTitle)\n"
             }
-            content.body = bodyText
+            
+            if upcomingDeadlines.count > maxItems {
+                bodyText += "...and \(upcomingDeadlines.count - maxItems) more"
+            }
+            
+            content.body = bodyText.trimmingCharacters(in: .whitespacesAndNewlines)
         }
         
         // Create the trigger to fire daily at 9:30 AM
@@ -913,9 +927,8 @@ class DeadlineViewModel: ObservableObject {
         // Collect all upcoming sub-deadlines
         for project in activeProjects {
             for subDeadline in project.subDeadlines {
-                // Only include active sub-deadlines that are not completed and are today or in the future
+                // Only include active sub-deadlines that are not completed
                 if !subDeadline.isCompleted && 
-                   Calendar.current.compare(subDeadline.date, to: today, toGranularity: .day) != .orderedAscending &&
                    isSubDeadlineActive(subDeadline) {
                     upcomingDeadlines.append((
                         title: subDeadline.title,

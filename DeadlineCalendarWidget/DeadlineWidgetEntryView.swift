@@ -126,7 +126,7 @@ struct SubDeadlineRow: View {
             // Main content (Title, Project, Date)
             VStack(alignment: .leading, spacing: 2) {
                 // Combined Project and Sub-deadline Title to match the main app
-                Text("\(subDeadlineInfo.projectTitle) \(subDeadlineInfo.title)")
+                Text(subDeadlineInfo.projectTitle == "Standalone Deadlines" ? subDeadlineInfo.title : "\(subDeadlineInfo.projectTitle) \(subDeadlineInfo.title)")
                     .font(.system(size: titleFontSize, weight: .medium))
                     .foregroundColor(.white)
                     .lineLimit(1)
