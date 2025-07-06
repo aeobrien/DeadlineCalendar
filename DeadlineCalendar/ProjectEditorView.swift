@@ -21,6 +21,19 @@ struct ProjectEditorView: View {
     @State private var showingAddTriggerAlert = false
     @State private var newTriggerSectionName: String = ""
     
+    // State for editing trigger dates
+    @State private var showingTriggerDatePicker = false
+    @State private var editingTriggerID: UUID? = nil
+    @State private var editingTriggerDate = Date()
+    
+    // Date formatter for trigger display
+    private let dateFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .medium
+        formatter.timeStyle = .none
+        return formatter
+    }()
+    
     init(viewModel: DeadlineViewModel, projectToEditID: UUID, scrollToSubDeadlineID: UUID? = nil) {
         self.viewModel = viewModel
         self.projectToEditID = projectToEditID
@@ -54,19 +67,15 @@ struct ProjectEditorView: View {
     }
     
     private var sortedProjectTriggers: [Trigger] {
-        guard
-            let project = currentProject,
-            let templateID = project.templateID,
-            let tpl = viewModel.templates.first(where: { $0.id == templateID })
-        else { return currentProject?.triggers ?? [] }
-
-        let order: [UUID: Int] = Dictionary(
-            uniqueKeysWithValues: tpl.templateTriggers.enumerated().map { ($0.element.id, $0.offset) }
-        )
-
-        return project.triggers.sorted {
-            (order[$0.originatingTemplateTriggerID ?? UUID()] ?? Int.max)
-          < (order[$1.originatingTemplateTriggerID ?? UUID()] ?? Int.max)
+        // Get triggers from ViewModel since they're stored separately
+        let projectTriggers = viewModel.triggers(for: projectToEditID)
+        
+        // Sort chronologically by date
+        return projectTriggers.sorted { first, second in
+            // Handle nil dates (put them at the end)
+            guard let firstDate = first.date else { return false }
+            guard let secondDate = second.date else { return true }
+            return firstDate < secondDate
         }
     }
 
@@ -90,16 +99,51 @@ struct ProjectEditorView: View {
                                 .foregroundColor(.gray)
                         } else {
                             ForEach(sortedProjectTriggers) { trigger in
-                                HStack {
-                                    Text(trigger.name)
-                                    Spacer()
-                                    // Show status (optional)
-                                    if trigger.isActive {
-                                        Image(systemName: "checkmark.circle.fill")
-                                            .foregroundColor(.green)
+                                VStack(alignment: .leading, spacing: 4) {
+                                    HStack {
+                                        Text(trigger.name)
+                                        Spacer()
+                                        // Show status (optional)
+                                        if trigger.isActive {
+                                            Image(systemName: "checkmark.circle.fill")
+                                                .foregroundColor(.green)
+                                        }
+                                    }
+                                    
+                                    // Show trigger date
+                                    if let triggerDate = trigger.date {
+                                        HStack {
+                                            Text("Due: \(triggerDate, formatter: dateFormatter)")
+                                                .font(.caption)
+                                                .foregroundColor(.secondary)
+                                            Spacer()
+                                            Button("Edit Date") {
+                                                editingTriggerID = trigger.id
+                                                if let date = trigger.date {
+                                                    editingTriggerDate = date
+                                                } else {
+                                                    editingTriggerDate = finalDeadlineDate.addingTimeInterval(-7 * 24 * 60 * 60) // Default to 7 days before
+                                                }
+                                                showingTriggerDatePicker = true
+                                            }
+                                            .font(.caption)
+                                            .buttonStyle(.borderless)
+                                        }
                                     } else {
-                                         Image(systemName: "circle")
-                                            .foregroundColor(.gray)
+                                        // No date assigned yet
+                                        HStack {
+                                            Text("No date assigned")
+                                                .font(.caption)
+                                                .foregroundColor(.orange)
+                                            Spacer()
+                                            Button("Assign Date") {
+                                                editingTriggerID = trigger.id
+                                                editingTriggerDate = finalDeadlineDate.addingTimeInterval(-7 * 24 * 60 * 60) // Default to 7 days before
+                                                showingTriggerDatePicker = true
+                                            }
+                                            .font(.caption)
+                                            .buttonStyle(.bordered)
+                                        }
                                     }
                                 }
                             }
@@ -123,7 +167,9 @@ struct ProjectEditorView: View {
                         TextField("Trigger Name", text: $newTriggerSectionName)
                         Button("Add") {
                             if !newTriggerSectionName.isEmpty {
-                                let newTrigger = Trigger(name: newTriggerSectionName, projectID: projectToEditID)
+                                // Create trigger with a default date (7 days before project deadline)
+                                let defaultDate = Calendar.current.date(byAdding: .day, value: -7, to: finalDeadlineDate) ?? Date()
+                                let newTrigger = Trigger(name: newTriggerSectionName, projectID: projectToEditID, date: defaultDate)
                                 viewModel.addTrigger(newTrigger)
                                 newTriggerSectionName = "" // Reset
                             } // else: Handle empty name?
@@ -196,10 +242,46 @@ struct ProjectEditorView: View {
                 }
                 .preferredColorScheme(.dark)
             }
+            .sheet(isPresented: $showingTriggerDatePicker) {
+                NavigationView {
+                    Form {
+                        DatePicker("Trigger Date", selection: $editingTriggerDate, displayedComponents: .date)
+                    }
+                    .navigationTitle("Set Trigger Date")
+                    .navigationBarTitleDisplayMode(.inline)
+                    .toolbar {
+                        ToolbarItem(placement: .navigationBarLeading) {
+                            Button("Cancel") {
+                                showingTriggerDatePicker = false
+                            }
+                        }
+                        ToolbarItem(placement: .navigationBarTrailing) {
+                            Button("Save") {
+                                saveTriggerDate()
+                                showingTriggerDatePicker = false
+                            }
+                        }
+                    }
+                }
+                .preferredColorScheme(.dark)
+            }
         }
     }
 
     // MARK: - Data Handling
+    
+    private func saveTriggerDate() {
+        guard let triggerID = editingTriggerID,
+              let trigger = viewModel.triggers.first(where: { $0.id == triggerID }) else {
+            print("ProjectEditorView: Could not find trigger to update")
+            return
+        }
+        
+        var updatedTrigger = trigger
+        updatedTrigger.date = editingTriggerDate
+        viewModel.updateTrigger(updatedTrigger)
+        print("ProjectEditorView: Updated trigger '\(trigger.name)' with date \(editingTriggerDate)")
+    }
 
     private func addNewSubDeadline() {
         // Create a new SubDeadline instance. 

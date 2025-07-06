@@ -40,13 +40,15 @@ class DeadlineViewModel: ObservableObject {
 
     // Initializer: ONLY sets up UserDefaults now.
     init() {
+        // Check both shared and standard UserDefaults
         if let sharedDefaults = UserDefaults(suiteName: "group.com.yourapp.deadlines") {
             self.userDefaults = sharedDefaults
-            print("ViewModel Init: Using shared UserDefaults.")
+            print("ViewModel Init: Using shared UserDefaults (group.com.yourapp.deadlines).")
         } else {
             print("ViewModel Init: Failed to get shared UserDefaults. Using standard.")
             self.userDefaults = UserDefaults.standard
         }
+        
         // Request notification permissions and schedule daily notifications
         requestNotificationPermissions()
         scheduleDailyNotifications()
@@ -58,10 +60,16 @@ class DeadlineViewModel: ObservableObject {
         print("ViewModel: Starting initial data load...")
         isLoading = true
         
+        // Try to recover data from standard UserDefaults if shared is empty
+        attemptDataRecovery()
+        
         // Perform loading (these are synchronous for now)
         loadProjects()
         loadTemplates()
         loadTriggers()
+        
+        // Migrate existing triggers to have dates
+        migrateTriggersWithoutDates()
 
         // Perform default template check/creation
         if !templates.contains(where: { $0.id == Self.defaultMonthlyVideoTemplateID }) {
@@ -73,6 +81,158 @@ class DeadlineViewModel: ObservableObject {
         
         isLoading = false
         print("ViewModel: Initial data load complete.")
+        
+        // Print summary of loaded data
+        print("\n=== DATA LOAD SUMMARY ===")
+        print("Projects: \(projects.count)")
+        print("Templates: \(templates.count)")
+        for template in templates {
+            print("  - '\(template.name)' (ID: \(template.id))")
+        }
+        print("Triggers: \(triggers.count)")
+        print("========================\n")
+    }
+    
+    // Attempt to recover data from various sources
+    private func attemptDataRecovery() {
+        print("\n--- Attempting Data Recovery ---")
+        
+        // First, let's see what's in the shared container
+        print("Current data in shared container:")
+        if let sharedData = userDefaults.data(forKey: "templates_key") {
+            print("  - templates_key in shared: \(sharedData.count) bytes")
+            if let templates = try? JSONDecoder().decode([Template].self, from: sharedData) {
+                print("    Contains \(templates.count) templates:")
+                for template in templates {
+                    print("      * '\(template.name)' (ID: \(template.id))")
+                }
+            }
+        }
+        
+        // Check standard UserDefaults
+        let standardDefaults = UserDefaults.standard
+        let possibleKeys = ["projects_v2_key", "projects_key", "projects", "templates_key", "templates", "triggers_v1_key", "triggers_key"]
+        
+        print("\nChecking standard UserDefaults for data...")
+        for key in possibleKeys {
+            if let data = standardDefaults.data(forKey: key) {
+                print("Found data in standard UserDefaults for key: \(key) (size: \(data.count) bytes)")
+                
+                // Special handling for templates since they might need migration
+                if key == "templates_key" || key == "templates" {
+                    print("Attempting to decode and migrate templates from standard UserDefaults...")
+                    print("Current templates count before recovery: \(self.templates.count)")
+                    
+                    // Try new format first
+                    do {
+                        let templates = try JSONDecoder().decode([Template].self, from: data)
+                        print("Successfully decoded \(templates.count) templates in new format from standard UserDefaults")
+                        for template in templates {
+                            print("  - Template: '\(template.name)' (ID: \(template.id))")
+                        }
+                        // Only update if we got more templates than we already have
+                        if templates.count > self.templates.count {
+                            self.templates = templates
+                            saveTemplates() // This will save to shared container
+                            standardDefaults.removeObject(forKey: key)
+                        }
+                        continue
+                    } catch {
+                        print("Failed to decode templates as new format: \(error)")
+                    
+                    // Try old format
+                    struct OldTemplate: Codable {
+                        let id: UUID
+                        var name: String
+                        var subDeadlines: [TemplateSubDeadline]
+                    }
+                    
+                    do {
+                        let oldTemplates = try JSONDecoder().decode([OldTemplate].self, from: data)
+                        print("Successfully decoded \(oldTemplates.count) templates in old format from standard UserDefaults")
+                        let convertedTemplates = oldTemplates.map { oldTemplate in
+                            Template(
+                                id: oldTemplate.id,
+                                name: oldTemplate.name,
+                                subDeadlines: oldTemplate.subDeadlines,
+                                templateTriggers: []
+                            )
+                        }
+                        for template in convertedTemplates {
+                            print("  - Template: '\(template.name)' (ID: \(template.id))")
+                        }
+                        // Only update if we got more templates
+                        if convertedTemplates.count > self.templates.count {
+                            self.templates = convertedTemplates
+                            saveTemplates() // This will save to shared container
+                            standardDefaults.removeObject(forKey: key)
+                        }
+                        continue
+                    } catch {
+                        print("Failed to decode templates as old format: \(error)")
+                    }
+                    
+                    print("Failed to decode templates from standard UserDefaults in any format")
+                }
+                
+                // For other keys, try direct copy (but the CFPrefs error might prevent this)
+                if userDefaults.data(forKey: key) == nil {
+                    // Instead of direct copy which might fail, we'll handle this in the load functions
+                    print("Will attempt to load \(key) from standard UserDefaults in load function")
+                }
+            }
+        }
+        
+        print("--- End Data Recovery ---\n")
+    }
+    }
+    
+    // Migrate existing triggers to have dates if they don't have them
+    private func migrateTriggersWithoutDates() {
+        print("\n--- Migrating Triggers Without Dates ---")
+        var migratedCount = 0
+        
+        for i in triggers.indices {
+            if triggers[i].date == nil {
+                // Find the project this trigger belongs to
+                if let project = projects.first(where: { $0.id == triggers[i].projectID }) {
+                    // Check if this trigger came from a template
+                    if let templateID = project.templateID,
+                       let template = templates.first(where: { $0.id == templateID }),
+                       let originatingID = triggers[i].originatingTemplateTriggerID,
+                       let templateTrigger = template.templateTriggers.first(where: { $0.id == originatingID }) {
+                        // Use the template's offset to calculate the date
+                        do {
+                            let triggerDate = try templateTrigger.offset.calculateDate(from: project.finalDeadlineDate)
+                            triggers[i].date = triggerDate
+                            print("  - Migrated trigger '\(triggers[i].name)' with template-based date: \(triggerDate)")
+                            migratedCount += 1
+                        } catch {
+                            // Fallback to default date
+                            let defaultDate = Calendar.current.date(byAdding: .day, value: -7, to: project.finalDeadlineDate) ?? Date()
+                            triggers[i].date = defaultDate
+                            print("  - Migrated trigger '\(triggers[i].name)' with default date (7 days before): \(defaultDate)")
+                            migratedCount += 1
+                        }
+                    } else {
+                        // No template info, use a default date (7 days before project deadline)
+                        let defaultDate = Calendar.current.date(byAdding: .day, value: -7, to: project.finalDeadlineDate) ?? Date()
+                        triggers[i].date = defaultDate
+                        print("  - Migrated trigger '\(triggers[i].name)' with default date (7 days before): \(defaultDate)")
+                        migratedCount += 1
+                    }
+                }
+            }
+        }
+        
+        if migratedCount > 0 {
+            saveTriggers()
+            print("Migrated \(migratedCount) triggers with dates.")
+        } else {
+            print("No triggers needed migration.")
+        }
+        
+        print("--- End Trigger Migration ---\n")
     }
 
     // --- DATA LOADING ---
@@ -80,90 +240,159 @@ class DeadlineViewModel: ObservableObject {
     // Loads projects from UserDefaults.
     func loadProjects() {
         print("ViewModel Load: Attempting to load projects using key '\(projectsKey)'.") // Log key
-        guard let data = userDefaults.data(forKey: projectsKey) else {
-            print("ViewModel Load: No data found for projects key '\(projectsKey)'. Initializing empty array.")
-            self.projects = []
-            return
-        }
-        print("ViewModel Load: Found data for projects key. Attempting to decode...") // Log data found
         
-        let decoder = JSONDecoder()
-        do {
-            self.projects = try decoder.decode([Project].self, from: data)
-            print("ViewModel Load: Projects loaded successfully (\(projects.count) projects).")
-        } catch {
-            // --- Enhanced Error Logging --- 
-            print("\n--- ViewModel FATAL ERROR: Failed to decode PROJECTS from UserDefaults --- ")
-            print("Error Description: \(error.localizedDescription)")
-            print("Full Error: \(error)")
-            
-            // Provide detailed decoding error context
-            if let decodingError = error as? DecodingError {
-                print("Decoding Error Type: \(decodingError)")
-                switch decodingError {
-                case .typeMismatch(let type, let context):
-                    print("  Type Mismatch: Expected type '\(type)' does not match JSON.")
-                    print("  Coding Path: \(context.codingPath.map { $0.stringValue }.joined(separator: "."))")
-                    print("  Context: \(context.debugDescription)")
-                case .valueNotFound(let type, let context):
-                    print("  Value Not Found: Expected value of type '\(type)'.")
-                    print("  Coding Path: \(context.codingPath.map { $0.stringValue }.joined(separator: "."))")
-                    print("  Context: \(context.debugDescription)")
-                case .keyNotFound(let key, let context):
-                    print("  Key Not Found: Missing key '\(key.stringValue)'.")
-                    print("  Coding Path: \(context.codingPath.map { $0.stringValue }.joined(separator: "."))")
-                    print("  Context: \(context.debugDescription)")
-                case .dataCorrupted(let context):
-                    print("  Data Corrupted: Invalid JSON or data format.")
-                    print("  Coding Path: \(context.codingPath.map { $0.stringValue }.joined(separator: "."))")
-                    print("  Context: \(context.debugDescription)")
-                @unknown default:
-                    print("  Unknown DecodingError occurred.")
+        // Debug: Print all keys in UserDefaults
+        print("\n--- DEBUG: All UserDefaults keys ---")
+        let allKeys = userDefaults.dictionaryRepresentation().keys.sorted()
+        for key in allKeys {
+            print("  Key: \(key)")
+        }
+        print("--- END UserDefaults keys ---\n")
+        
+        // First, try to load from the current key
+        if let data = userDefaults.data(forKey: projectsKey) {
+            print("ViewModel Load: Found data for projects key. Attempting to decode...") // Log data found
+            do {
+                let decodedProjects = try JSONDecoder().decode([Project].self, from: data)
+                self.projects = decodedProjects
+                print("ViewModel Load: Projects loaded successfully (\(projects.count) projects).")
+                return
+            } catch {
+                print("ViewModel Load: Failed to decode projects from v2 key. Error: \(error)")
+                // Try to decode with old structure if needed
+            }
+        }
+        
+        // If no data found with v2 key, try to migrate from old keys
+        let possibleOldKeys = ["projects_key", "projects", "SavedProjects"]
+        for oldKey in possibleOldKeys {
+            if let oldData = userDefaults.data(forKey: oldKey) {
+                print("ViewModel Load: Found data with old key '\(oldKey)'. Attempting migration...")
+                do {
+                    let decodedProjects = try JSONDecoder().decode([Project].self, from: oldData)
+                    self.projects = decodedProjects
+                    print("ViewModel Load: Successfully migrated \(projects.count) projects from old key '\(oldKey)'.")
+                    // Save to new key
+                    saveProjects()
+                    // Remove old key to prevent future confusion
+                    userDefaults.removeObject(forKey: oldKey)
+                    return
+                } catch {
+                    print("ViewModel Load: Failed to decode from key '\(oldKey)': \(error)")
                 }
             }
-            print("--- END PROJECT DECODING ERROR ---\n")
-            
-            // Resetting to empty array to prevent crash, but data is lost.
-            print("ViewModel Load: Resetting projects to empty array due to decoding failure.") 
-            self.projects = []
         }
+        
+        print("ViewModel Load: No data found for projects. Initializing empty array.")
+        self.projects = []
     }
 
     // Loads templates from UserDefaults.
     func loadTemplates() {
         print("ViewModel Load: Attempting to load templates using key '\(templatesKey)'.") // Log key
-        guard let data = userDefaults.data(forKey: templatesKey) else {
-            print("ViewModel Load: No data found for templates key '\(templatesKey)'. Initializing empty array.")
-            self.templates = []
+        
+        // If we already have templates from recovery, don't overwrite them
+        if !templates.isEmpty {
+            print("ViewModel Load: Templates already loaded from recovery (\(templates.count) templates). Skipping load.")
             return
         }
-        print("ViewModel Load: Found data for templates key. Attempting to decode...") // Log data found
         
-        let decoder = JSONDecoder()
-        do {
-            self.templates = try decoder.decode([Template].self, from: data)
-            print("ViewModel Load: Templates loaded successfully (\(templates.count) templates).")
-        } catch {
-            // --- Enhanced Error Logging --- 
-            print("\n--- ViewModel FATAL ERROR: Failed to decode TEMPLATES from UserDefaults --- ")
-            print("Error Description: \(error.localizedDescription)")
-            print("Full Error: \(error)")
-            if let decodingError = error as? DecodingError {
-                print("Decoding Error Type: \(decodingError)")
-                switch decodingError {
-                case .typeMismatch(let type, let context): print("  Type Mismatch: '\(type)' at path \(context.codingPath.map { $0.stringValue }.joined(separator: ".")). Context: \(context.debugDescription)")
-                case .valueNotFound(let type, let context): print("  Value Not Found: '\(type)' at path \(context.codingPath.map { $0.stringValue }.joined(separator: ".")). Context: \(context.debugDescription)")
-                case .keyNotFound(let key, let context): print("  Key Not Found: '\(key.stringValue)' at path \(context.codingPath.map { $0.stringValue }.joined(separator: ".")). Context: \(context.debugDescription)")
-                case .dataCorrupted(let context): print("  Data Corrupted at path \(context.codingPath.map { $0.stringValue }.joined(separator: ".")). Context: \(context.debugDescription)")
-                @unknown default: print("  Unknown DecodingError occurred.")
+        // First try the shared container
+        if let data = userDefaults.data(forKey: templatesKey) {
+            print("ViewModel Load: Found data for templates key. Attempting to decode...") // Log data found
+            do {
+                let decodedTemplates = try JSONDecoder().decode([Template].self, from: data)
+                self.templates = decodedTemplates
+                print("ViewModel Load: Templates loaded successfully (\(templates.count) templates).")
+                // Print template names for debugging
+                for template in templates {
+                    print("  - Template: '\(template.name)' (ID: \(template.id))")
+                }
+                return
+            } catch {
+                print("ViewModel Load: Failed to decode templates. Error: \(error)")
+                // Try to decode with old template structure (without templateTriggers field)
+                do {
+                    // Define old template structure
+                    struct OldTemplate: Codable {
+                        let id: UUID
+                        var name: String
+                        var subDeadlines: [TemplateSubDeadline]
+                    }
+                    
+                    let oldTemplates = try JSONDecoder().decode([OldTemplate].self, from: data)
+                    print("ViewModel Load: Detected old template format. Migrating \(oldTemplates.count) templates...")
+                    
+                    // Convert to new format
+                    self.templates = oldTemplates.map { oldTemplate in
+                        Template(
+                            id: oldTemplate.id,
+                            name: oldTemplate.name,
+                            subDeadlines: oldTemplate.subDeadlines,
+                            templateTriggers: [] // Old templates had no triggers
+                        )
+                    }
+                    
+                    print("ViewModel Load: Successfully migrated \(templates.count) templates from old format.")
+                    // Save in new format
+                    saveTemplates()
+                    return
+                } catch {
+                    print("ViewModel Load: Failed to decode as old template format. Error: \(error)")
                 }
             }
-            print("--- END TEMPLATE DECODING ERROR ---\n")
-            
-            // Resetting to empty array.
-            print("ViewModel Load: Resetting templates to empty array due to decoding failure.") 
-            self.templates = []
         }
+        
+        // If not found in shared, check standard UserDefaults
+        let standardDefaults = UserDefaults.standard
+        if let standardData = standardDefaults.data(forKey: templatesKey) {
+            print("ViewModel Load: Found templates in standard UserDefaults. Attempting migration...")
+            do {
+                let decodedTemplates = try JSONDecoder().decode([Template].self, from: standardData)
+                self.templates = decodedTemplates
+                print("ViewModel Load: Successfully loaded \(templates.count) templates from standard UserDefaults.")
+                // Print template names for debugging
+                for template in templates {
+                    print("  - Template: '\(template.name)' (ID: \(template.id))")
+                }
+                // Save to shared container
+                saveTemplates()
+                // Remove from standard to avoid confusion
+                standardDefaults.removeObject(forKey: templatesKey)
+                return
+            } catch {
+                print("ViewModel Load: Failed to decode templates from standard UserDefaults. Error: \(error)")
+                
+                // Try old format from standard UserDefaults
+                struct OldTemplate: Codable {
+                    let id: UUID
+                    var name: String
+                    var subDeadlines: [TemplateSubDeadline]
+                }
+                
+                if let oldTemplates = try? JSONDecoder().decode([OldTemplate].self, from: standardData) {
+                    print("ViewModel Load: Detected old template format in standard UserDefaults. Migrating \(oldTemplates.count) templates...")
+                    self.templates = oldTemplates.map { oldTemplate in
+                        Template(
+                            id: oldTemplate.id,
+                            name: oldTemplate.name,
+                            subDeadlines: oldTemplate.subDeadlines,
+                            templateTriggers: []
+                        )
+                    }
+                    print("ViewModel Load: Successfully migrated \(templates.count) templates from old format.")
+                    for template in templates {
+                        print("  - Template: '\(template.name)' (ID: \(template.id))")
+                    }
+                    saveTemplates()
+                    standardDefaults.removeObject(forKey: templatesKey)
+                    return
+                }
+            }
+        }
+        
+        print("ViewModel Load: No templates found. Initializing empty array.")
+        self.templates = []
     }
 
     // Loads triggers from UserDefaults.
@@ -369,6 +598,93 @@ class DeadlineViewModel: ObservableObject {
 
 
     // --- TEMPLATE CRUD OPERATIONS ---
+    
+    // Creates a template from an existing project
+    private func createTemplateFromProjectInternal(_ project: Project) -> Template {
+        print("ViewModel: Creating template from project '\(project.title)'")
+        print("  Project has \(project.subDeadlines.count) sub-deadlines")
+        print("  Project has \(triggers(for: project.id).count) triggers")
+        
+        // Calculate template sub-deadlines from project sub-deadlines
+        var templateSubDeadlines: [TemplateSubDeadline] = []
+        for subDeadline in project.subDeadlines {
+            // Calculate the offset from the final deadline
+            let daysDifference = Calendar.current.dateComponents([.day], from: subDeadline.date, to: project.finalDeadlineDate).day ?? 0
+            
+            // Create offset based on the difference
+            let offset = TimeOffset(
+                value: abs(daysDifference),
+                unit: .days,
+                before: daysDifference > 0 // If positive, subdeadline is before final deadline
+            )
+            
+            // Create template sub-deadline
+            let templateSubDeadline = TemplateSubDeadline(
+                title: subDeadline.title,
+                offset: offset,
+                templateTriggerID: nil // We'll map these after creating triggers
+            )
+            templateSubDeadlines.append(templateSubDeadline)
+        }
+        
+        // Get triggers for this project and create template triggers
+        let projectTriggers = triggers(for: project.id)
+        var templateTriggers: [TemplateTrigger] = []
+        var triggerIDMap: [UUID: UUID] = [:] // Map from real trigger ID to template trigger ID
+        
+        for trigger in projectTriggers {
+            // Calculate offset if trigger has a date
+            let offset: TimeOffset
+            if let triggerDate = trigger.date {
+                let daysDifference = Calendar.current.dateComponents([.day], from: triggerDate, to: project.finalDeadlineDate).day ?? 0
+                offset = TimeOffset(
+                    value: abs(daysDifference),
+                    unit: .days,
+                    before: daysDifference > 0
+                )
+            } else {
+                // Default offset if no date
+                offset = TimeOffset(value: 7, unit: .days, before: true)
+            }
+            
+            let templateTrigger = TemplateTrigger(
+                name: trigger.name,
+                offset: offset
+            )
+            templateTriggers.append(templateTrigger)
+            
+            // Map the IDs for linking sub-deadlines
+            triggerIDMap[trigger.id] = templateTrigger.id
+        }
+        
+        // Now update template sub-deadlines with trigger links
+        for i in templateSubDeadlines.indices {
+            if let originalSubDeadline = project.subDeadlines.first(where: { $0.title == templateSubDeadlines[i].title }),
+               let triggerID = originalSubDeadline.triggerID,
+               let templateTriggerID = triggerIDMap[triggerID] {
+                templateSubDeadlines[i].templateTriggerID = templateTriggerID
+            }
+        }
+        
+        // Create the template
+        let templateName = project.templateName ?? "\(project.title) Template"
+        let newTemplate = Template(
+            name: templateName,
+            subDeadlines: templateSubDeadlines,
+            templateTriggers: templateTriggers
+        )
+        
+        print("ViewModel: Created template '\(newTemplate.name)' with \(templateSubDeadlines.count) sub-deadlines and \(templateTriggers.count) triggers")
+        
+        return newTemplate
+    }
+    
+    // Wrapper function that creates a template from a project and adds it to the templates list
+    func createTemplateFromProject(_ project: Project) -> String {
+        let template = createTemplateFromProjectInternal(project)
+        addTemplate(template)
+        return template.name
+    }
 
     // Adds a new template and saves.
     func addTemplate(_ template: Template) {
@@ -434,6 +750,10 @@ class DeadlineViewModel: ObservableObject {
 
     // --- PROJECT CREATION FROM TEMPLATE (MODIFIED) ---
     func createProjectFromTemplate(template: Template, title: String, finalDeadline: Date) -> Project {
+        print("ViewModel: Creating project '\(title)' from template '\(template.name)'")
+        print("  Template has \(template.subDeadlines.count) sub-deadlines")
+        print("  Template has \(template.templateTriggers.count) triggers")
+        
         // Generate the final Project ID *before* creating triggers
         let newProjectID = UUID()
 
@@ -442,15 +762,23 @@ class DeadlineViewModel: ObservableObject {
         var templateTriggerToRealTriggerMap: [UUID: UUID] = [:] // Map TemplateTrigger.id -> Trigger.id
 
         for templateTrigger in template.templateTriggers {
-            // Create a new Trigger instance for the project using the final project ID
-            let newRealTrigger = Trigger(
-                name: templateTrigger.name, // Use name from template
-                projectID: newProjectID, // <-- Use the final project ID directly
-                originatingTemplateTriggerID: templateTrigger.id // Link back to template definition
-            )
-            createdTriggers.append(newRealTrigger)
-            templateTriggerToRealTriggerMap[templateTrigger.id] = newRealTrigger.id
-            print("ViewModel (create): Prepared trigger '\(newRealTrigger.name)' for project (ID: \(newProjectID)) from template trigger ID \(templateTrigger.id)")
+            do {
+                // Calculate the date for this trigger based on the project's final deadline
+                let triggerDate = try templateTrigger.offset.calculateDate(from: finalDeadline)
+                
+                // Create a new Trigger instance for the project using the final project ID
+                let newRealTrigger = Trigger(
+                    name: templateTrigger.name, // Use name from template
+                    projectID: newProjectID, // <-- Use the final project ID directly
+                    date: triggerDate, // Set the calculated date
+                    originatingTemplateTriggerID: templateTrigger.id // Link back to template definition
+                )
+                createdTriggers.append(newRealTrigger)
+                templateTriggerToRealTriggerMap[templateTrigger.id] = newRealTrigger.id
+                print("ViewModel (create): Prepared trigger '\(newRealTrigger.name)' for project (ID: \(newProjectID)) with date \(triggerDate) from template trigger ID \(templateTrigger.id)")
+            } catch {
+                print("ViewModel Error (create): Failed to calculate date for trigger '\(templateTrigger.name)'. Error: \(error.localizedDescription)")
+            }
         }
 
         // --- Create SubDeadlines, linking to newly created Triggers ---
@@ -538,9 +866,13 @@ class DeadlineViewModel: ObservableObject {
         let commonTrigDefIDs = oldTrigDefIDs.intersection(newTrigDefIDs)
 
         var trigDefNameChanges: [UUID: String] = [:] // Map templateTriggerID -> new name
+        var trigDefOffsetChanges: [UUID: TimeOffset] = [:] // Map templateTriggerID -> new offset
         for id in commonTrigDefIDs {
             if oldTrigDefs[id]!.name != newTrigDefs[id]!.name {
                 trigDefNameChanges[id] = newTrigDefs[id]!.name
+            }
+            if oldTrigDefs[id]!.offset != newTrigDefs[id]!.offset {
+                trigDefOffsetChanges[id] = newTrigDefs[id]!.offset
             }
         }
         let addedTriggerDefs = addedTrigDefIDs.compactMap { newTrigDefs[$0] }
@@ -571,15 +903,21 @@ class DeadlineViewModel: ObservableObject {
                 for trigDefToAdd in addedTriggerDefs {
                     // Avoid duplicates if sync runs multiple times (shouldn't happen ideally)
                      if !self.triggers(for: project.id).contains(where: {$0.originatingTemplateTriggerID == trigDefToAdd.id}) {
-                        let newRealTrigger = Trigger(
-                            name: trigDefToAdd.name,
-                            projectID: project.id,
-                            originatingTemplateTriggerID: trigDefToAdd.id
-                        )
-                        self.addTrigger(newRealTrigger) // Add to main list & save
-                        currentProjectTriggerMap[trigDefToAdd.id] = newRealTrigger.id // Update map
-                        projectDidChange = true // Indicate change might have happened indirectly
-                        print("      - Created real trigger '\(newRealTrigger.name)' from added template trigger.")
+                        do {
+                            let triggerDate = try trigDefToAdd.offset.calculateDate(from: project.finalDeadlineDate)
+                            let newRealTrigger = Trigger(
+                                name: trigDefToAdd.name,
+                                projectID: project.id,
+                                date: triggerDate,
+                                originatingTemplateTriggerID: trigDefToAdd.id
+                            )
+                            self.addTrigger(newRealTrigger) // Add to main list & save
+                            currentProjectTriggerMap[trigDefToAdd.id] = newRealTrigger.id // Update map
+                            projectDidChange = true // Indicate change might have happened indirectly
+                            print("      - Created real trigger '\(newRealTrigger.name)' with date \(triggerDate) from added template trigger.")
+                        } catch {
+                            print("      - Error calculating date for trigger '\(trigDefToAdd.name)': \(error)")
+                        }
                      }
                 }
             }
@@ -600,14 +938,35 @@ class DeadlineViewModel: ObservableObject {
             }
 
             // Handle Renamed Template Triggers: Update real Triggers in this project
-            if !trigDefNameChanges.isEmpty {
-                 print("    - Handling renamed template triggers for project '\(project.title)'...")
-                 for (trigDefID, newName) in trigDefNameChanges {
+            if !trigDefNameChanges.isEmpty || !trigDefOffsetChanges.isEmpty {
+                 print("    - Handling updated template triggers for project '\(project.title)'...")
+                 for trigDefID in commonTrigDefIDs {
                      if let realTriggerToUpdate = self.triggers(for: project.id).first(where: { $0.originatingTemplateTriggerID == trigDefID }) {
-                         if realTriggerToUpdate.name != newName {
+                         var needsUpdate = false
+                         var mutableTrigger = realTriggerToUpdate // Create mutable copy
+                         
+                         // Check for name change
+                         if let newName = trigDefNameChanges[trigDefID], realTriggerToUpdate.name != newName {
                              print("      - Renaming real trigger '\(realTriggerToUpdate.name)' to '\(newName)'.")
-                             var mutableTrigger = realTriggerToUpdate // Create mutable copy
                              mutableTrigger.name = newName
+                             needsUpdate = true
+                         }
+                         
+                         // Check for offset change
+                         if let newOffset = trigDefOffsetChanges[trigDefID] {
+                             do {
+                                 let newDate = try newOffset.calculateDate(from: project.finalDeadlineDate)
+                                 if mutableTrigger.date != newDate {
+                                     print("      - Updating trigger date for '\(mutableTrigger.name)': \(mutableTrigger.date) -> \(newDate)")
+                                     mutableTrigger.date = newDate
+                                     needsUpdate = true
+                                 }
+                             } catch {
+                                 print("      - Error calculating new date for trigger '\(mutableTrigger.name)': \(error)")
+                             }
+                         }
+                         
+                         if needsUpdate {
                              self.updateTrigger(mutableTrigger) // Updates & saves triggers
                              projectDidChange = true // Indicate change
                          }
@@ -852,34 +1211,48 @@ class DeadlineViewModel: ObservableObject {
         }
     }
     
-    // Schedule daily notifications at 9:30 AM
+    // Schedule notifications based on user preferences
     private func scheduleDailyNotifications() {
         let center = UNUserNotificationCenter.current()
         
         // Remove any existing notifications for this identifier
         center.removePendingNotificationRequests(withIdentifiers: ["daily-deadline-reminder"])
         
-        // Create date components for 9:30 AM
+        // Get user preferences
+        let frequency = UserDefaults.standard.integer(forKey: "notificationFrequency")
+        let deadlineCount = UserDefaults.standard.integer(forKey: "notificationDeadlineCount")
+        let timeData = UserDefaults.standard.object(forKey: "notificationTime") as? Date
+        
+        // Use defaults if not set
+        let notificationFrequency = frequency > 0 ? frequency : 1
+        let notificationDeadlineCount = deadlineCount > 0 ? deadlineCount : 3
+        
+        // Get time components from saved time or default to 9:30 AM
         var dateComponents = DateComponents()
-        dateComponents.hour = 9
-        dateComponents.minute = 30
+        if let savedTime = timeData {
+            let calendar = Calendar.current
+            dateComponents.hour = calendar.component(.hour, from: savedTime)
+            dateComponents.minute = calendar.component(.minute, from: savedTime)
+        } else {
+            dateComponents.hour = 9
+            dateComponents.minute = 30
+        }
         
         // Create the notification content
         let content = UNMutableNotificationContent()
         content.title = "Deadlines"
         content.sound = .default
         
-        // Get the next 5 upcoming deadlines
-        let upcomingDeadlines = getUpcomingDeadlines(limit: 5)
+        // Get upcoming deadlines based on user preference
+        let upcomingDeadlines = getUpcomingDeadlines(limit: notificationDeadlineCount)
         
         if upcomingDeadlines.isEmpty {
             content.body = "No upcoming deadlines"
         } else {
             // More concise format for better readability in notifications
             var bodyText = ""
-            let maxItems = min(3, upcomingDeadlines.count) // Show only first 3 to save space
             
-            for deadline in upcomingDeadlines.prefix(maxItems) {
+            for deadline in upcomingDeadlines {
                 let daysRemaining = Calendar.current.dateComponents([.day], from: Date(), to: deadline.date).day ?? 0
                 let timeText = daysRemaining < 0 ? "OVERDUE (\(-daysRemaining)d)" :
                               daysRemaining == 0 ? "TODAY" : 
@@ -893,15 +1266,19 @@ class DeadlineViewModel: ObservableObject {
                 bodyText += "• \(timeText): \(truncatedTitle)\n"
             }
             
-            if upcomingDeadlines.count > maxItems {
-                bodyText += "...and \(upcomingDeadlines.count - maxItems) more"
-            }
-            
             content.body = bodyText.trimmingCharacters(in: .whitespacesAndNewlines)
         }
         
-        // Create the trigger to fire daily at 9:30 AM
-        let trigger = UNCalendarNotificationTrigger(dateMatching: dateComponents, repeats: true)
+        // Create the trigger based on frequency
+        let trigger: UNNotificationTrigger
+        if notificationFrequency == 1 {
+            // Daily notifications
+            trigger = UNCalendarNotificationTrigger(dateMatching: dateComponents, repeats: true)
+        } else {
+            // For multi-day frequencies, use time interval
+            let interval = TimeInterval(notificationFrequency * 24 * 60 * 60) // Days to seconds
+            trigger = UNTimeIntervalNotificationTrigger(timeInterval: interval, repeats: true)
+        }
         
         // Create the request
         let request = UNNotificationRequest(identifier: "daily-deadline-reminder", content: content, trigger: trigger)
@@ -911,7 +1288,8 @@ class DeadlineViewModel: ObservableObject {
             if let error = error {
                 print("ViewModel: Error scheduling daily notification: \(error.localizedDescription)")
             } else {
-                print("ViewModel: Daily notification scheduled for 9:30 AM")
+                let frequencyText = notificationFrequency == 1 ? "daily" : "every \(notificationFrequency) days"
+                print("ViewModel: Notification scheduled \(frequencyText) at \(dateComponents.hour ?? 9):\(String(format: "%02d", dateComponents.minute ?? 30))")
             }
         }
     }
@@ -950,8 +1328,12 @@ class DeadlineViewModel: ObservableObject {
     func updateNotifications() {
         scheduleDailyNotifications()
     }
+    
+    // Public method to get upcoming deadlines for notification preview
+    func getUpcomingDeadlinesForNotification(limit: Int) -> [(title: String, date: Date, projectTitle: String)] {
+        return getUpcomingDeadlines(limit: limit)
+    }
 }
-
 
 // MARK: - ShakeEffect (Generic Animation)
 // A reusable geometry effect for adding a shaking animation.
@@ -975,6 +1357,8 @@ struct ShakeEffect: GeometryEffect {
 struct ContentView: View {
     // Inject the shared ViewModel instance.
     @StateObject private var viewModel = DeadlineViewModel()
+    @Environment(\.scenePhase) private var scenePhase
+    @State private var lastActiveTime = Date()
 
     var body: some View {
         TabView {
@@ -996,10 +1380,10 @@ struct ContentView: View {
                     Label("Triggers", systemImage: "play.circle") // Icon for triggers
                 }
             
-            // --- Tab 4: Backup & Restore ---
+            // --- Tab 4: Settings ---
             BackupRestoreView(viewModel: viewModel)
                 .tabItem {
-                    Label("Backup", systemImage: "archivebox") // Icon for backup/restore
+                    Label("Settings", systemImage: "gearshape.fill") // Icon for settings
                 }
         }
         // --- ADDED .task MODIFIER --- 
@@ -1012,6 +1396,24 @@ struct ContentView: View {
         .preferredColorScheme(.dark)
         // You might need to adjust the accent color for the selected tab item
         .accentColor(.blue) // Example: Set accent color
+        // Monitor scene phase changes to refresh dates
+        .onChange(of: scenePhase) { newPhase in
+            switch newPhase {
+            case .active:
+                // App became active, check if dates need refreshing
+                let timeSinceLastActive = Date().timeIntervalSince(lastActiveTime)
+                // If more than 1 hour has passed, or it's a new day, force a refresh
+                if timeSinceLastActive > 3600 || !Calendar.current.isDateInToday(lastActiveTime) {
+                    print("ContentView: App became active after \(Int(timeSinceLastActive))s. Forcing date refresh.")
+                    viewModel.objectWillChange.send()
+                }
+                lastActiveTime = Date()
+            case .inactive, .background:
+                break
+            @unknown default:
+                break
+            }
+        }
     }
 }
 

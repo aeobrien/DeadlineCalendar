@@ -92,6 +92,28 @@ struct AddProjectView: View {
                     }
                 }
                 
+                // --- Section for Template Triggers (Read-only preview) ---
+                if useTemplate, let template = selectedTemplate, !template.templateTriggers.isEmpty {
+                    Section(header: Text("Triggers").foregroundColor(.gray)) {
+                        ForEach(template.templateTriggers) { trigger in
+                            HStack {
+                                Text(trigger.name)
+                                Spacer()
+                                // Show when the trigger will be due
+                                if let calculatedDate = try? trigger.offset.calculateDate(from: finalDeadlineDate) {
+                                    Text(calculatedDate, formatter: subDeadlineDateFormatter)
+                                        .font(.caption)
+                                        .foregroundColor(.secondary)
+                                } else {
+                                    Text("Invalid date")
+                                        .font(.caption)
+                                        .foregroundColor(.red)
+                                }
+                            }
+                        }
+                    }
+                }
+                
                 // --- Section for Managing Sub-Deadlines (Editable) ---
                 Section(header: Text(useTemplate ? "Derived Sub-Deadlines" : "Manual Sub-Deadlines").foregroundColor(.gray)) {
                     // List the editable sub-deadlines
@@ -245,14 +267,25 @@ struct AddProjectView: View {
         
         print("AddProjectView: Saving project '\(trimmedTitle)' with final date \(finalDeadlineDate). Template Used: \(currentTemplateName ?? "None")")
         
-        // Create the new Project object directly with the current state
-        let newProject = Project(
-            title: trimmedTitle,
-            finalDeadlineDate: finalDeadlineDate,
-            subDeadlines: projectSubDeadlines.sorted { $0.date < $1.date }, // Ensure sorted on save
-            templateID: currentTemplateID, // Pass the template ID if used
-            templateName: currentTemplateName // Pass the template name if used
-        )
+        // Create the project using the template if one was selected
+        let newProject: Project
+        if useTemplate, let template = selectedTemplate {
+            // Use createProjectFromTemplate to properly create triggers
+            newProject = viewModel.createProjectFromTemplate(
+                template: template,
+                title: trimmedTitle,
+                finalDeadline: finalDeadlineDate
+            )
+        } else {
+            // Create without template
+            newProject = Project(
+                title: trimmedTitle,
+                finalDeadlineDate: finalDeadlineDate,
+                subDeadlines: projectSubDeadlines.sorted { $0.date < $1.date }, // Ensure sorted on save
+                templateID: nil,
+                templateName: nil
+            )
+        }
         
         // Add the newly created project using the ViewModel.
         viewModel.addProject(newProject)

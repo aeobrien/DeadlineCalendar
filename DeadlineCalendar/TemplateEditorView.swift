@@ -79,7 +79,26 @@ struct TemplateEditorView: View {
                     } else {
                         // Editable rows, drag-reorder enabled
                         ForEach($templateTriggers) { $trigger in
-                            TextField("Trigger Name", text: $trigger.name)
+                            VStack(alignment: .leading, spacing: 4) {
+                                TextField("Trigger Name", text: $trigger.name)
+                                HStack {
+                                    Text("Due")
+                                    TextField("Value", value: $trigger.offset.value, format: .number)
+                                        .frame(width: 50)
+                                        .textFieldStyle(RoundedBorderTextFieldStyle())
+                                    Picker("Unit", selection: $trigger.offset.unit) {
+                                        ForEach(TimeOffsetUnit.allCases) { unit in
+                                            Text(unit.rawValue).tag(unit)
+                                        }
+                                    }
+                                    .pickerStyle(SegmentedPickerStyle())
+                                    .frame(width: 150)
+                                    Text("before deadline")
+                                        .foregroundColor(.secondary)
+                                }
+                                .font(.caption)
+                            }
+                            .padding(.vertical, 4)
                         }
                         .onDelete(perform: deleteTemplateTrigger)
                         .onMove { indices, newOffset in
@@ -180,6 +199,22 @@ struct TemplateEditorView: View {
                 Text("Do you want to update all projects created using the template '\\(savedTemplate.name)' with these changes?")
             }
             .preferredColorScheme(.dark) // Consistent theme
+            .alert("New Trigger", isPresented: $showingAddTemplateTriggerAlert) {
+                TextField("Trigger Name", text: $newTemplateTriggerName)
+                Button("Add") {
+                    if !newTemplateTriggerName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                        let newTrigger = TemplateTrigger(
+                            name: newTemplateTriggerName.trimmingCharacters(in: .whitespacesAndNewlines),
+                            offset: TimeOffset(value: 7, unit: .days, before: true) // Default offset
+                        )
+                        templateTriggers.append(newTrigger)
+                        print("TemplateEditorView: Added new template trigger '\(newTrigger.name)'")
+                    }
+                }
+                Button("Cancel", role: .cancel) { }
+            } message: {
+                Text("Enter a name for the new trigger.")
+            }
             .sheet(isPresented: $showingAddSubDeadlineModal) {
                 NavigationView {
                     Form {

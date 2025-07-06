@@ -12,6 +12,8 @@ struct ProjectDetailView: View {
     @Environment(\.dismiss) var dismiss
     // State to control the presentation of the project editor sheet
     @State private var showingEditSheet = false
+    @State private var showingTemplateCreatedAlert = false
+    @State private var createdTemplateName = ""
 
     // Date formatter for displaying dates clearly
     private let dateFormatter: DateFormatter = {
@@ -91,11 +93,25 @@ struct ProjectDetailView: View {
         .navigationTitle(project.title) // Set navigation title to project title
         .navigationBarTitleDisplayMode(.inline)
         .preferredColorScheme(.dark)
-        // Add Toolbar for Edit button
+        // Add Toolbar for Edit button and Menu
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
-                Button("Edit") {
-                    showingEditSheet = true
+                HStack(spacing: 16) {
+                    // Menu for additional options
+                    Menu {
+                        Button {
+                            createTemplateFromProject()
+                        } label: {
+                            Label("Create Template from Project", systemImage: "doc.badge.plus")
+                        }
+                    } label: {
+                        Image(systemName: "ellipsis.circle")
+                    }
+                    
+                    // Edit button
+                    Button("Edit") {
+                        showingEditSheet = true
+                    }
                 }
             }
         }
@@ -103,6 +119,12 @@ struct ProjectDetailView: View {
         .sheet(isPresented: $showingEditSheet, onDismiss: updateLocalProject) {
             ProjectEditorView(viewModel: viewModel,
                               projectToEditID: project.id)
+        }
+        // Alert for template creation success
+        .alert("Template Created", isPresented: $showingTemplateCreatedAlert) {
+            Button("OK") { }
+        } message: {
+            Text("Template '\(createdTemplateName)' has been created successfully.")
         }
     }
 
@@ -157,6 +179,13 @@ extension ProjectDetailView {
             return nil
         }
         return try? templateDef.offset.calculateDate(from: project.finalDeadlineDate)
+    }
+    
+    /// Creates a new template based on the current project
+    private func createTemplateFromProject() {
+        let templateName = viewModel.createTemplateFromProject(project)
+        createdTemplateName = templateName
+        showingTemplateCreatedAlert = true
     }
 }
 // MARK: - Preview Provider

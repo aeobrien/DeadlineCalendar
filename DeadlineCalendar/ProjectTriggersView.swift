@@ -4,6 +4,14 @@ import SwiftUI
 struct ProjectTriggersView: View {
     @ObservedObject var viewModel: DeadlineViewModel
     let project: Project                         // Injected from parent list
+    
+    // Date formatter for trigger display
+    private let dateFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .medium
+        formatter.timeStyle = .none
+        return formatter
+    }()
 
     /// Template order lookup so rows appear in the same order set in **Edit Template**.
     private var templateOrder: [UUID: Int] {
@@ -16,19 +24,20 @@ struct ProjectTriggersView: View {
         )
     }
 
-    /// All triggers, sorted by template order (fallback: alphabetic).
+    /// All triggers, sorted chronologically by date.
     private var allTriggers: [Trigger] {
         let triggers = viewModel.triggers(for: project.id)
-            .sorted {
-                let first = templateOrder[$0.originatingTemplateTriggerID ?? UUID()] ?? Int.max
-                let second = templateOrder[$1.originatingTemplateTriggerID ?? UUID()] ?? Int.max
-                return first == second ? $0.name < $1.name : first < second
+            .sorted { first, second in
+                // Handle nil dates (put them at the end)
+                guard let firstDate = first.date else { return false }
+                guard let secondDate = second.date else { return true }
+                return firstDate < secondDate
             }
         
         // Debug output
         print("ProjectTriggersView: Project '\(project.title)' has \(triggers.count) triggers:")
         for trigger in triggers {
-            print("  - Trigger '\(trigger.name)': isActive = \(trigger.isActive), activationDate = \(trigger.activationDate?.description ?? "nil")")
+            print("  - Trigger '\(trigger.name)': isActive = \(trigger.isActive), date = \(trigger.date?.description ?? "nil")")
         }
         
         return triggers
@@ -49,14 +58,23 @@ struct ProjectTriggersView: View {
                             viewModel.activateTrigger(triggerID: trig.id)
                         }
                     } label: {
-                        HStack {
-                            Text(trig.name)
-                                .strikethrough(trig.isActive, color: .gray)         // crosses out when activated
-                                .foregroundColor(trig.isActive ? .gray : .primary)
-                                .opacity(trig.isActive ? 0.6 : 1.0)
-                            Spacer()
-                            Image(systemName: trig.isActive ? "checkmark.circle" : "play.circle")
-                                .foregroundColor(trig.isActive ? .green : .blue)
+                        VStack(alignment: .leading, spacing: 4) {
+                            HStack {
+                                Text(trig.name)
+                                    .strikethrough(trig.isActive, color: .gray)         // crosses out when activated
+                                    .foregroundColor(trig.isActive ? .gray : .primary)
+                                    .opacity(trig.isActive ? 0.6 : 1.0)
+                                Spacer()
+                                Image(systemName: trig.isActive ? "checkmark.circle" : "play.circle")
+                                    .foregroundColor(trig.isActive ? .green : .blue)
+                            }
+                            
+                            // Show trigger date
+                            if let triggerDate = trig.date {
+                                Text("Due: \(triggerDate, formatter: dateFormatter)")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                            }
                         }
                         .padding(.vertical, 4)
                     }

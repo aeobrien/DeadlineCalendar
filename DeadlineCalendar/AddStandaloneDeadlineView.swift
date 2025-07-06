@@ -71,7 +71,7 @@ struct AddStandaloneDeadlineView: View {
         )
         
         // Add the deadline using the view model.
-        self.viewModel.addStandaloneDeadline(newDeadline)
+        viewModel.addStandaloneDeadline(newDeadline)
         
         print("AddStandaloneDeadlineView: Saved standalone deadline '\(newDeadline.title)' for date \(newDeadline.date)")
         

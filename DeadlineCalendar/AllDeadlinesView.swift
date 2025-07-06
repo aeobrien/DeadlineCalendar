@@ -7,10 +7,12 @@ struct DeadlineListItem: Identifiable, Hashable {
     let id = UUID()                                   // Row identity only – *not* the sub‑deadline ID
     let projectID: UUID                               // Owning project (stand‑ins included)
     let projectName: String                           // Display name for project
-    let subDeadlineID: UUID                           // Actual SubDeadline ID – used for editing actions
+    let subDeadlineID: UUID?                          // Actual SubDeadline ID – used for editing actions (nil for triggers)
     let subDeadlineTitle: String                      // Title shown in the list
     let subDeadlineDate: Date                         // When it is due
     let isSubDeadlineCompleted: Bool                  // Needed so we can grey out completed ones
+    let triggerID: UUID?                              // Actual Trigger ID if this is a trigger
+    let isTrigger: Bool                               // True if this item represents a trigger
 }
 
 /// Wrapper used so we can present the project editor via `.sheet(item:)`.
@@ -38,6 +40,10 @@ struct AllDeadlinesView: View {
     @State private var showingAddStandaloneDeadlineSheet = false // Presents `AddStandaloneDeadlineView`
     @State private var showingAddProjectSheet = false            // Presents `AddProjectView`
     @State private var showingCompletedDeadlinesSheet = false     // Presents completed deadlines view
+    
+    // Timer for refreshing date calculations
+    @State private var refreshTimer: Timer?
+    @State private var currentTime = Date()
 
     // MARK: – Derived data
 
@@ -45,6 +51,7 @@ struct AllDeadlinesView: View {
     private var allDeadlinesSorted: [DeadlineListItem] {
         var items: [DeadlineListItem] = []
 
+        // Add sub-deadlines
         for project in viewModel.projects {
             for sub in project.subDeadlines {
                 guard !sub.isCompleted, viewModel.isSubDeadlineActive(sub) else { continue }
@@ -53,9 +60,29 @@ struct AllDeadlinesView: View {
                                              subDeadlineID: sub.id,
                                              subDeadlineTitle: sub.title,
                                              subDeadlineDate: sub.date,
-                                             isSubDeadlineCompleted: sub.isCompleted))
+                                             isSubDeadlineCompleted: sub.isCompleted,
+                                             triggerID: nil,
+                                             isTrigger: false))
             }
         }
+        
+        // Add triggers that are not yet activated
+        for trigger in viewModel.triggers {
+            guard !trigger.isActive else { continue }
+            // Skip triggers without dates (old triggers)
+            guard let triggerDate = trigger.date else { continue }
+            if let project = viewModel.projects.first(where: { $0.id == trigger.projectID }) {
+                items.append(DeadlineListItem(projectID: project.id,
+                                             projectName: project.title,
+                                             subDeadlineID: nil,
+                                             subDeadlineTitle: trigger.name,
+                                             subDeadlineDate: triggerDate,
+                                             isSubDeadlineCompleted: false,
+                                             triggerID: trigger.id,
+                                             isTrigger: true))
+            }
+        }
+        
         return items.sorted { $0.subDeadlineDate < $1.subDeadlineDate }
     }
 
@@ -119,6 +146,17 @@ struct AllDeadlinesView: View {
             .preferredColorScheme(.dark)
         }
         .navigationViewStyle(.stack)
+        .onAppear {
+            // Set up timer to refresh every minute to keep date calculations fresh
+            refreshTimer = Timer.scheduledTimer(withTimeInterval: 60, repeats: true) { _ in
+                currentTime = Date()
+            }
+        }
+        .onDisappear {
+            // Clean up timer when view disappears
+            refreshTimer?.invalidate()
+            refreshTimer = nil
+        }
         //------------------------------------------------------------------
         //  SHEETS
         //------------------------------------------------------------------
@@ -147,6 +185,12 @@ struct AllDeadlinesView: View {
                 .fill(stripColor(for: item.subDeadlineDate))
                 .frame(width: 5)
 
+            // Icon for triggers
+            if item.isTrigger {
+                Image(systemName: "play.circle")
+                    .foregroundColor(.blue)
+            }
+            
             // title
             Text(item.projectID == DeadlineViewModel.standaloneProjectID ? item.subDeadlineTitle : "\(item.projectName) \(item.subDeadlineTitle)")
                 .fontWeight(.medium)
@@ -166,15 +210,21 @@ struct AllDeadlinesView: View {
                 selectedProjectID = item.projectID
                 navigateToProject = true
             }
-            Button("Edit Deadline") {
-                editSheetParameters = EditSheetParameters(projectID: item.projectID, subDeadlineID: item.subDeadlineID)
+            if !item.isTrigger {
+                Button("Edit Deadline") {
+                    editSheetParameters = EditSheetParameters(projectID: item.projectID, subDeadlineID: item.subDeadlineID)
+                }
             }
         }
         .swipeActions(edge: .leading, allowsFullSwipe: true) {
             Button {
                 complete(item)
             } label: {
-                Label("Complete", systemImage: "checkmark.circle.fill")
+                if item.isTrigger {
+                    Label("Activate", systemImage: "play.circle.fill")
+                } else {
+                    Label("Complete", systemImage: "checkmark.circle.fill")
+                }
             }.tint(.green)
         }
         .swipeActions(edge: .trailing, allowsFullSwipe: true) {
@@ -189,13 +239,32 @@ struct AllDeadlinesView: View {
     // MARK: – Row actions
 
     private func complete(_ item: DeadlineListItem) {
-        guard let project = viewModel.projects.first(where: { $0.id == item.projectID }),
-              let sub = project.subDeadlines.first(where: { $0.id == item.subDeadlineID }) else { return }
-        viewModel.toggleSubDeadlineCompletion(sub, in: project)
+        if item.isTrigger {
+            // Activate the trigger
+            if let triggerID = item.triggerID {
+                viewModel.activateTrigger(triggerID: triggerID)
+            }
+        } else {
+            // Complete the sub-deadline
+            guard let project = viewModel.projects.first(where: { $0.id == item.projectID }),
+                  let subID = item.subDeadlineID,
+                  let sub = project.subDeadlines.first(where: { $0.id == subID }) else { return }
+            viewModel.toggleSubDeadlineCompletion(sub, in: project)
+        }
     }
 
     private func delete(_ item: DeadlineListItem) {
-        viewModel.deleteSubDeadline(subDeadlineID: item.subDeadlineID, fromProjectID: item.projectID)
+        if item.isTrigger {
+            // Delete the trigger
+            if let triggerID = item.triggerID {
+                viewModel.deleteTrigger(triggerID: triggerID)
+            }
+        } else {
+            // Delete the sub-deadline
+            if let subID = item.subDeadlineID {
+                viewModel.deleteSubDeadline(subDeadlineID: subID, fromProjectID: item.projectID)
+            }
+        }
     }
 
     // MARK: – Navigation destination helper
@@ -213,14 +282,14 @@ struct AllDeadlinesView: View {
 
     private func dateColor(for date: Date, isCompleted: Bool) -> Color {
         if isCompleted { return .gray }
-        if date < Calendar.current.startOfDay(for: Date()) { return .red }
+        if date < Calendar.current.startOfDay(for: currentTime) { return .red }
         if Calendar.current.isDateInToday(date) { return .orange }
         return .primary
     }
 
     private func daysRemaining(until date: Date) -> Int {
         let cal = Calendar.current
-        return cal.dateComponents([.day], from: cal.startOfDay(for: Date()), to: cal.startOfDay(for: date)).day ?? 0
+        return cal.dateComponents([.day], from: cal.startOfDay(for: currentTime), to: cal.startOfDay(for: date)).day ?? 0
     }
 
     private func stripColor(for date: Date) -> Color {

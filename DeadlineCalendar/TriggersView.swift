@@ -16,7 +16,7 @@ struct TriggersView: View {
 
     /// Pending-count helper
     private func pendingCount(for project: Project) -> Int {
-        project.triggers.filter { !$0.isActive }.count
+        viewModel.triggers(for: project.id).filter { !$0.isActive }.count
     }
 
     var body: some View {

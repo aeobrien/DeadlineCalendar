@@ -17,7 +17,9 @@ struct CompletedDeadlinesView: View {
                     subDeadlineID: sub.id,
                     subDeadlineTitle: sub.title,
                     subDeadlineDate: sub.date,
-                    isSubDeadlineCompleted: sub.isCompleted
+                    isSubDeadlineCompleted: sub.isCompleted,
+                    triggerID: nil,
+                    isTrigger: false
                 ))
             }
         }

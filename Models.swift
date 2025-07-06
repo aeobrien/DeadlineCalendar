@@ -70,10 +70,12 @@ struct TimeOffset: Codable, Equatable, Hashable {
 struct TemplateTrigger: Identifiable, Codable, Equatable, Hashable {
     let id: UUID // Unique ID *within the template*
     var name: String
+    var offset: TimeOffset // Time offset for when this trigger is due
 
-    init(id: UUID = UUID(), name: String) {
+    init(id: UUID = UUID(), name: String, offset: TimeOffset = TimeOffset()) {
         self.id = id
         self.name = name
+        self.offset = offset
     }
 }
 
@@ -86,12 +88,14 @@ struct Trigger: Identifiable, Codable, Equatable, Hashable {
     let projectID: UUID       // Which project this trigger belongs to
     var activationDate: Date? // Optional: Record when it was activated
     var originatingTemplateTriggerID: UUID? // <-- ADDED: Link to TemplateTrigger.id
+    var date: Date? // The calculated date when this trigger is due (optional for backwards compatibility)
 
     // Update Initializer
-    init(id: UUID = UUID(), name: String, projectID: UUID, isActive: Bool = false, activationDate: Date? = nil, originatingTemplateTriggerID: UUID? = nil) {
+    init(id: UUID = UUID(), name: String, projectID: UUID, date: Date? = nil, isActive: Bool = false, activationDate: Date? = nil, originatingTemplateTriggerID: UUID? = nil) {
         self.id = id
         self.name = name
         self.projectID = projectID
+        self.date = date
         self.isActive = isActive
         self.activationDate = activationDate
         self.originatingTemplateTriggerID = originatingTemplateTriggerID // <-- Assign param
@@ -160,8 +164,8 @@ struct Template: Identifiable, Codable, Equatable {
             TemplateSubDeadline(id: UUID(), title: "Final Delivery", offset: TimeOffset(value: 1, unit: .weeks, before: true), templateTriggerID: exampleTrigger2ID)
         ],
         templateTriggers: [ // <-- Add example triggers
-            TemplateTrigger(id: exampleTrigger1ID, name: "Animation Complete"), // Assign ID for linking
-            TemplateTrigger(id: exampleTrigger2ID, name: "Client Feedback Received")
+            TemplateTrigger(id: exampleTrigger1ID, name: "Animation Complete", offset: TimeOffset(value: 3, unit: .weeks, before: true)), // Assign ID for linking
+            TemplateTrigger(id: exampleTrigger2ID, name: "Client Feedback Received", offset: TimeOffset(value: 1, unit: .weeks, before: true))
         ]
     )
 }
