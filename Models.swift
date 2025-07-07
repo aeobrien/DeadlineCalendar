@@ -276,12 +276,130 @@ struct Project: Identifiable, Codable, Equatable {
 struct BackupData: Codable {
     var projects: [Project]
     var templates: [Template]
-    // Add other top-level data arrays if needed (e.g., if Triggers exist outside Projects)
-    // var triggers: [Trigger] // Only if triggers are stored independently
-
+    var triggers: [Trigger] // Include triggers in backup
+    var appSettings: AppSettings // Include app settings in backup
+    
     // Add an initializer if you need default values or specific setup
-    init(projects: [Project] = [], templates: [Template] = []) {
+    init(projects: [Project] = [], templates: [Template] = [], triggers: [Trigger] = [], appSettings: AppSettings = AppSettings()) {
         self.projects = projects
         self.templates = templates
+        self.triggers = triggers
+        self.appSettings = appSettings
     }
+}
+
+// MARK: - Settings Models
+
+// MARK: - Color Settings Model
+// Manages the time periods for urgency color assignment
+struct ColorSettings: Codable, Equatable {
+    var greenThreshold: Int = 21    // Days until deadline for green color (>= this value)
+    var orangeThreshold: Int = 7    // Days until deadline for orange color (>= this value)
+    var redThreshold: Int = 0       // Days until deadline for red color (< orange threshold)
+    
+    // Default initializer
+    init() {}
+    
+    // Custom initializer
+    init(greenThreshold: Int, orangeThreshold: Int, redThreshold: Int = 0) {
+        self.greenThreshold = greenThreshold
+        self.orangeThreshold = orangeThreshold
+        self.redThreshold = redThreshold
+    }
+    
+    // Validation to ensure thresholds make sense
+    var isValid: Bool {
+        return greenThreshold > orangeThreshold && orangeThreshold >= redThreshold
+    }
+    
+    // Static default for easy access
+    static let defaultSettings = ColorSettings()
+}
+
+// MARK: - Notification Format Settings Model
+// Manages the format template for notifications
+struct NotificationFormatSettings: Codable, Equatable {
+    var titleFormat: String = "Upcoming Deadlines"
+    var itemFormat: String = "{index}. {title} - {timeRemaining}"
+    var showProjectName: Bool = true
+    var showDate: Bool = false
+    var dateFormat: String = "MMM d"
+    var maxItems: Int = 3
+    
+    // Available placeholders for reference
+    static let availablePlaceholders = [
+        "{index}": "Item number (1, 2, 3, etc.)",
+        "{title}": "Deadline title",
+        "{projectName}": "Project name",
+        "{timeRemaining}": "Time until deadline (e.g., 'Today', 'Tomorrow', 'In 5 days')",
+        "{date}": "Due date formatted according to dateFormat setting",
+        "{daysLeft}": "Number of days remaining"
+    ]
+    
+    // Default initializer
+    init() {}
+    
+    // Custom initializer
+    init(titleFormat: String, itemFormat: String, showProjectName: Bool = true, showDate: Bool = false, dateFormat: String = "MMM d", maxItems: Int = 3) {
+        self.titleFormat = titleFormat
+        self.itemFormat = itemFormat
+        self.showProjectName = showProjectName
+        self.showDate = showDate
+        self.dateFormat = dateFormat
+        self.maxItems = maxItems
+    }
+    
+    // Static default for easy access
+    static let defaultSettings = NotificationFormatSettings()
+    
+    // Format a notification item using the template
+    func formatItem(index: Int, title: String, projectName: String?, date: Date, timeRemaining: String, daysLeft: Int) -> String {
+        var formatted = itemFormat
+        
+        // Replace placeholders
+        formatted = formatted.replacingOccurrences(of: "{index}", with: "\(index)")
+        formatted = formatted.replacingOccurrences(of: "{title}", with: title)
+        formatted = formatted.replacingOccurrences(of: "{timeRemaining}", with: timeRemaining)
+        formatted = formatted.replacingOccurrences(of: "{daysLeft}", with: "\(daysLeft)")
+        
+        // Handle project name
+        if showProjectName, let projectName = projectName {
+            formatted = formatted.replacingOccurrences(of: "{projectName}", with: projectName)
+        } else {
+            formatted = formatted.replacingOccurrences(of: "{projectName}", with: "")
+        }
+        
+        // Handle date formatting
+        if showDate {
+            let formatter = DateFormatter()
+            formatter.dateFormat = dateFormat
+            let formattedDate = formatter.string(from: date)
+            formatted = formatted.replacingOccurrences(of: "{date}", with: formattedDate)
+        } else {
+            formatted = formatted.replacingOccurrences(of: "{date}", with: "")
+        }
+        
+        // Clean up any double spaces or trailing/leading spaces
+        formatted = formatted.replacingOccurrences(of: "  ", with: " ")
+        return formatted.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+}
+
+// MARK: - App Settings Container
+// Container for all app settings
+struct AppSettings: Codable, Equatable {
+    var colorSettings: ColorSettings = ColorSettings()
+    var notificationFormatSettings: NotificationFormatSettings = NotificationFormatSettings()
+    
+    // Default initializer
+    init() {}
+    
+    // Custom initializer
+    init(colorSettings: ColorSettings, notificationFormatSettings: NotificationFormatSettings) {
+        self.colorSettings = colorSettings
+        self.notificationFormatSettings = notificationFormatSettings
+    }
+    
+    // Static default for easy access
+    static let defaultSettings = AppSettings()
 }

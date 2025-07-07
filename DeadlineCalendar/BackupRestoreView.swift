@@ -16,139 +16,136 @@ struct BackupRestoreView: View {
     @AppStorage("notificationFrequency") private var notificationFrequency = 1 // Days between notifications
     @AppStorage("notificationDeadlineCount") private var notificationDeadlineCount = 3 // Number of deadlines to show
     @State private var notificationTime = Date() // Time of day for notifications
+    
+    // Computed bindings for color settings to avoid complex expressions
+    private var greenThresholdBinding: Binding<Int> {
+        Binding(
+            get: { viewModel.appSettings.colorSettings.greenThreshold },
+            set: { newValue in
+                var settings = viewModel.appSettings.colorSettings
+                settings.greenThreshold = newValue
+                viewModel.updateColorSettings(settings)
+            }
+        )
+    }
+    
+    private var orangeThresholdBinding: Binding<Int> {
+        Binding(
+            get: { viewModel.appSettings.colorSettings.orangeThreshold },
+            set: { newValue in
+                var settings = viewModel.appSettings.colorSettings
+                settings.orangeThreshold = newValue
+                viewModel.updateColorSettings(settings)
+            }
+        )
+    }
+    
+    // Computed bindings for notification format settings
+    private var titleFormatBinding: Binding<String> {
+        Binding(
+            get: { viewModel.appSettings.notificationFormatSettings.titleFormat },
+            set: { newValue in
+                var settings = viewModel.appSettings.notificationFormatSettings
+                settings.titleFormat = newValue
+                viewModel.updateNotificationFormatSettings(settings)
+            }
+        )
+    }
+    
+    private var itemFormatBinding: Binding<String> {
+        Binding(
+            get: { viewModel.appSettings.notificationFormatSettings.itemFormat },
+            set: { newValue in
+                var settings = viewModel.appSettings.notificationFormatSettings
+                settings.itemFormat = newValue
+                viewModel.updateNotificationFormatSettings(settings)
+            }
+        )
+    }
+    
+    private var showProjectNameBinding: Binding<Bool> {
+        Binding(
+            get: { viewModel.appSettings.notificationFormatSettings.showProjectName },
+            set: { newValue in
+                var settings = viewModel.appSettings.notificationFormatSettings
+                settings.showProjectName = newValue
+                viewModel.updateNotificationFormatSettings(settings)
+            }
+        )
+    }
+    
+    private var showDateBinding: Binding<Bool> {
+        Binding(
+            get: { viewModel.appSettings.notificationFormatSettings.showDate },
+            set: { newValue in
+                var settings = viewModel.appSettings.notificationFormatSettings
+                settings.showDate = newValue
+                viewModel.updateNotificationFormatSettings(settings)
+            }
+        )
+    }
+    
+    private var dateFormatBinding: Binding<String> {
+        Binding(
+            get: { viewModel.appSettings.notificationFormatSettings.dateFormat },
+            set: { newValue in
+                var settings = viewModel.appSettings.notificationFormatSettings
+                settings.dateFormat = newValue
+                viewModel.updateNotificationFormatSettings(settings)
+            }
+        )
+    }
 
+    // MARK: – Body
     var body: some View {
         NavigationView {
             ScrollView {
                 VStack(spacing: 30) {
-                    // --- Notification Settings Section ---
-                    VStack(alignment: .leading, spacing: 10) {
-                        Text("Notifications")
-                            .font(.title2).fontWeight(.semibold)
-                        
-                        // Frequency picker
-                        HStack {
-                            Text("Frequency")
-                                .font(.subheadline)
-                            Spacer()
-                            Picker("", selection: $notificationFrequency) {
-                                Text("Daily").tag(1)
-                                Text("Every 2 days").tag(2)
-                                Text("Every 3 days").tag(3)
-                                Text("Weekly").tag(7)
-                            }
-                            .pickerStyle(.menu)
-                        }
-                        
-                        // Number of deadlines picker
-                        HStack {
-                            Text("Show deadlines")
-                                .font(.subheadline)
-                            Spacer()
-                            Picker("", selection: $notificationDeadlineCount) {
-                                ForEach(1...10, id: \.self) { count in
-                                    Text("\(count)").tag(count)
-                                }
-                            }
-                            .pickerStyle(.menu)
-                        }
-                        
-                        // Time picker
-                        DatePicker("Notification time", 
-                                 selection: $notificationTime,
-                                 displayedComponents: .hourAndMinute)
-                            .font(.subheadline)
-                        
-                        // Test notification button
-                        Button {
-                            testNotification()
-                        } label: {
-                            Label("Test Notification", systemImage: "bell")
-                                .frame(maxWidth: .infinity)
-                        }
-                        .buttonStyle(.borderedProminent)
-                        .tint(.purple)
-                    }
-                    .padding()
-                    .background(Color(.secondarySystemBackground))
-                    .cornerRadius(10)
-                    
-                    // --- Export Section ---
-                VStack(alignment: .leading, spacing: 10) {
-                    Text("Export Data")
-                        .font(.title2).fontWeight(.semibold)
-                    Text("Copies all your current projects and templates to the clipboard as text. Paste this text somewhere safe to create a backup.")
-                        .font(.subheadline)
-                        .foregroundColor(.gray)
-                    Button {
-                        exportAction()
-                    } label: {
-                        Label("Export to Clipboard", systemImage: "doc.on.clipboard")
-                            .frame(maxWidth: .infinity) // Make button wide
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .tint(.blue) // Style the button
+                    ColorSettingsSection(viewModel: viewModel)
+                    NotificationFormatSection(viewModel: viewModel)
+                    NotificationSettingsSection(
+                        notificationFrequency: $notificationFrequency,
+                        notificationDeadlineCount: $notificationDeadlineCount,
+                        notificationTime: $notificationTime,
+                        testAction: testNotification
+                    )
+                    ExportSection(exportAction: exportAction)
+                    ImportSection(importAction: importAction)
                 }
                 .padding()
-                .background(Color(.secondarySystemBackground)) // Subtle background
-                .cornerRadius(10)
-
-                // --- Import Section ---
-                VStack(alignment: .leading, spacing: 10) {
-                    Text("Import Data")
-                        .font(.title2).fontWeight(.semibold)
-                    Text("Restores projects and templates from text copied to the clipboard. WARNING: This will permanently replace ALL current projects and templates.")
-                        .font(.subheadline)
-                        .foregroundColor(.gray)
-                    Button {
-                        importAction()
-                    } label: {
-                        Label("Import from Clipboard", systemImage: "clipboard.fill")
-                            .frame(maxWidth: .infinity)
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .tint(.orange) // Use a different color for caution
-                }
-                .padding()
-                .background(Color(.secondarySystemBackground))
-                .cornerRadius(10)
-
-                }
-                .padding() // Padding around the main VStack
             }
             .navigationTitle("Settings")
-            .preferredColorScheme(.dark) // Maintain dark mode
+            .preferredColorScheme(.dark)
+            // Global alert handler
             .alert(isPresented: $showingAlert) {
-                Alert(title: Text(alertTitle), message: Text(alertMessage), dismissButton: .default(Text("OK")))
+                Alert(title: Text(alertTitle),
+                      message: Text(alertMessage),
+                      dismissButton: .default(Text("OK")))
             }
-            .onChange(of: notificationFrequency) { _ in
+            // Keep notifications up-to-date
+            .onChange(of: notificationFrequency)      { _ in viewModel.updateNotifications() }
+            .onChange(of: notificationDeadlineCount) { _ in viewModel.updateNotifications() }
+            .onChange(of: notificationTime) { new in
+                UserDefaults.standard.set(new, forKey: "notificationTime")
                 viewModel.updateNotifications()
             }
-            .onChange(of: notificationDeadlineCount) { _ in
-                viewModel.updateNotifications()
-            }
-            .onChange(of: notificationTime) { newTime in
-                // Save time to UserDefaults
-                UserDefaults.standard.set(newTime, forKey: "notificationTime")
-                viewModel.updateNotifications()
-            }
-            .onAppear {
-                // Load saved notification time
-                if let savedTime = UserDefaults.standard.object(forKey: "notificationTime") as? Date {
-                    notificationTime = savedTime
-                } else {
-                    // Default to 9:30 AM
-                    var components = Calendar.current.dateComponents([.year, .month, .day], from: Date())
-                    components.hour = 9
-                    components.minute = 30
-                    if let defaultTime = Calendar.current.date(from: components) {
-                        notificationTime = defaultTime
-                    }
-                }
-            }
+            .onAppear(perform: loadSavedTime)
         }
-        .navigationViewStyle(.stack) // Use stack style
+        .navigationViewStyle(.stack)
     }
+
+    // Loads persisted notification time or falls back to 09:30
+    private func loadSavedTime() {
+        if let saved = UserDefaults.standard.object(forKey: "notificationTime") as? Date {
+            notificationTime = saved
+        } else {
+            var comps = Calendar.current.dateComponents([.year, .month, .day], from: Date())
+            comps.hour   = 9
+            comps.minute = 30
+            notificationTime = Calendar.current.date(from: comps) ?? Date()
+        }
+    }
+
 
     // MARK: - Actions
     
@@ -176,17 +173,11 @@ struct BackupRestoreView: View {
                     return
                 }
                 
-                // Create notification content
+                // Create notification content using the formatted settings
                 let content = UNMutableNotificationContent()
-                content.title = "Upcoming Deadlines"
-                
-                var bodyText = ""
-                for (index, deadline) in upcomingDeadlines.enumerated() {
-                    let daysUntil = Calendar.current.dateComponents([.day], from: Date(), to: deadline.date).day ?? 0
-                    let dayText = daysUntil == 0 ? "Today" : daysUntil == 1 ? "Tomorrow" : "In \(daysUntil) days"
-                    bodyText += "\(index + 1). \(deadline.title) - \(dayText)\n"
-                }
-                content.body = bodyText.trimmingCharacters(in: .whitespacesAndNewlines)
+                let formattedContent = self.viewModel.formatNotificationContent(for: upcomingDeadlines)
+                content.title = formattedContent.title
+                content.body = formattedContent.body
                 content.sound = .default
                 
                 // Create trigger for 2 seconds from now (shorter delay)
@@ -219,14 +210,15 @@ struct BackupRestoreView: View {
     private func exportAction() {
         print("BackupRestoreView: Export button tapped.")
         do {
-            // Pass the current projects, templates, AND triggers from the ViewModel
+            // Pass the current projects, templates, triggers, AND settings from the ViewModel
             try BackupManager.exportData(projects: viewModel.projects, 
                                          templates: viewModel.templates, 
-                                         triggers: viewModel.triggers)
+                                         triggers: viewModel.triggers,
+                                         appSettings: viewModel.appSettings)
             print("BackupRestoreView: Export successful.")
             // Show success alert
             alertTitle = "Export Successful"
-            alertMessage = "All projects, templates, and triggers have been copied to your clipboard."
+            alertMessage = "All projects, templates, triggers, and settings have been copied to your clipboard."
             showingAlert = true
         } catch let error as BackupError {
             print("BackupRestoreView: Export failed. Error: \(error.localizedDescription)")
@@ -252,22 +244,25 @@ struct BackupRestoreView: View {
             print("  Projects: \(importedData.projects.count)")
             print("  Templates: \(importedData.templates.count)")
             print("  Triggers: \(importedData.triggers.count)")
+            print("  App Settings: imported")
 
             // 2. Replace ViewModel data 
             viewModel.projects = importedData.projects
             viewModel.templates = importedData.templates
             viewModel.triggers = importedData.triggers // <-- Assign the reconstructed triggers
+            viewModel.appSettings = importedData.appSettings // <-- Assign the imported settings
 
             // 3. Save the new data via ViewModel's save functions
             viewModel.saveProjects()
             viewModel.saveTemplates()
             viewModel.saveTriggers() // <-- Save the triggers
+            viewModel.saveAppSettings() // <-- Save the settings
 
             print("BackupRestoreView: Import successful. ViewModel data replaced and saved.")
 
             // 4. Show success alert
             alertTitle = "Import Successful"
-            alertMessage = "Successfully restored \(importedData.projects.count) projects, \(importedData.templates.count) templates, and \(importedData.triggers.count) triggers from the clipboard. All previous data has been replaced."
+            alertMessage = "Successfully restored \(importedData.projects.count) projects, \(importedData.templates.count) templates, \(importedData.triggers.count) triggers, and settings from the clipboard. All previous data has been replaced."
             showingAlert = true
 
         } catch let error as BackupError {
@@ -284,6 +279,241 @@ struct BackupRestoreView: View {
     }
 }
 
+
+// MARK: - Colour settings
+private struct ColorSettingsSection: View {
+    @ObservedObject var viewModel: DeadlineViewModel
+    private var green: Binding<Int> {
+        Binding(get: { viewModel.appSettings.colorSettings.greenThreshold },
+                set: { n in var s = viewModel.appSettings.colorSettings; s.greenThreshold = n; viewModel.updateColorSettings(s) })
+    }
+    private var orange: Binding<Int> {
+        Binding(get: { viewModel.appSettings.colorSettings.orangeThreshold },
+                set: { n in var s = viewModel.appSettings.colorSettings; s.orangeThreshold = n; viewModel.updateColorSettings(s) })
+    }
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("Deadline Colours").font(.title2).fontWeight(.semibold)
+            Text("Customise when deadlines change colour based on days remaining")
+                .font(.subheadline).foregroundColor(.gray)
+
+            HStack {
+                Text("Green (safe)")
+                Spacer()
+                Text("≥")
+                Stepper("\(viewModel.appSettings.colorSettings.greenThreshold) days",
+                        value: green, in: 8...90)
+            }
+
+            HStack {
+                Text("Orange (warning)")
+                Spacer()
+                Text("≥")
+                Stepper(
+                    "\(viewModel.appSettings.colorSettings.orangeThreshold) days",
+                    value: orange,
+                    in: 1...(viewModel.appSettings.colorSettings.greenThreshold - 1) // ✅ ClosedRange<Int>
+                )
+            }
+
+
+
+            HStack {
+                Text("Red (urgent)")
+                Spacer()
+                Text("< \(viewModel.appSettings.colorSettings.orangeThreshold) days")
+                    .foregroundColor(.gray)
+            }
+
+            // Tiny preview
+            HStack {
+                Text("Preview:")
+                Spacer()
+                Label("Safe",    systemImage: "circle.fill").foregroundColor(.green).font(.caption)
+                Label("Warning", systemImage: "circle.fill").foregroundColor(.orange).font(.caption)
+                Label("Urgent",  systemImage: "circle.fill").foregroundColor(.red).font(.caption)
+            }
+        }
+        .padding()
+        .background(Color(.secondarySystemBackground))
+        .cornerRadius(10)
+    }
+}
+
+// MARK: - Notification format
+private struct NotificationFormatSection: View {
+    @ObservedObject var viewModel: DeadlineViewModel
+    private var title: Binding<String> {
+        Binding(get: { viewModel.appSettings.notificationFormatSettings.titleFormat },
+                set: { t in var s = viewModel.appSettings.notificationFormatSettings; s.titleFormat = t; viewModel.updateNotificationFormatSettings(s) })
+    }
+    private var item: Binding<String> {
+        Binding(get: { viewModel.appSettings.notificationFormatSettings.itemFormat },
+                set: { v in var s = viewModel.appSettings.notificationFormatSettings; s.itemFormat = v; viewModel.updateNotificationFormatSettings(s) })
+    }
+    private var showProject: Binding<Bool> {
+        Binding(get: { viewModel.appSettings.notificationFormatSettings.showProjectName },
+                set: { v in var s = viewModel.appSettings.notificationFormatSettings; s.showProjectName = v; viewModel.updateNotificationFormatSettings(s) })
+    }
+    private var showDate: Binding<Bool> {
+        Binding(get: { viewModel.appSettings.notificationFormatSettings.showDate },
+                set: { v in var s = viewModel.appSettings.notificationFormatSettings; s.showDate = v; viewModel.updateNotificationFormatSettings(s) })
+    }
+    private var dateFmt: Binding<String> {
+        Binding(get: { viewModel.appSettings.notificationFormatSettings.dateFormat },
+                set: { v in var s = viewModel.appSettings.notificationFormatSettings; s.dateFormat = v; viewModel.updateNotificationFormatSettings(s) })
+    }
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("Notification Format").font(.title2).fontWeight(.semibold)
+            Text("Customise how notification content is formatted")
+                .font(.subheadline).foregroundColor(.gray)
+
+            Group {
+                Text("Notification Title").font(.subheadline)
+                TextField("Notification Title", text: title)
+                    .textFieldStyle(RoundedBorderTextFieldStyle())
+            }
+
+            Group {
+                Text("Item Format").font(.subheadline)
+                TextField("Item Format", text: item)
+                    .textFieldStyle(RoundedBorderTextFieldStyle())
+            }
+
+            Toggle("Show Project Name", isOn: showProject)
+            Toggle("Show Date",          isOn: showDate)
+
+            if viewModel.appSettings.notificationFormatSettings.showDate {
+                Group {
+                    Text("Date Format").font(.subheadline)
+                    TextField("Date Format", text: dateFmt)
+                        .textFieldStyle(RoundedBorderTextFieldStyle())
+                }
+            }
+
+            // Placeholder cheat-sheet
+            // Placeholder cheat-sheet
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Available Placeholders")
+                    .font(.subheadline).fontWeight(.semibold)
+
+                ForEach(NotificationFormatSettings.availablePlaceholders.keys.sorted(),
+                        id: \.self) { key in
+                    if let desc = NotificationFormatSettings.availablePlaceholders[key] {
+                        HStack(alignment: .top) {
+                            Text(key)
+                                .font(.system(.caption, design: .monospaced))
+                                .foregroundColor(.blue)
+                            Text("- \(desc)")
+                                .font(.caption)
+                                .foregroundColor(.gray)
+                        }
+                    }
+                }
+            }
+
+        }
+        .padding()
+        .background(Color(.secondarySystemBackground))
+        .cornerRadius(10)
+    }
+}
+
+// MARK: - Notification scheduling
+private struct NotificationSettingsSection: View {
+    @Binding var notificationFrequency: Int
+    @Binding var notificationDeadlineCount: Int
+    @Binding var notificationTime: Date
+    var testAction: () -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("Notifications").font(.title2).fontWeight(.semibold)
+
+            HStack {
+                Text("Frequency")
+                Spacer()
+                Picker("", selection: $notificationFrequency) {
+                    Text("Daily").tag(1)
+                    Text("Every 2 days").tag(2)
+                    Text("Every 3 days").tag(3)
+                    Text("Weekly").tag(7)
+                }
+                .pickerStyle(.menu)
+            }
+
+            HStack {
+                Text("Show deadlines")
+                Spacer()
+                Picker("", selection: $notificationDeadlineCount) {
+                    ForEach(1...10, id: \.self) { count in
+                        Text("\(count)").tag(count)
+                    }
+                }
+                .pickerStyle(.menu)
+            }
+
+
+            DatePicker("Notification time",
+                       selection: $notificationTime,
+                       displayedComponents: .hourAndMinute)
+
+            Button(action: testAction) {
+                Label("Test Notification", systemImage: "bell")
+                    .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.borderedProminent)
+            .tint(.purple)
+        }
+        .padding()
+        .background(Color(.secondarySystemBackground))
+        .cornerRadius(10)
+    }
+}
+
+// MARK: - Export widget
+private struct ExportSection: View {
+    var exportAction: () -> Void
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("Export Data").font(.title2).fontWeight(.semibold)
+            Text("Copies all your current projects and templates to the clipboard as text. Paste this text somewhere safe to create a backup.")
+                .font(.subheadline).foregroundColor(.gray)
+            Button(action: exportAction) {
+                Label("Export to Clipboard", systemImage: "doc.on.clipboard")
+                    .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.borderedProminent)
+            .tint(.blue)
+        }
+        .padding()
+        .background(Color(.secondarySystemBackground))
+        .cornerRadius(10)
+    }
+}
+
+// MARK: - Import widget
+private struct ImportSection: View {
+    var importAction: () -> Void
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("Import Data").font(.title2).fontWeight(.semibold)
+            Text("Restores projects and templates from text copied to the clipboard. WARNING: This will permanently replace ALL current projects and templates.")
+                .font(.subheadline).foregroundColor(.gray)
+            Button(action: importAction) {
+                Label("Import from Clipboard", systemImage: "clipboard.fill")
+                    .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.borderedProminent)
+            .tint(.orange)
+        }
+        .padding()
+        .background(Color(.secondarySystemBackground))
+        .cornerRadius(10)
+    }
+}
+
 // MARK: - Preview Provider
 struct BackupRestoreView_Previews: PreviewProvider {
     static var previews: some View {
@@ -291,4 +521,6 @@ struct BackupRestoreView_Previews: PreviewProvider {
         BackupRestoreView(viewModel: DeadlineViewModel())
              .preferredColorScheme(.dark)
     }
-} 
+}
+
+

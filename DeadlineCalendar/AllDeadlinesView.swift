@@ -293,12 +293,7 @@ struct AllDeadlinesView: View {
     }
 
     private func stripColor(for date: Date) -> Color {
-        switch daysRemaining(until: date) {
-        case ..<0:   return .red
-        case 0..<7:  return .red
-        case 7...21:return .orange
-        default:     return .green
-        }
+        return viewModel.getColorForDate(date)
     }
 
     private func daysRemainingText(for date: Date) -> String {

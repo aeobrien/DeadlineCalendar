@@ -99,20 +99,46 @@ struct DeadlineProvider: TimelineProvider {
         // Load data directly
         let subDeadlines = loadUpcomingSubDeadlines()
         
-        // Create a single timeline entry for the immediate future.
-        let entry = SubDeadlineEntry(date: Date(),
-                                     upcomingSubDeadlines: subDeadlines)
-
-        // Define when the next timeline update should occur.
-        // Refresh more frequently if desired, e.g., every 15-30 minutes.
-        // Or, calculate based on the next upcoming deadline date.
-        let nextUpdateDate = Calendar.current.date(byAdding: .minute, value: 15, to: Date())!
+        // Create timeline entries for multiple refresh points
+        let now = Date()
+        var entries: [SubDeadlineEntry] = []
         
-        // Create the timeline with the single entry and the refresh policy.
-        let timeline = Timeline(entries: [entry], policy: .after(nextUpdateDate))
+        // Add immediate entry
+        entries.append(SubDeadlineEntry(date: now, upcomingSubDeadlines: subDeadlines))
         
-        print("Widget Provider: Timeline generated with \(entry.upcomingSubDeadlines.count) sub-deadlines. Next update around \(nextUpdateDate).")
+        // Calculate next midnight for date boundary refresh
+        let nextMidnight = calculateNextMidnight(from: now)
+        
+        // Add entry for next midnight to ensure "days remaining" updates immediately
+        entries.append(SubDeadlineEntry(date: nextMidnight, upcomingSubDeadlines: subDeadlines))
+        
+        // Determine the next refresh policy
+        // Refresh every 5 minutes for frequent updates, but prioritize midnight refresh
+        let regularRefreshInterval = TimeInterval(5 * 60) // 5 minutes
+        let nextRegularRefresh = now.addingTimeInterval(regularRefreshInterval)
+        
+        // Use the sooner of the two refresh times
+        let nextRefreshDate = min(nextMidnight, nextRegularRefresh)
+        
+        // Create the timeline with multiple entries and the refresh policy
+        let timeline = Timeline(entries: entries, policy: .after(nextRefreshDate))
+        
+        print("Widget Provider: Timeline generated with \(entries.count) entries and \(subDeadlines.count) sub-deadlines.")
+        print("Widget Provider: Next refresh scheduled for \(nextRefreshDate) (midnight: \(nextMidnight), regular: \(nextRegularRefresh))")
         completion(timeline)
+    }
+    
+    // MARK: - Helper Methods
+    
+    /// Calculates the next midnight from the given date
+    private func calculateNextMidnight(from date: Date) -> Date {
+        let calendar = Calendar.current
+        
+        // Get the start of the next day (which is the next midnight)
+        let startOfToday = calendar.startOfDay(for: date)
+        let nextMidnight = calendar.date(byAdding: .day, value: 1, to: startOfToday) ?? date.addingTimeInterval(24 * 60 * 60)
+        
+        return nextMidnight
     }
     
     private func loadUpcomingSubDeadlines() -> [WidgetSubDeadlineInfo] {

@@ -34,27 +34,29 @@ enum BackupError: Error, LocalizedError {
 // using the clipboard.
 struct BackupManager {
 
-    // Internal struct representing the full data package, including triggers.
+    // Internal struct representing the full data package, including triggers and settings.
     // Used for EXPORTING the current state.
     struct BackupData: Codable {
         var projects: [Project]
         var templates: [Template]
         var triggers: [Trigger] // <-- ADDED for export
+        var appSettings: AppSettings // <-- ADDED for settings export
     }
 
     // MARK: - Export Function (Updated)
-    /// Encodes the provided projects, templates, and triggers into a JSON string
+    /// Encodes the provided projects, templates, triggers, and settings into a JSON string
     /// and copies it to the system clipboard.
     /// - Parameters:
     ///   - projects: An array of `Project` objects to be backed up.
     ///   - templates: An array of `Template` objects to be backed up.
     ///   - triggers: An array of `Trigger` objects to be backed up.
+    ///   - appSettings: The `AppSettings` object to be backed up.
     /// - Throws: A `BackupError` if encoding or clipboard operation fails.
-    static func exportData(projects: [Project], templates: [Template], triggers: [Trigger]) throws { // <-- Added triggers parameter
+    static func exportData(projects: [Project], templates: [Template], triggers: [Trigger], appSettings: AppSettings) throws { // <-- Added appSettings parameter
         print("Starting export process...")
         // 1. Create BackupData object with all current data
-        let backupData = BackupData(projects: projects, templates: templates, triggers: triggers)
-        print("BackupData object created with \(projects.count) projects, \(templates.count) templates, and \(triggers.count) triggers.")
+        let backupData = BackupData(projects: projects, templates: templates, triggers: triggers, appSettings: appSettings)
+        print("BackupData object created with \(projects.count) projects, \(templates.count) templates, \(triggers.count) triggers, and app settings.")
 
         // 2. Encode to JSON Data
         let encoder = JSONEncoder()
@@ -97,9 +99,9 @@ struct BackupManager {
     /// Attempts to read a JSON string from the system clipboard,
     /// decode it (handling older formats lacking triggers), reconstruct trigger data,
     /// and return the complete data set.
-    /// - Returns: A tuple containing the reconstructed `projects`, `templates`, and `triggers`.
+    /// - Returns: A tuple containing the reconstructed `projects`, `templates`, `triggers`, and `appSettings`.
     /// - Throws: A `BackupError` if clipboard reading, string conversion, or decoding fails.
-    static func importData() throws -> (projects: [Project], templates: [Template], triggers: [Trigger]) {
+    static func importData() throws -> (projects: [Project], templates: [Template], triggers: [Trigger], appSettings: AppSettings) {
         print("Starting import process...")
         
         // --- Define Temporary Structs for Decoding --- 
@@ -236,8 +238,21 @@ struct BackupManager {
         
         print("Reconstruction complete. Final counts: Projects=\(reconstructedProjects.count), Templates=\(decodedOldData.templates.count), Triggers=\(allImportedTriggers.count)")
         
+        // Try to decode new format with settings first, fallback to default settings if not found
+        let importedSettings: AppSettings
+        do {
+            // Try to decode with the new format that includes settings
+            let newFormatData = try decoder.decode(BackupData.self, from: jsonData)
+            importedSettings = newFormatData.appSettings
+            print("Successfully imported app settings from backup.")
+        } catch {
+            // Old format doesn't have settings, use defaults
+            importedSettings = AppSettings()
+            print("Backup doesn't contain app settings, using defaults.")
+        }
+        
         // 4. Return the fully reconstructed data
-        return (projects: reconstructedProjects, templates: decodedOldData.templates, triggers: allImportedTriggers)
+        return (projects: reconstructedProjects, templates: decodedOldData.templates, triggers: allImportedTriggers, appSettings: importedSettings)
     }
 }
 

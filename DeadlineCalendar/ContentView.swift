@@ -15,6 +15,7 @@ class DeadlineViewModel: ObservableObject {
     @Published var templates: [Template] = []
     @Published var triggers: [Trigger] = []
     @Published var isLoading = true // <-- Add loading state flag
+    @Published var appSettings: AppSettings = AppSettings() // <-- Add app settings
 
     // --- ADDED for Standalone Deadlines ---
     // Define a static ID for the standalone project to ensure it's always the same.
@@ -25,6 +26,7 @@ class DeadlineViewModel: ObservableObject {
     private let projectsKey = "projects_v2_key" // Use a new key to avoid conflicts with old data structure
     private let templatesKey = "templates_key"
     private let triggersKey = "triggers_v1_key"
+    private let appSettingsKey = "app_settings_key"
 
     // UserDefaults instance, potentially using a shared app group for widgets.
     private let userDefaults: UserDefaults
@@ -49,9 +51,8 @@ class DeadlineViewModel: ObservableObject {
             self.userDefaults = UserDefaults.standard
         }
         
-        // Request notification permissions and schedule daily notifications
+        // Request notification permissions (but don't schedule yet - data isn't loaded)
         requestNotificationPermissions()
-        scheduleDailyNotifications()
     }
 
     // New function to load data asynchronously
@@ -67,6 +68,7 @@ class DeadlineViewModel: ObservableObject {
         loadProjects()
         loadTemplates()
         loadTriggers()
+        loadAppSettings()
         
         // Migrate existing triggers to have dates
         migrateTriggersWithoutDates()
@@ -91,6 +93,9 @@ class DeadlineViewModel: ObservableObject {
         }
         print("Triggers: \(triggers.count)")
         print("========================\n")
+        
+        // Schedule notifications now that data is loaded
+        scheduleDailyNotifications()
     }
     
     // Attempt to recover data from various sources
@@ -432,6 +437,27 @@ class DeadlineViewModel: ObservableObject {
         }
     }
 
+    // Loads app settings from UserDefaults.
+    func loadAppSettings() {
+        print("ViewModel Load: Attempting to load app settings using key '\(appSettingsKey)'.") 
+        guard let data = userDefaults.data(forKey: appSettingsKey) else {
+            print("ViewModel Load: No data found for app settings key '\(appSettingsKey)'. Using default settings.")
+            self.appSettings = AppSettings()
+            return
+        }
+        print("ViewModel Load: Found data for app settings key. Attempting to decode...") 
+        
+        let decoder = JSONDecoder()
+        do {
+            self.appSettings = try decoder.decode(AppSettings.self, from: data)
+            print("ViewModel Load: App settings loaded successfully.")
+        } catch {
+            print("ViewModel Load: Failed to decode app settings from UserDefaults. Error: \(error)")
+            print("ViewModel Load: Using default settings.")
+            self.appSettings = AppSettings()
+        }
+    }
+
     // --- DATA SAVING ---
 
     // Saves the current state of projects to UserDefaults.
@@ -466,9 +492,21 @@ class DeadlineViewModel: ObservableObject {
         if let encoded = try? encoder.encode(triggers) {
             userDefaults.set(encoded, forKey: triggersKey)
             print("ViewModel: saveTriggers() completed. (\(triggers.count) triggers)")
-            // reloadWidgets() // Optional
+            // Trigger widget reload since trigger changes affect widget content
+            reloadWidgets()
         } else {
             print("ViewModel Error: Failed to encode triggers for saving.")
+        }
+    }
+
+    // Saves the current state of app settings to UserDefaults.
+    func saveAppSettings() {
+        let encoder = JSONEncoder()
+        if let encoded = try? encoder.encode(appSettings) {
+            userDefaults.set(encoded, forKey: appSettingsKey)
+            print("ViewModel: saveAppSettings() completed.")
+        } else {
+            print("ViewModel Error: Failed to encode app settings for saving.")
         }
     }
 
@@ -1238,35 +1276,21 @@ class DeadlineViewModel: ObservableObject {
             dateComponents.minute = 30
         }
         
-        // Create the notification content
+        // Create the notification content using the formatted settings
         let content = UNMutableNotificationContent()
-        content.title = "Deadlines"
         content.sound = .default
         
         // Get upcoming deadlines based on user preference
         let upcomingDeadlines = getUpcomingDeadlines(limit: notificationDeadlineCount)
         
         if upcomingDeadlines.isEmpty {
+            content.title = appSettings.notificationFormatSettings.titleFormat
             content.body = "No upcoming deadlines"
         } else {
-            // More concise format for better readability in notifications
-            var bodyText = ""
-            
-            for deadline in upcomingDeadlines {
-                let daysRemaining = Calendar.current.dateComponents([.day], from: Date(), to: deadline.date).day ?? 0
-                let timeText = daysRemaining < 0 ? "OVERDUE (\(-daysRemaining)d)" :
-                              daysRemaining == 0 ? "TODAY" : 
-                              daysRemaining == 1 ? "TOMORROW" : 
-                              "\(daysRemaining)d"
-                
-                // Truncate long titles to fit better
-                let truncatedTitle = deadline.title.count > 20 ? 
-                    String(deadline.title.prefix(17)) + "..." : deadline.title
-                
-                bodyText += "• \(timeText): \(truncatedTitle)\n"
-            }
-            
-            content.body = bodyText.trimmingCharacters(in: .whitespacesAndNewlines)
+            // Use the formatted notification content
+            let formattedContent = formatNotificationContent(for: upcomingDeadlines)
+            content.title = formattedContent.title
+            content.body = formattedContent.body
         }
         
         // Create the trigger based on frequency
@@ -1333,6 +1357,68 @@ class DeadlineViewModel: ObservableObject {
     func getUpcomingDeadlinesForNotification(limit: Int) -> [(title: String, date: Date, projectTitle: String)] {
         return getUpcomingDeadlines(limit: limit)
     }
+    
+    // --- APP SETTINGS OPERATIONS ---
+    
+    // Updates color settings and saves
+    func updateColorSettings(_ colorSettings: ColorSettings) {
+        guard colorSettings.isValid else {
+            print("ViewModel Error: Invalid color settings provided")
+            return
+        }
+        self.appSettings.colorSettings = colorSettings
+        saveAppSettings()
+        print("ViewModel: Color settings updated")
+    }
+    
+    // Updates notification format settings and saves
+    func updateNotificationFormatSettings(_ notificationFormatSettings: NotificationFormatSettings) {
+        self.appSettings.notificationFormatSettings = notificationFormatSettings
+        saveAppSettings()
+        print("ViewModel: Notification format settings updated")
+    }
+    
+    // Get the current color for a date based on user settings
+    func getColorForDate(_ date: Date) -> Color {
+        let daysRemaining = Calendar.current.dateComponents([.day], from: Calendar.current.startOfDay(for: Date()), to: Calendar.current.startOfDay(for: date)).day ?? 0
+        let colorSettings = appSettings.colorSettings
+        
+        switch daysRemaining {
+        case ..<0:
+            return .red // Overdue
+        case 0..<colorSettings.orangeThreshold:
+            return .red
+        case colorSettings.orangeThreshold..<colorSettings.greenThreshold:
+            return .orange
+        default:
+            return .green
+        }
+    }
+    
+    // Format a notification using the current settings
+    func formatNotificationContent(for deadlines: [(title: String, date: Date, projectTitle: String)]) -> (title: String, body: String) {
+        let settings = appSettings.notificationFormatSettings
+        let title = settings.titleFormat
+        
+        var body = ""
+        for (index, deadline) in deadlines.enumerated() {
+            let daysUntil = Calendar.current.dateComponents([.day], from: Date(), to: deadline.date).day ?? 0
+            let timeRemaining = daysUntil == 0 ? "Today" : daysUntil == 1 ? "Tomorrow" : "In \(daysUntil) days"
+            
+            let formattedItem = settings.formatItem(
+                index: index + 1,
+                title: deadline.title,
+                projectName: settings.showProjectName ? deadline.projectTitle : nil,
+                date: deadline.date,
+                timeRemaining: timeRemaining,
+                daysLeft: daysUntil
+            )
+            
+            body += formattedItem + "\n"
+        }
+        
+        return (title: title, body: body.trimmingCharacters(in: .whitespacesAndNewlines))
+    }
 }
 
 // MARK: - ShakeEffect (Generic Animation)
@@ -1374,13 +1460,13 @@ struct ContentView: View {
                     Label("Projects", systemImage: "folder")
                 }
                 
-            // --- Tab 3: Triggers View ---
-            TriggersView(viewModel: viewModel)
-                .tabItem {
-                    Label("Triggers", systemImage: "play.circle") // Icon for triggers
-                }
+            // --- Tab 3: Triggers View (Hidden) ---
+            // TriggersView(viewModel: viewModel)
+            //     .tabItem {
+            //         Label("Triggers", systemImage: "play.circle") // Icon for triggers
+            //     }
             
-            // --- Tab 4: Settings ---
+            // --- Tab 3: Settings ---
             BackupRestoreView(viewModel: viewModel)
                 .tabItem {
                     Label("Settings", systemImage: "gearshape.fill") // Icon for settings
