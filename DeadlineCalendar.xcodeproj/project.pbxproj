@@ -35,6 +35,12 @@
 		DDB898D32E06F94200A24E47 /* Deadline_CalendarTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD75C9252E06F7C900AA393B /* Deadline_CalendarTests.swift */; };
 		DDB89A562E08710E00A24E47 /* ProjectTriggersView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DDB89A552E08710B00A24E47 /* ProjectTriggersView.swift */; };
 		DDB89A582E087F1000A24E47 /* TriggerProjectRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = DDB89A572E087F0D00A24E47 /* TriggerProjectRow.swift */; };
+		DDC3634B2E1BCC2200FC322D /* DesignSystem.swift in Sources */ = {isa = PBXBuildFile; fileRef = DDC363492E1BCC2200FC322D /* DesignSystem.swift */; };
+		DDC3634C2E1BCC2200FC322D /* DesignSystemExample.swift in Sources */ = {isa = PBXBuildFile; fileRef = DDC3634A2E1BCC2200FC322D /* DesignSystemExample.swift */; };
+		DDC3634E2E1BCF0700FC322D /* AllDeadlinesViewRedesigned.swift in Sources */ = {isa = PBXBuildFile; fileRef = DDC3634D2E1BCF0700FC322D /* AllDeadlinesViewRedesigned.swift */; };
+		DDC363522E1BD1C600FC322D /* ProjectsListViewRedesigned.swift in Sources */ = {isa = PBXBuildFile; fileRef = DDC363512E1BD1C600FC322D /* ProjectsListViewRedesigned.swift */; };
+		DDC363542E1BDDF900FC322D /* BackupRestoreViewRedesigned.swift in Sources */ = {isa = PBXBuildFile; fileRef = DDC363532E1BDDF900FC322D /* BackupRestoreViewRedesigned.swift */; };
+		DDC363562E1BE25700FC322D /* TemplateManagerViewRedesigned.swift in Sources */ = {isa = PBXBuildFile; fileRef = DDC363552E1BE25700FC322D /* TemplateManagerViewRedesigned.swift */; };
 		DDD8801A2E06DC9500CBF567 /* .gitignore in Resources */ = {isa = PBXBuildFile; fileRef = DDD880192E06DC9000CBF567 /* .gitignore */; };
 		DDF73B682CC04F5C00833720 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = DDF73B672CC04F5C00833720 /* WidgetKit.framework */; };
 		DDF73B6A2CC04F5C00833720 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = DDF73B692CC04F5C00833720 /* SwiftUI.framework */; };
@@ -126,6 +132,12 @@
 		DDB898CD2E06F8D700A24E47 /* XCTest.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = XCTest.framework; path = Platforms/iPhoneOS.platform/Developer/Library/Frameworks/XCTest.framework; sourceTree = DEVELOPER_DIR; };
 		DDB89A552E08710B00A24E47 /* ProjectTriggersView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectTriggersView.swift; sourceTree = "<group>"; };
 		DDB89A572E087F0D00A24E47 /* TriggerProjectRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TriggerProjectRow.swift; sourceTree = "<group>"; };
+		DDC363492E1BCC2200FC322D /* DesignSystem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesignSystem.swift; sourceTree = "<group>"; };
+		DDC3634A2E1BCC2200FC322D /* DesignSystemExample.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesignSystemExample.swift; sourceTree = "<group>"; };
+		DDC3634D2E1BCF0700FC322D /* AllDeadlinesViewRedesigned.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AllDeadlinesViewRedesigned.swift; sourceTree = "<group>"; };
+		DDC363512E1BD1C600FC322D /* ProjectsListViewRedesigned.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectsListViewRedesigned.swift; sourceTree = "<group>"; };
+		DDC363532E1BDDF900FC322D /* BackupRestoreViewRedesigned.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackupRestoreViewRedesigned.swift; sourceTree = "<group>"; };
+		DDC363552E1BE25700FC322D /* TemplateManagerViewRedesigned.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TemplateManagerViewRedesigned.swift; sourceTree = "<group>"; };
 		DDD880192E06DC9000CBF567 /* .gitignore */ = {isa = PBXFileReference; lastKnownFileType = text; path = .gitignore; sourceTree = "<group>"; };
 		DDF73AF82CC0378000833720 /* Deadline Calendar.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Deadline Calendar.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		DDF73B082CC0378100833720 /* Deadline CalendarTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "Deadline CalendarTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -192,9 +204,13 @@
 		DD75C9142E06F75000AA393B /* DeadlineCalendar */ = {
 			isa = PBXGroup;
 			children = (
+				DDC363552E1BE25700FC322D /* TemplateManagerViewRedesigned.swift */,
+				DDC363532E1BDDF900FC322D /* BackupRestoreViewRedesigned.swift */,
+				DDC363512E1BD1C600FC322D /* ProjectsListViewRedesigned.swift */,
 				DD75C9042E06F75000AA393B /* AddProjectView.swift */,
 				DD75C9052E06F75000AA393B /* AddStandaloneDeadlineView.swift */,
 				DD75C9062E06F75000AA393B /* AllDeadlinesView.swift */,
+				DDC3634D2E1BCF0700FC322D /* AllDeadlinesViewRedesigned.swift */,
 				DD75C9072E06F75000AA393B /* Assets.xcassets */,
 				DD75C9082E06F75000AA393B /* BackupRestoreView.swift */,
 				DD8E7E552E09A15400124738 /* CompletedDeadlinesView.swift */,
@@ -203,6 +219,8 @@
 				DD75C90A2E06F75000AA393B /* ContentView.swift */,
 				DD75C90B2E06F75000AA393B /* Deadline_CalendarApp.swift */,
 				DD75C90C2E06F75000AA393B /* DeadlineCalendar.entitlements */,
+				DDC363492E1BCC2200FC322D /* DesignSystem.swift */,
+				DDC3634A2E1BCC2200FC322D /* DesignSystemExample.swift */,
 				DD75C9032E06F75000AA393B /* Preview Content */,
 				DD75C90D2E06F75000AA393B /* ProjectDetailView.swift */,
 				DD75C90E2E06F75000AA393B /* ProjectEditorView.swift */,
@@ -465,17 +483,23 @@
 				DD80DAFC2E0ACFDB00F8AD2F /* CompletedTriggersView.swift in Sources */,
 				DD8E7E562E09A15400124738 /* CompletedDeadlinesView.swift in Sources */,
 				DD75C9172E06F75000AA393B /* TriggersView.swift in Sources */,
+				DDC363542E1BDDF900FC322D /* BackupRestoreViewRedesigned.swift in Sources */,
 				DD75C9182E06F75000AA393B /* Deadline_CalendarApp.swift in Sources */,
 				DD75C9192E06F75000AA393B /* AddStandaloneDeadlineView.swift in Sources */,
+				DDC363522E1BD1C600FC322D /* ProjectsListViewRedesigned.swift in Sources */,
 				DDB89A562E08710E00A24E47 /* ProjectTriggersView.swift in Sources */,
 				DD75C91A2E06F75000AA393B /* TemplateManagerView.swift in Sources */,
 				DDB89A582E087F1000A24E47 /* TriggerProjectRow.swift in Sources */,
+				DDC363562E1BE25700FC322D /* TemplateManagerViewRedesigned.swift in Sources */,
 				DD75C91B2E06F75000AA393B /* ContentView.swift in Sources */,
 				DD75C91C2E06F75000AA393B /* TemplateSubDeadlineEditorRow.swift in Sources */,
 				DD75C91D2E06F75000AA393B /* ProjectRow.swift in Sources */,
 				DD75C91E2E06F75000AA393B /* AddProjectView.swift in Sources */,
 				DD75C91F2E06F75000AA393B /* CompletedProjectsView.swift in Sources */,
+				DDC3634B2E1BCC2200FC322D /* DesignSystem.swift in Sources */,
+				DDC3634C2E1BCC2200FC322D /* DesignSystemExample.swift in Sources */,
 				DD75C9202E06F75000AA393B /* AllDeadlinesView.swift in Sources */,
+				DDC3634E2E1BCF0700FC322D /* AllDeadlinesViewRedesigned.swift in Sources */,
 				DD75C9212E06F75000AA393B /* TemplateEditorView.swift in Sources */,
 				DD75C9222E06F75000AA393B /* ProjectDetailView.swift in Sources */,
 				DD6A58722DADB712006A064E /* BackupManager.swift in Sources */,

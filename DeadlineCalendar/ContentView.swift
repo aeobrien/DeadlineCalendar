@@ -31,14 +31,6 @@ class DeadlineViewModel: ObservableObject {
     // UserDefaults instance, potentially using a shared app group for widgets.
     private let userDefaults: UserDefaults
 
-    // Define a fixed, known ID for the default template
-    // Use a valid UUID string and safe initialization
-    static let defaultMonthlyVideoTemplateID: UUID = {
-        guard let uuid = UUID(uuidString: "E621E1F8-C36C-495A-93FC-0C247A3E6E5F") else {
-            fatalError("Invalid hardcoded UUID string for defaultMonthlyVideoTemplateID")
-        }
-        return uuid
-    }()
 
     // Initializer: ONLY sets up UserDefaults now.
     init() {
@@ -73,13 +65,7 @@ class DeadlineViewModel: ObservableObject {
         // Migrate existing triggers to have dates
         migrateTriggersWithoutDates()
 
-        // Perform default template check/creation
-        if !templates.contains(where: { $0.id == Self.defaultMonthlyVideoTemplateID }) {
-            print("ViewModel Load: Default 'Monthly Video' template not found. Creating it.")
-            createDefaultTemplate() // This calls saveTemplates internally
-        } else {
-            print("ViewModel Load: Default 'Monthly Video' template found.")
-        }
+        // Removed default template creation - templates are now user-created only
         
         isLoading = false
         print("ViewModel: Initial data load complete.")
@@ -767,23 +753,6 @@ class DeadlineViewModel: ObservableObject {
          }
     }
 
-    // Creates a default template if none exist.
-    private func createDefaultTemplate() {
-        print("ViewModel: Creating minimal default template...")
-        // Use the predefined static ID
-        let defaultTemplate = Template(
-            id: Self.defaultMonthlyVideoTemplateID, // Assign the fixed ID
-            name: "Monthly Video", // Keep the name
-            subDeadlines: [
-                // Only one simple sub-deadline
-                TemplateSubDeadline(id: UUID(), title: "Sample Task", offset: TimeOffset(value: 7, unit: .days, before: true))
-            ],
-            templateTriggers: [] // NO default triggers initially
-        )
-        // Use the add function which handles saving and prevents duplicates by ID
-        addTemplate(defaultTemplate)
-        print("ViewModel: Minimal default template created and add attempted.")
-    }
 
 
     // --- PROJECT CREATION FROM TEMPLATE (MODIFIED) ---
@@ -1403,7 +1372,7 @@ class DeadlineViewModel: ObservableObject {
         var body = ""
         for (index, deadline) in deadlines.enumerated() {
             let daysUntil = Calendar.current.dateComponents([.day], from: Date(), to: deadline.date).day ?? 0
-            let timeRemaining = daysUntil == 0 ? "Today" : daysUntil == 1 ? "Tomorrow" : "In \(daysUntil) days"
+            let timeRemaining = daysUntil == 0 ? "Today" : daysUntil == 1 ? "Tomorrow" : "\(daysUntil) days"
             
             let formattedItem = settings.formatItem(
                 index: index + 1,
@@ -1449,25 +1418,25 @@ struct ContentView: View {
     var body: some View {
         TabView {
             // --- Tab 1: All Deadlines View ---
-            AllDeadlinesView(viewModel: viewModel)
+            AllDeadlinesViewRedesigned(viewModel: viewModel)
                 .tabItem {
                     Label("Deadlines", systemImage: "calendar.badge.clock") // Updated icon
                 }
             
             // --- Tab 2: Projects View ---
-            ProjectsListView(viewModel: viewModel) // Use the extracted view
+            ProjectsListViewRedesigned(viewModel: viewModel) // Use the redesigned view
                 .tabItem {
                     Label("Projects", systemImage: "folder")
                 }
-                
-            // --- Tab 3: Triggers View (Hidden) ---
-            // TriggersView(viewModel: viewModel)
-            //     .tabItem {
-            //         Label("Triggers", systemImage: "play.circle") // Icon for triggers
-            //     }
             
-            // --- Tab 3: Settings ---
-            BackupRestoreView(viewModel: viewModel)
+            // --- Tab 3: Templates View ---
+            TemplateManagerViewRedesigned(viewModel: viewModel)
+                .tabItem {
+                    Label("Templates", systemImage: "doc.plaintext")
+                }
+            
+            // --- Tab 4: Settings ---
+            BackupRestoreViewRedesigned(viewModel: viewModel)
                 .tabItem {
                     Label("Settings", systemImage: "gearshape.fill") // Icon for settings
                 }
@@ -1478,10 +1447,9 @@ struct ContentView: View {
             await viewModel.loadInitialData()
         }
         // --- END ADDED MODIFIER --- 
-        // Apply the preferred color scheme to the TabView itself
-        .preferredColorScheme(.dark)
-        // You might need to adjust the accent color for the selected tab item
-        .accentColor(.blue) // Example: Set accent color
+        // Apply design system styling
+        .appStyle()
+        .accentColor(DesignSystem.Colors.primary)
         // Monitor scene phase changes to refresh dates
         .onChange(of: scenePhase) { newPhase in
             switch newPhase {

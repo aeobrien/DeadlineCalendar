@@ -56,20 +56,7 @@ struct ProjectDetailView: View {
                     // Need to use indices if we want to modify via ViewModel
                     ForEach(project.subDeadlines.indices, id: \.self) { index in
                         let subDeadline = project.subDeadlines[index]
-                        VStack(alignment: .leading, spacing: 2) {
-                            // Completion Toggle Button
-                            Button {
-                                // Find the actual index in the viewModel's array if necessary
-                                // This assumes the passed `project` is up-to-date or we find it.
-                                // A safer approach might be to pass the Project ID and SubDeadline ID
-                                // to the ViewModel toggle function.
-                                toggleCompletion(for: subDeadline)
-                            } label: {
-                                Image(systemName: subDeadline.isCompleted ? "checkmark.circle.fill" : "circle")
-                                    .foregroundColor(subDeadline.isCompleted ? .green : .gray)
-                            }
-                            .buttonStyle(BorderlessButtonStyle()) // Allow interaction within the row
-
+                        HStack(spacing: 12) {
                             // Sub-deadline Details
                             VStack(alignment: .leading, spacing: 2) {
                                 Text(subDeadline.title)
@@ -84,7 +71,17 @@ struct ProjectDetailView: View {
                                 .font(.caption)
                                 .foregroundColor(.gray)
                             }
-                            Spacer() // Push content to the left
+                            
+                            Spacer()
+                            
+                            // Completion Toggle Button
+                            Button {
+                                toggleCompletion(for: subDeadline)
+                            } label: {
+                                Image(systemName: subDeadline.isCompleted ? "checkmark.circle.fill" : "circle")
+                                    .foregroundColor(subDeadline.isCompleted ? .green : .gray)
+                            }
+                            .buttonStyle(BorderlessButtonStyle()) // Allow interaction within the row
                         }
                     }
                 }
