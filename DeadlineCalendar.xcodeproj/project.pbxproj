@@ -8,6 +8,11 @@
 
 /* Begin PBXBuildFile section */
 		DD6A58722DADB712006A064E /* BackupManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD6A58712DADB711006A064E /* BackupManager.swift */; };
+		DD70B5052E1C03F800673D79 /* iCloudBackupManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD70B5032E1C03F800673D79 /* iCloudBackupManager.swift */; };
+		DD70B5062E1C03F800673D79 /* BackupDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD70B5002E1C03F800673D79 /* BackupDetailView.swift */; };
+		DD70B5072E1C03F800673D79 /* BackupRestoreViewRedesigned.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD70B5012E1C03F800673D79 /* BackupRestoreViewRedesigned.swift */; };
+		DD70B5082E1C03F800673D79 /* iCloudBackupRestoreView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD70B5042E1C03F800673D79 /* iCloudBackupRestoreView.swift */; };
+		DD70B5092E1C03F800673D79 /* DeadlineCalendarBackupDocument.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD70B5022E1C03F800673D79 /* DeadlineCalendarBackupDocument.swift */; };
 		DD75C8F42E06F6CB00AA393B /* DeadlineRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD75C8F02E06F6CB00AA393B /* DeadlineRow.swift */; };
 		DD75C9152E06F75000AA393B /* BackupRestoreView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD75C9082E06F75000AA393B /* BackupRestoreView.swift */; };
 		DD75C9162E06F75000AA393B /* ProjectEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD75C90E2E06F75000AA393B /* ProjectEditorView.swift */; };
@@ -106,6 +111,11 @@
 
 /* Begin PBXFileReference section */
 		DD6A58712DADB711006A064E /* BackupManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = BackupManager.swift; sourceTree = "<group>"; };
+		DD70B5002E1C03F800673D79 /* BackupDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackupDetailView.swift; sourceTree = "<group>"; };
+		DD70B5012E1C03F800673D79 /* BackupRestoreViewRedesigned.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackupRestoreViewRedesigned.swift; sourceTree = "<group>"; };
+		DD70B5022E1C03F800673D79 /* DeadlineCalendarBackupDocument.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeadlineCalendarBackupDocument.swift; sourceTree = "<group>"; };
+		DD70B5032E1C03F800673D79 /* iCloudBackupManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iCloudBackupManager.swift; sourceTree = "<group>"; };
+		DD70B5042E1C03F800673D79 /* iCloudBackupRestoreView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iCloudBackupRestoreView.swift; sourceTree = "<group>"; };
 		DD75C8F02E06F6CB00AA393B /* DeadlineRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeadlineRow.swift; sourceTree = "<group>"; };
 		DD75C9022E06F75000AA393B /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 		DD75C9042E06F75000AA393B /* AddProjectView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddProjectView.swift; sourceTree = "<group>"; };
@@ -204,6 +214,11 @@
 		DD75C9142E06F75000AA393B /* DeadlineCalendar */ = {
 			isa = PBXGroup;
 			children = (
+				DD70B5002E1C03F800673D79 /* BackupDetailView.swift */,
+				DD70B5012E1C03F800673D79 /* BackupRestoreViewRedesigned.swift */,
+				DD70B5022E1C03F800673D79 /* DeadlineCalendarBackupDocument.swift */,
+				DD70B5032E1C03F800673D79 /* iCloudBackupManager.swift */,
+				DD70B5042E1C03F800673D79 /* iCloudBackupRestoreView.swift */,
 				DDC363552E1BE25700FC322D /* TemplateManagerViewRedesigned.swift */,
 				DDC363532E1BDDF900FC322D /* BackupRestoreViewRedesigned.swift */,
 				DDC363512E1BD1C600FC322D /* ProjectsListViewRedesigned.swift */,
@@ -480,6 +495,11 @@
 				DDF73B832CC053F300833720 /* Models.swift in Sources */,
 				DD75C9152E06F75000AA393B /* BackupRestoreView.swift in Sources */,
 				DD75C9162E06F75000AA393B /* ProjectEditorView.swift in Sources */,
+				DD70B5052E1C03F800673D79 /* iCloudBackupManager.swift in Sources */,
+				DD70B5062E1C03F800673D79 /* BackupDetailView.swift in Sources */,
+				DD70B5072E1C03F800673D79 /* BackupRestoreViewRedesigned.swift in Sources */,
+				DD70B5082E1C03F800673D79 /* iCloudBackupRestoreView.swift in Sources */,
+				DD70B5092E1C03F800673D79 /* DeadlineCalendarBackupDocument.swift in Sources */,
 				DD80DAFC2E0ACFDB00F8AD2F /* CompletedTriggersView.swift in Sources */,
 				DD8E7E562E09A15400124738 /* CompletedDeadlinesView.swift in Sources */,
 				DD75C9172E06F75000AA393B /* TriggersView.swift in Sources */,

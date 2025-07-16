@@ -20,6 +20,9 @@ struct BackupRestoreViewRedesigned: View {
     @State private var isNotificationSettingsExpanded = false
     @State private var isDataManagementExpanded = false
     
+    // State for showing iCloud backup view
+    @State private var showingICloudBackupView = false
+    
     // Computed bindings for color settings
     private var greenThresholdBinding: Binding<Int> {
         Binding(
@@ -296,13 +299,38 @@ struct BackupRestoreViewRedesigned: View {
                             isExpanded: $isDataManagementExpanded
                         ) {
                             VStack(spacing: DesignSystem.Spacing.medium) {
-                                // Export
+                                // iCloud Backup
                                 VStack(alignment: .leading, spacing: DesignSystem.Spacing.small) {
-                                    Text("Export Data")
+                                    Text("iCloud Backup")
                                         .font(DesignSystem.Typography.headline)
                                         .foregroundColor(DesignSystem.Colors.primaryText)
                                     
-                                    Text("Export your projects, templates, and triggers to a file")
+                                    Text("Backup and restore your data using iCloud")
+                                        .font(DesignSystem.Typography.caption)
+                                        .foregroundColor(DesignSystem.Colors.secondaryText)
+                                    
+                                    Button {
+                                        showingICloudBackupView = true
+                                    } label: {
+                                        HStack {
+                                            Image(systemName: "icloud.and.arrow.up.down")
+                                            Text("iCloud Backup & Restore")
+                                        }
+                                        .frame(maxWidth: .infinity)
+                                    }
+                                    .buttonStyle(PrimaryButtonStyle())
+                                }
+                                
+                                Divider()
+                                    .background(DesignSystem.Colors.divider)
+                                
+                                // Export
+                                VStack(alignment: .leading, spacing: DesignSystem.Spacing.small) {
+                                    Text("Export to Clipboard")
+                                        .font(DesignSystem.Typography.headline)
+                                        .foregroundColor(DesignSystem.Colors.primaryText)
+                                    
+                                    Text("Copy your data to clipboard as text")
                                         .font(DesignSystem.Typography.caption)
                                         .foregroundColor(DesignSystem.Colors.secondaryText)
                                     
@@ -310,8 +338,8 @@ struct BackupRestoreViewRedesigned: View {
                                         exportAction()
                                     } label: {
                                         HStack {
-                                            Image(systemName: "square.and.arrow.up")
-                                            Text("Export Data")
+                                            Image(systemName: "doc.on.clipboard")
+                                            Text("Export to Clipboard")
                                         }
                                         .frame(maxWidth: .infinity)
                                     }
@@ -323,11 +351,11 @@ struct BackupRestoreViewRedesigned: View {
                                 
                                 // Import
                                 VStack(alignment: .leading, spacing: DesignSystem.Spacing.small) {
-                                    Text("Import Data")
+                                    Text("Import from Clipboard")
                                         .font(DesignSystem.Typography.headline)
                                         .foregroundColor(DesignSystem.Colors.primaryText)
                                     
-                                    Text("Import projects and templates from a backup file")
+                                    Text("Import data from text in clipboard")
                                         .font(DesignSystem.Typography.caption)
                                         .foregroundColor(DesignSystem.Colors.secondaryText)
                                     
@@ -335,8 +363,8 @@ struct BackupRestoreViewRedesigned: View {
                                         importAction()
                                     } label: {
                                         HStack {
-                                            Image(systemName: "square.and.arrow.down")
-                                            Text("Import Data")
+                                            Image(systemName: "clipboard")
+                                            Text("Import from Clipboard")
                                         }
                                         .frame(maxWidth: .infinity)
                                     }
@@ -369,6 +397,9 @@ struct BackupRestoreViewRedesigned: View {
             Button("OK", role: .cancel) { }
         } message: {
             Text(alertMessage)
+        }
+        .sheet(isPresented: $showingICloudBackupView) {
+            iCloudBackupRestoreView(viewModel: viewModel)
         }
     }
     
@@ -514,18 +545,46 @@ struct BackupRestoreViewRedesigned: View {
     }
     
     private func exportAction() {
-        // This is the same as the original export functionality
-        // Implementation would go here
-        alertTitle = "Export"
-        alertMessage = "Export functionality will be implemented"
-        showingAlert = true
+        do {
+            try BackupManager.exportData(
+                projects: viewModel.projects,
+                templates: viewModel.templates,
+                triggers: viewModel.triggers,
+                appSettings: viewModel.appSettings
+            )
+            alertTitle = "Export Successful"
+            alertMessage = "All projects, templates, triggers, and settings have been copied to your clipboard."
+            showingAlert = true
+        } catch {
+            alertTitle = "Export Failed"
+            alertMessage = error.localizedDescription
+            showingAlert = true
+        }
     }
     
     private func importAction() {
-        // This is the same as the original import functionality
-        // Implementation would go here
-        alertTitle = "Import"
-        alertMessage = "Import functionality will be implemented"
-        showingAlert = true
+        do {
+            let importedData = try BackupManager.importData()
+            
+            // Replace ViewModel data
+            viewModel.projects = importedData.projects
+            viewModel.templates = importedData.templates
+            viewModel.triggers = importedData.triggers
+            viewModel.appSettings = importedData.appSettings
+            
+            // Save the new data
+            viewModel.saveProjects()
+            viewModel.saveTemplates()
+            viewModel.saveTriggers()
+            viewModel.saveAppSettings()
+            
+            alertTitle = "Import Successful"
+            alertMessage = "Successfully restored \(importedData.projects.count) projects, \(importedData.templates.count) templates, \(importedData.triggers.count) triggers, and settings from the clipboard."
+            showingAlert = true
+        } catch {
+            alertTitle = "Import Failed"
+            alertMessage = error.localizedDescription
+            showingAlert = true
+        }
     }
 }

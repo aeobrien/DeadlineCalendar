@@ -82,6 +82,9 @@ class DeadlineViewModel: ObservableObject {
         
         // Schedule notifications now that data is loaded
         scheduleDailyNotifications()
+        
+        // Check for automatic iCloud backup
+        await checkForAutomaticBackup()
     }
     
     // Attempt to recover data from various sources
@@ -1345,6 +1348,50 @@ class DeadlineViewModel: ObservableObject {
         self.appSettings.notificationFormatSettings = notificationFormatSettings
         saveAppSettings()
         print("ViewModel: Notification format settings updated")
+    }
+    
+    // MARK: - iCloud Backup Methods
+    
+    /// Check if automatic backup should be performed
+    @MainActor
+    private func checkForAutomaticBackup() async {
+        let backupManager = iCloudBackupManager.shared
+        
+        // Only proceed if iCloud is available
+        guard backupManager.iCloudAvailable else {
+            print("ViewModel: iCloud not available, skipping automatic backup check")
+            return
+        }
+        
+        // Check if we need to create an automatic backup
+        if let lastBackupDate = backupManager.lastBackupDate {
+            let hoursSinceLastBackup = Date().timeIntervalSince(lastBackupDate) / 3600
+            if hoursSinceLastBackup >= 24 {
+                print("ViewModel: Last backup was \(Int(hoursSinceLastBackup)) hours ago, creating automatic backup")
+                await createAutomaticBackup()
+            } else {
+                print("ViewModel: Last backup was \(Int(hoursSinceLastBackup)) hours ago, no automatic backup needed")
+            }
+        } else {
+            print("ViewModel: No previous backup found, creating first automatic backup")
+            await createAutomaticBackup()
+        }
+    }
+    
+    /// Create an automatic backup
+    @MainActor
+    private func createAutomaticBackup() async {
+        do {
+            try await iCloudBackupManager.shared.createBackup(
+                projects: projects,
+                templates: templates,
+                triggers: triggers,
+                appSettings: appSettings
+            )
+            print("ViewModel: Automatic backup created successfully")
+        } catch {
+            print("ViewModel: Failed to create automatic backup: \(error)")
+        }
     }
     
     // Get the current color for a date based on user settings
