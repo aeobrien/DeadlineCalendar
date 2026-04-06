@@ -15,6 +15,7 @@ struct DeadlineCLI: ParsableCommand {
             CompleteCommand.self,
             TriggerCommand.self,
             AdjustCommand.self,
+            AddCommand.self,
             ExportCommand.self,
         ]
     )
@@ -395,6 +396,69 @@ struct AdjustCommand: ParsableCommand {
         }
         let newDateStr = displayDateFormatter.string(from: newDate)
         print("Adjusted '\(matches[0].subDeadline.title)' in '\(project.title)': \(oldDate) -> \(newDateStr)")
+        print("Saved to: \(url.lastPathComponent)")
+    }
+}
+
+// MARK: - Add Command
+
+struct AddCommand: ParsableCommand {
+    static let configuration = CommandConfiguration(
+        commandName: "add",
+        abstract: "Add a standalone deadline or a sub-deadline to a project."
+    )
+
+    @Argument(help: "Title of the deadline.")
+    var title: String
+
+    @Option(name: .long, help: "Due date in YYYY-MM-DD format.")
+    var date: String
+
+    @Option(name: .long, help: "Project to add to (partial match). Defaults to Standalone Deadlines.")
+    var project: String?
+
+    func run() throws {
+        let store = try DataStore()
+
+        guard let dueDate = dateFormatter.date(from: date) else {
+            print("Invalid date format '\(date)'. Expected YYYY-MM-DD.")
+            return
+        }
+
+        let url = try store.mutate { projects, templates, triggers, appSettings in
+            let targetIndex: Int
+
+            if let projectQuery = project {
+                let matches = findProjects(projects, matching: projectQuery)
+                guard !matches.isEmpty else {
+                    print("No projects matching '\(projectQuery)'.")
+                    return
+                }
+                guard matches.count == 1 else {
+                    print("Ambiguous project match for '\(projectQuery)':")
+                    for p in matches { print("  - \(p.title)") }
+                    return
+                }
+                targetIndex = projects.firstIndex { $0.id == matches[0].id }!
+            } else {
+                // Default to Standalone Deadlines
+                let standaloneID = UUID(uuidString: "00000000-0000-0000-0000-000000000001")!
+                guard let idx = projects.firstIndex(where: { $0.id == standaloneID }) else {
+                    print("Standalone Deadlines project not found.")
+                    return
+                }
+                targetIndex = idx
+            }
+
+            let newSubDeadline = SubDeadline(
+                title: title,
+                date: dueDate
+            )
+            projects[targetIndex].subDeadlines.append(newSubDeadline)
+        }
+        let projectName = project ?? "Standalone Deadlines"
+        let dateStr = displayDateFormatter.string(from: dueDate)
+        print("Added '\(title)' due \(dateStr) to \(projectName).")
         print("Saved to: \(url.lastPathComponent)")
     }
 }
