@@ -105,9 +105,11 @@ struct ListCommand: ParsableCommand {
             print()
         }
 
-        // Show which backup was read
-        if let url = try? store.latestBackupURL() {
-            print("(Source: \(url.lastPathComponent))")
+        // Show data source
+        if FileManager.default.fileExists(atPath: sharedFilePath) {
+            print("(Source: DeadlineCalendar.json — shared iCloud file)")
+        } else if let url = try? store.latestBackupURL() {
+            print("(Source: \(url.lastPathComponent) — legacy backup)")
         }
     }
 }
