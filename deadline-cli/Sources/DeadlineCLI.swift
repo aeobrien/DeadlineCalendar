@@ -207,9 +207,9 @@ struct CompleteCommand: ParsableCommand {
 
     func run() throws {
         let store = try DataStore()
-        let backup = try store.loadLatest()
+        let (projects, _, _, _) = try store.loadProjectsResolved()
 
-        let matchedProjects = findProjects(backup.projects, matching: projectTitle)
+        let matchedProjects = findProjects(projects, matching: projectTitle)
 
         guard !matchedProjects.isEmpty else {
             print("No projects matching '\(projectTitle)'.")
@@ -221,11 +221,11 @@ struct CompleteCommand: ParsableCommand {
             return
         }
 
-        let projectIndex = backup.projects.firstIndex { $0.id == matchedProjects[0].id }!
-        let matches = findSubDeadlines(in: backup.projects[projectIndex], matching: subDeadlineTitle)
+        let project = matchedProjects[0]
+        let matches = findSubDeadlines(in: project, matching: subDeadlineTitle)
 
         guard !matches.isEmpty else {
-            print("No sub-deadlines matching '\(subDeadlineTitle)' in '\(backup.projects[projectIndex].title)'.")
+            print("No sub-deadlines matching '\(subDeadlineTitle)' in '\(project.title)'.")
             return
         }
         guard matches.count == 1 else {
@@ -238,18 +238,17 @@ struct CompleteCommand: ParsableCommand {
         }
 
         let sdIndex = matches[0].index
-        if backup.projects[projectIndex].subDeadlines[sdIndex].isCompleted {
+        if project.subDeadlines[sdIndex].isCompleted {
             print("'\(matches[0].subDeadline.title)' is already completed.")
             return
         }
 
-        let url = try store.mutate { data in
-            let pi = data.projects.firstIndex { $0.id == matchedProjects[0].id }!
-            data.projects[pi].subDeadlines[sdIndex].isCompleted = true
+        let url = try store.mutate { projects, templates, triggers, appSettings in
+            let pi = projects.firstIndex { $0.id == project.id }!
+            projects[pi].subDeadlines[sdIndex].isCompleted = true
         }
-        print("Marked '\(matches[0].subDeadline.title)' as completed in '\(backup.projects[projectIndex].title)'.")
+        print("Marked '\(matches[0].subDeadline.title)' as completed in '\(project.title)'.")
         print("Saved to: \(url.lastPathComponent)")
-        print("Restore this backup in the app to sync the change.")
     }
 }
 
@@ -315,23 +314,22 @@ struct TriggerCommand: ParsableCommand {
             return
         }
 
-        let url = try store.mutate { data in
+        let url = try store.mutate { projects, templates, triggers, appSettings in
             // Update in the top-level triggers array
-            if let ti = data.triggers.firstIndex(where: { $0.id == trigger.id }) {
-                data.triggers[ti].isActive = true
-                data.triggers[ti].activationDate = Date()
+            if let ti = triggers.firstIndex(where: { $0.id == trigger.id }) {
+                triggers[ti].isActive = true
+                triggers[ti].activationDate = Date()
             }
             // Also update if embedded in the project
-            if let pi = data.projects.firstIndex(where: { $0.id == project.id }) {
-                if let ti = data.projects[pi].triggers.firstIndex(where: { $0.id == trigger.id }) {
-                    data.projects[pi].triggers[ti].isActive = true
-                    data.projects[pi].triggers[ti].activationDate = Date()
+            if let pi = projects.firstIndex(where: { $0.id == project.id }) {
+                if let ti = projects[pi].triggers.firstIndex(where: { $0.id == trigger.id }) {
+                    projects[pi].triggers[ti].isActive = true
+                    projects[pi].triggers[ti].activationDate = Date()
                 }
             }
         }
         print("Activated trigger '\(trigger.name)' on '\(project.title)'.")
         print("Saved to: \(url.lastPathComponent)")
-        print("Restore this backup in the app to sync the change.")
     }
 }
 
@@ -354,14 +352,14 @@ struct AdjustCommand: ParsableCommand {
 
     func run() throws {
         let store = try DataStore()
-        let backup = try store.loadLatest()
+        let (projects, _, _, _) = try store.loadProjectsResolved()
 
         guard let newDate = dateFormatter.date(from: date) else {
             print("Invalid date format '\(date)'. Expected YYYY-MM-DD.")
             return
         }
 
-        let matchedProjects = findProjects(backup.projects, matching: projectTitle)
+        let matchedProjects = findProjects(projects, matching: projectTitle)
 
         guard !matchedProjects.isEmpty else {
             print("No projects matching '\(projectTitle)'.")
@@ -389,14 +387,13 @@ struct AdjustCommand: ParsableCommand {
         let sdIndex = matches[0].index
         let oldDate = displayDateFormatter.string(from: project.subDeadlines[sdIndex].date)
 
-        let url = try store.mutate { data in
-            let pi = data.projects.firstIndex { $0.id == project.id }!
-            data.projects[pi].subDeadlines[sdIndex].date = newDate
+        let url = try store.mutate { projects, templates, triggers, appSettings in
+            let pi = projects.firstIndex { $0.id == project.id }!
+            projects[pi].subDeadlines[sdIndex].date = newDate
         }
         let newDateStr = displayDateFormatter.string(from: newDate)
         print("Adjusted '\(matches[0].subDeadline.title)' in '\(project.title)': \(oldDate) -> \(newDateStr)")
         print("Saved to: \(url.lastPathComponent)")
-        print("Restore this backup in the app to sync the change.")
     }
 }
 
@@ -410,13 +407,22 @@ struct ExportCommand: ParsableCommand {
 
     func run() throws {
         let store = try DataStore()
-        let backup = try store.loadLatest()
+        let (projects, templates, triggers, appSettings) = try store.loadProjectsResolved()
+
+        let exportData = SharedData(
+            projects: projects,
+            templates: templates,
+            triggers: triggers,
+            appSettings: appSettings,
+            lastModified: Date(),
+            lastModifiedBy: "cli-export"
+        )
 
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
         encoder.dateEncodingStrategy = .iso8601
 
-        let data = try encoder.encode(backup)
+        let data = try encoder.encode(exportData)
         if let json = String(data: data, encoding: .utf8) {
             print(json)
         }
