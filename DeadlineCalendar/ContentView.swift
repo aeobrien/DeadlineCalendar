@@ -31,8 +31,13 @@ class DeadlineViewModel: ObservableObject {
     // UserDefaults instance, potentially using a shared app group for widgets.
     private let userDefaults: UserDefaults
 
+    // Shared iCloud data store for cross-platform sync.
+    private let sharedStore = SharedDataStore.shared
 
-    // Initializer: ONLY sets up UserDefaults now.
+    // Observer token for external change notifications.
+    private var externalChangeObserver: NSObjectProtocol?
+
+    // Initializer: Sets up UserDefaults and shared store monitoring.
     init() {
         // Check both shared and standard UserDefaults
         if let sharedDefaults = UserDefaults(suiteName: "group.com.yourapp.deadlines") {
@@ -42,9 +47,56 @@ class DeadlineViewModel: ObservableObject {
             print("ViewModel Init: Failed to get shared UserDefaults. Using standard.")
             self.userDefaults = UserDefaults.standard
         }
-        
+
         // Request notification permissions (but don't schedule yet - data isn't loaded)
         requestNotificationPermissions()
+
+        // Start monitoring the shared iCloud file for external changes.
+        sharedStore.startMonitoring()
+        externalChangeObserver = NotificationCenter.default.addObserver(
+            forName: SharedDataStore.didDetectExternalChange,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            self?.handleExternalSharedDataChange()
+        }
+    }
+
+    deinit {
+        if let observer = externalChangeObserver {
+            NotificationCenter.default.removeObserver(observer)
+        }
+        sharedStore.stopMonitoring()
+    }
+
+    /// Reload data when the shared iCloud file is modified externally (e.g. by the CLI).
+    private func handleExternalSharedDataChange() {
+        print("ViewModel: External shared data change detected — reloading...")
+        if let sharedData = sharedStore.load() {
+            self.projects = sharedData.projects
+            self.templates = sharedData.templates
+            self.triggers = sharedData.triggers
+            self.appSettings = sharedData.appSettings
+            print("ViewModel: Reloaded from shared file (lastModifiedBy: \(sharedData.lastModifiedBy))")
+
+            // Also update UserDefaults so the widget stays current.
+            let encoder = JSONEncoder()
+            if let encoded = try? encoder.encode(projects) {
+                userDefaults.set(encoded, forKey: projectsKey)
+            }
+            if let encoded = try? encoder.encode(templates) {
+                userDefaults.set(encoded, forKey: templatesKey)
+            }
+            if let encoded = try? encoder.encode(triggers) {
+                userDefaults.set(encoded, forKey: triggersKey)
+            }
+            if let encoded = try? encoder.encode(appSettings) {
+                userDefaults.set(encoded, forKey: appSettingsKey)
+            }
+
+            reloadWidgets()
+            updateNotifications()
+        }
     }
 
     // New function to load data asynchronously
@@ -52,21 +104,58 @@ class DeadlineViewModel: ObservableObject {
     func loadInitialData() async {
         print("ViewModel: Starting initial data load...")
         isLoading = true
-        
-        // Try to recover data from standard UserDefaults if shared is empty
-        attemptDataRecovery()
-        
-        // Perform loading (these are synchronous for now)
-        loadProjects()
-        loadTemplates()
-        loadTriggers()
-        loadAppSettings()
-        
+
+        // --- Shared iCloud file: try loading first ---
+        var loadedFromSharedFile = false
+        if let sharedData = sharedStore.load() {
+            print("ViewModel: Loaded data from shared iCloud file (lastModifiedBy: \(sharedData.lastModifiedBy))")
+            self.projects = sharedData.projects
+            self.templates = sharedData.templates
+            self.triggers = sharedData.triggers
+            self.appSettings = sharedData.appSettings
+            loadedFromSharedFile = true
+
+            // Sync to UserDefaults so the widget stays up to date.
+            let encoder = JSONEncoder()
+            if let encoded = try? encoder.encode(projects) {
+                userDefaults.set(encoded, forKey: projectsKey)
+            }
+            if let encoded = try? encoder.encode(templates) {
+                userDefaults.set(encoded, forKey: templatesKey)
+            }
+            if let encoded = try? encoder.encode(triggers) {
+                userDefaults.set(encoded, forKey: triggersKey)
+            }
+            if let encoded = try? encoder.encode(appSettings) {
+                userDefaults.set(encoded, forKey: appSettingsKey)
+            }
+        }
+
+        if !loadedFromSharedFile {
+            // Fall back to UserDefaults
+            print("ViewModel: Shared file not available, falling back to UserDefaults")
+
+            // Try to recover data from standard UserDefaults if shared is empty
+            attemptDataRecovery()
+
+            // Perform loading (these are synchronous for now)
+            loadProjects()
+            loadTemplates()
+            loadTriggers()
+            loadAppSettings()
+
+            // First-launch migration: write current data to shared file if it doesn't exist.
+            if !sharedStore.sharedFileExists {
+                print("ViewModel: Shared file does not exist — migrating UserDefaults data to iCloud shared file")
+                sharedStore.save(projects: projects, templates: templates, triggers: triggers, appSettings: appSettings)
+            }
+        }
+
         // Migrate existing triggers to have dates
         migrateTriggersWithoutDates()
 
         // Removed default template creation - templates are now user-created only
-        
+
         isLoading = false
         print("ViewModel: Initial data load complete.")
         
@@ -449,7 +538,7 @@ class DeadlineViewModel: ObservableObject {
 
     // --- DATA SAVING ---
 
-    // Saves the current state of projects to UserDefaults.
+    // Saves the current state of projects to UserDefaults and the shared iCloud file.
     func saveProjects() {
         let encoder = JSONEncoder()
         if let encoded = try? encoder.encode(projects) {
@@ -460,9 +549,11 @@ class DeadlineViewModel: ObservableObject {
         } else {
             print("ViewModel Error: Failed to encode projects for saving.")
         }
+        // Write to shared iCloud file
+        saveToSharedFile()
     }
 
-    // Saves the current state of templates to UserDefaults.
+    // Saves the current state of templates to UserDefaults and the shared iCloud file.
     func saveTemplates() {
         let encoder = JSONEncoder()
         if let encoded = try? encoder.encode(templates) {
@@ -473,9 +564,11 @@ class DeadlineViewModel: ObservableObject {
         } else {
             print("ViewModel Error: Failed to encode templates for saving.")
         }
+        // Write to shared iCloud file
+        saveToSharedFile()
     }
 
-    // Saves the current state of triggers to UserDefaults.
+    // Saves the current state of triggers to UserDefaults and the shared iCloud file.
     func saveTriggers() {
         let encoder = JSONEncoder()
         if let encoded = try? encoder.encode(triggers) {
@@ -486,9 +579,11 @@ class DeadlineViewModel: ObservableObject {
         } else {
             print("ViewModel Error: Failed to encode triggers for saving.")
         }
+        // Write to shared iCloud file
+        saveToSharedFile()
     }
 
-    // Saves the current state of app settings to UserDefaults.
+    // Saves the current state of app settings to UserDefaults and the shared iCloud file.
     func saveAppSettings() {
         let encoder = JSONEncoder()
         if let encoded = try? encoder.encode(appSettings) {
@@ -497,12 +592,19 @@ class DeadlineViewModel: ObservableObject {
         } else {
             print("ViewModel Error: Failed to encode app settings for saving.")
         }
+        // Write to shared iCloud file
+        saveToSharedFile()
     }
 
     // Utility function to reload widget timelines.
     func reloadWidgets() {
         WidgetCenter.shared.reloadAllTimelines()
         print("ViewModel: Widget timelines reloaded.")
+    }
+
+    /// Write all current data to the shared iCloud JSON file.
+    private func saveToSharedFile() {
+        sharedStore.save(projects: projects, templates: templates, triggers: triggers, appSettings: appSettings)
     }
 
 
@@ -567,6 +669,247 @@ class DeadlineViewModel: ObservableObject {
             )
             addProject(newProject) // addProject handles appending and saving.
             print("ViewModel: Created new project '\(standaloneProjectName)' for standalone deadline '\(deadline.title)'.")
+        }
+    }
+    
+    // MARK: - Repetition Management
+    
+    /// Generates future occurrences of a deadline based on its repetition pattern
+    func generateRepetitionOccurrences(for deadline: SubDeadline) {
+        guard let pattern = deadline.repetitionPattern, pattern.type != .none else {
+            print("ViewModel: No repetition pattern to generate for deadline '\(deadline.title)'")
+            return
+        }
+        
+        print("ViewModel: Generating repetition occurrences for '\(deadline.title)'")
+        
+        var currentDate = deadline.date
+        var occurrenceCount = 1 // The original is occurrence #1
+        var generatedDeadlines: [SubDeadline] = []
+        
+        // Determine the limit for generation
+        let maxDate = pattern.endDate ?? Calendar.current.date(byAdding: .year, value: 2, to: Date()) ?? Date()
+        let maxOccurrences = pattern.maxOccurrences ?? 100 // Safety limit
+        
+        while occurrenceCount < maxOccurrences {
+            // Calculate the next occurrence date
+            guard let nextDate = pattern.nextOccurrence(after: currentDate) else {
+                print("ViewModel: Could not calculate next occurrence")
+                break
+            }
+            
+            // Check if we've exceeded the end date
+            if let endDate = pattern.endDate, nextDate > endDate {
+                print("ViewModel: Reached end date limit")
+                break
+            }
+            
+            // Check if we've gone too far into the future (safety check)
+            if nextDate > maxDate {
+                print("ViewModel: Reached maximum date limit")
+                break
+            }
+            
+            occurrenceCount += 1
+            
+            // Create the new occurrence
+            let newDeadline = SubDeadline(
+                title: deadline.title,
+                date: nextDate,
+                isCompleted: false,
+                subtasks: deadline.subtasks.map { Subtask(title: $0.title, isCompleted: false) }, // Copy subtasks as uncompleted
+                templateSubDeadlineID: deadline.templateSubDeadlineID,
+                triggerID: deadline.triggerID,
+                repetitionPattern: pattern, // Keep the same pattern for future regeneration
+                repetitionSourceID: deadline.id, // Link back to the original
+                repetitionOccurrenceNumber: occurrenceCount
+            )
+            
+            generatedDeadlines.append(newDeadline)
+            currentDate = nextDate
+        }
+        
+        print("ViewModel: Generated \(generatedDeadlines.count) repetition occurrences")
+        
+        // Add all generated deadlines to the standalone project
+        if !generatedDeadlines.isEmpty {
+            if let projectIndex = projects.firstIndex(where: { $0.id == DeadlineViewModel.standaloneProjectID }) {
+                projects[projectIndex].subDeadlines.append(contentsOf: generatedDeadlines)
+                projects[projectIndex].subDeadlines.sort { $0.date < $1.date }
+                saveProjects()
+            }
+        }
+    }
+    
+    /// Removes all future occurrences of a repeating deadline
+    func removeRepetitionOccurrences(for deadline: SubDeadline) {
+        guard let projectIndex = projects.firstIndex(where: { $0.id == DeadlineViewModel.standaloneProjectID }) else {
+            return
+        }
+        
+        // Remove all deadlines that have this deadline as their repetition source
+        projects[projectIndex].subDeadlines.removeAll { $0.repetitionSourceID == deadline.id }
+        
+        print("ViewModel: Removed repetition occurrences for deadline '\(deadline.title)'")
+        saveProjects()
+    }
+    
+    /// Updates repetition occurrences when the pattern changes
+    func updateRepetitionOccurrences(for deadline: SubDeadline) {
+        // First remove old occurrences
+        removeRepetitionOccurrences(for: deadline)
+        
+        // Then generate new ones if pattern is still active
+        if let pattern = deadline.repetitionPattern, pattern.type != .none {
+            generateRepetitionOccurrences(for: deadline)
+        }
+    }
+    
+    // MARK: - Project Repetition Management
+    
+    /// Generates future occurrences of a project based on its repetition pattern
+    func generateProjectRepetitionOccurrences(for project: Project) {
+        guard let pattern = project.repetitionPattern, pattern.type != .none else {
+            print("ViewModel: No repetition pattern to generate for project '\(project.title)'")
+            return
+        }
+        
+        print("ViewModel: Generating repetition occurrences for project '\(project.title)'")
+        
+        var currentDate = project.finalDeadlineDate
+        var occurrenceCount = 1 // The original is occurrence #1
+        var generatedProjects: [Project] = []
+        
+        // Determine the limit for generation
+        let maxDate = pattern.endDate ?? Calendar.current.date(byAdding: .year, value: 2, to: Date()) ?? Date()
+        let maxOccurrences = pattern.maxOccurrences ?? 100 // Safety limit
+        
+        while occurrenceCount < maxOccurrences {
+            // Calculate the next occurrence date
+            guard let nextDate = pattern.nextOccurrence(after: currentDate) else {
+                print("ViewModel: Could not calculate next occurrence")
+                break
+            }
+            
+            // Check if we've exceeded the end date
+            if let endDate = pattern.endDate, nextDate > endDate {
+                print("ViewModel: Reached end date limit")
+                break
+            }
+            
+            // Check if we've gone too far into the future (safety check)
+            if nextDate > maxDate {
+                print("ViewModel: Reached maximum date limit")
+                break
+            }
+            
+            occurrenceCount += 1
+            
+            // Calculate the time difference for sub-deadlines
+            let daysDifference = Calendar.current.dateComponents([.day], from: project.finalDeadlineDate, to: nextDate).day ?? 0
+            
+            // Create new sub-deadlines with adjusted dates
+            let newSubDeadlines = project.subDeadlines.map { original -> SubDeadline in
+                let newDate = Calendar.current.date(byAdding: .day, value: daysDifference, to: original.date) ?? original.date
+                return SubDeadline(
+                    title: original.title,
+                    date: newDate,
+                    isCompleted: false,
+                    subtasks: original.subtasks.map { Subtask(title: $0.title, isCompleted: false) },
+                    templateSubDeadlineID: original.templateSubDeadlineID,
+                    triggerID: nil, // Don't copy trigger IDs as they're project-specific
+                    repetitionPattern: original.repetitionPattern // Keep sub-deadline repetition if any
+                )
+            }
+            
+            // Create new triggers with adjusted dates if the project has triggers
+            let originalTriggers = triggers(for: project.id)
+            var newTriggers: [Trigger] = []
+            if !originalTriggers.isEmpty {
+                for trigger in originalTriggers {
+                    if let triggerDate = trigger.date {
+                        let newTriggerDate = Calendar.current.date(byAdding: .day, value: daysDifference, to: triggerDate) ?? triggerDate
+                        let newTrigger = Trigger(
+                            name: trigger.name,
+                            projectID: UUID(), // Will be updated when project is created
+                            date: newTriggerDate,
+                            isActive: false,
+                            originatingTemplateTriggerID: trigger.originatingTemplateTriggerID
+                        )
+                        newTriggers.append(newTrigger)
+                    }
+                }
+            }
+            
+            // Create the new project occurrence
+            let newProject = Project(
+                title: project.title,
+                finalDeadlineDate: nextDate,
+                subDeadlines: newSubDeadlines.sorted { $0.date < $1.date },
+                triggers: newTriggers,
+                templateID: project.templateID,
+                templateName: project.templateName,
+                repetitionPattern: pattern, // Keep the same pattern for future regeneration
+                repetitionSourceID: project.id, // Link back to the original
+                repetitionOccurrenceNumber: occurrenceCount
+            )
+            
+            generatedProjects.append(newProject)
+            currentDate = nextDate
+        }
+        
+        print("ViewModel: Generated \(generatedProjects.count) project repetition occurrences")
+        
+        // Add all generated projects
+        for generatedProject in generatedProjects {
+            // Update trigger project IDs to match the new project
+            var projectWithCorrectTriggers = generatedProject
+            projectWithCorrectTriggers.triggers = generatedProject.triggers.map { trigger in
+                var updatedTrigger = trigger
+                updatedTrigger = Trigger(
+                    id: trigger.id,
+                    name: trigger.name,
+                    projectID: generatedProject.id, // Use the actual project ID
+                    date: trigger.date,
+                    isActive: trigger.isActive,
+                    originatingTemplateTriggerID: trigger.originatingTemplateTriggerID
+                )
+                return updatedTrigger
+            }
+            
+            // Add the project
+            addProject(projectWithCorrectTriggers)
+            
+            // Add the triggers separately
+            for trigger in projectWithCorrectTriggers.triggers {
+                addTrigger(trigger)
+            }
+        }
+    }
+    
+    /// Removes all future occurrences of a repeating project
+    func removeProjectRepetitionOccurrences(for project: Project) {
+        // Remove all projects that have this project as their repetition source
+        projects.removeAll { $0.repetitionSourceID == project.id }
+        
+        // Also remove associated triggers
+        triggers.removeAll { trigger in
+            projects.contains { $0.repetitionSourceID == project.id && $0.id == trigger.projectID }
+        }
+        
+        print("ViewModel: Removed repetition occurrences for project '\(project.title)'")
+        saveProjects()
+        saveTriggers()
+    }
+    
+    /// Updates project repetition occurrences when the pattern changes
+    func updateProjectRepetitionOccurrences(for project: Project) {
+        // First remove old occurrences
+        removeProjectRepetitionOccurrences(for: project)
+        
+        // Then generate new ones if pattern is still active
+        if let pattern = project.repetitionPattern, pattern.type != .none {
+            generateProjectRepetitionOccurrences(for: project)
         }
     }
 
