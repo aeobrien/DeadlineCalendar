@@ -17,6 +17,20 @@ struct ProjectEditorView: View {
     // Internal state to hold the original project data once loaded
     @State private var originalProject: Project?
     
+    // State variables for repetition settings
+    @State private var enableRepetition: Bool = false
+    @State private var repetitionType: RepetitionType = .fixedInterval
+    @State private var intervalValue: Int = 1
+    @State private var intervalUnit: TimeOffsetUnit = .months
+    @State private var dayOfMonthPosition: DayOfMonthPosition = .first
+    @State private var dayOfMonthWeekday: RepetitionWeekday = .monday
+    @State private var useDayNumber: Bool = false
+    @State private var dayNumber: Int = 1
+    @State private var hasEndDate: Bool = false
+    @State private var endDate: Date = Date()
+    @State private var hasMaxOccurrences: Bool = false
+    @State private var maxOccurrences: Int = 10
+    
     // State for creating a trigger from the dedicated section
     @State private var showingAddTriggerAlert = false
     @State private var newTriggerSectionName: String = ""
@@ -45,6 +59,22 @@ struct ProjectEditorView: View {
             _finalDeadlineDate = State(initialValue: project.finalDeadlineDate)
             _subDeadlines = State(initialValue: project.subDeadlines)
             _originalProject = State(initialValue: project)
+            
+            // Initialize repetition settings
+            if let pattern = project.repetitionPattern {
+                _enableRepetition = State(initialValue: pattern.type != .none)
+                _repetitionType = State(initialValue: pattern.type)
+                _intervalValue = State(initialValue: pattern.intervalValue)
+                _intervalUnit = State(initialValue: pattern.intervalUnit)
+                _dayOfMonthPosition = State(initialValue: pattern.dayOfMonthPosition)
+                _dayOfMonthWeekday = State(initialValue: pattern.dayOfMonthWeekday)
+                _useDayNumber = State(initialValue: pattern.dayOfMonthDay != nil)
+                _dayNumber = State(initialValue: pattern.dayOfMonthDay ?? 1)
+                _hasEndDate = State(initialValue: pattern.endDate != nil)
+                _endDate = State(initialValue: pattern.endDate ?? Calendar.current.date(byAdding: .year, value: 1, to: Date())!)
+                _hasMaxOccurrences = State(initialValue: pattern.maxOccurrences != nil)
+                _maxOccurrences = State(initialValue: pattern.maxOccurrences ?? 10)
+            }
         } else {
             // Fallback for when project is not found. The view will dismiss on appear.
             _projectTitle = State(initialValue: "")
@@ -203,6 +233,80 @@ struct ProjectEditorView: View {
                         }
                         .buttonStyle(.borderless)
                     }
+                    
+                    // Section for repetition settings
+                    Section("Repetition Settings") {
+                        Toggle("Repeat Project", isOn: $enableRepetition.animation())
+                        
+                        if enableRepetition {
+                            Picker("Repetition Type", selection: $repetitionType) {
+                                Text("Fixed Interval").tag(RepetitionType.fixedInterval)
+                                Text("Day of Month").tag(RepetitionType.dayOfMonth)
+                            }
+                            .pickerStyle(.segmented)
+                            
+                            if repetitionType == .fixedInterval {
+                                // Fixed interval settings
+                                HStack {
+                                    Text("Every")
+                                    Picker("Value", selection: $intervalValue) {
+                                        ForEach(1..<100) { value in
+                                            Text("\(value)").tag(value)
+                                        }
+                                    }
+                                    .pickerStyle(.menu)
+                                    .frame(width: 80)
+                                    
+                                    Picker("Unit", selection: $intervalUnit) {
+                                        Text("Day(s)").tag(TimeOffsetUnit.days)
+                                        Text("Week(s)").tag(TimeOffsetUnit.weeks)
+                                        Text("Month(s)").tag(TimeOffsetUnit.months)
+                                    }
+                                    .pickerStyle(.menu)
+                                }
+                            } else if repetitionType == .dayOfMonth {
+                                // Day of month settings
+                                Toggle("Use specific day number", isOn: $useDayNumber.animation())
+                                
+                                if useDayNumber {
+                                    Picker("Day of month", selection: $dayNumber) {
+                                        ForEach(1...31, id: \.self) { day in
+                                            Text("\(day)").tag(day)
+                                        }
+                                    }
+                                    .pickerStyle(.menu)
+                                } else {
+                                    HStack {
+                                        Picker("Position", selection: $dayOfMonthPosition) {
+                                            ForEach(DayOfMonthPosition.allCases) { position in
+                                                Text(position.rawValue).tag(position)
+                                            }
+                                        }
+                                        .pickerStyle(.menu)
+                                        
+                                        Picker("Weekday", selection: $dayOfMonthWeekday) {
+                                            ForEach(RepetitionWeekday.allCases) { weekday in
+                                                Text(weekday.displayName).tag(weekday)
+                                            }
+                                        }
+                                        .pickerStyle(.menu)
+                                    }
+                                }
+                            }
+                            
+                            // End date settings
+                            Toggle("End date", isOn: $hasEndDate.animation())
+                            if hasEndDate {
+                                DatePicker("End by", selection: $endDate, in: finalDeadlineDate..., displayedComponents: .date)
+                            }
+                            
+                            // Max occurrences settings
+                            Toggle("Limit occurrences", isOn: $hasMaxOccurrences.animation())
+                            if hasMaxOccurrences {
+                                Stepper("Max \(maxOccurrences) occurrences", value: $maxOccurrences, in: 1...100)
+                            }
+                        }
+                    }
                 }
                 .navigationTitle("Edit Project")
                 .navigationBarTitleDisplayMode(.inline)
@@ -328,6 +432,22 @@ struct ProjectEditorView: View {
         // Sort subdeadlines before saving, just in case
         projectToUpdate.subDeadlines = subDeadlines.sorted { $0.date < $1.date }
         
+        // Update repetition pattern
+        if enableRepetition {
+            projectToUpdate.repetitionPattern = RepetitionPattern(
+                type: repetitionType,
+                intervalValue: intervalValue,
+                intervalUnit: intervalUnit,
+                dayOfMonthPosition: dayOfMonthPosition,
+                dayOfMonthWeekday: dayOfMonthWeekday,
+                dayOfMonthDay: useDayNumber ? dayNumber : nil,
+                maxOccurrences: hasMaxOccurrences ? maxOccurrences : nil,
+                endDate: hasEndDate ? endDate : nil
+            )
+        } else {
+            projectToUpdate.repetitionPattern = nil
+        }
+        
         // Recalculate dates for template-linked subdeadlines if the final deadline changed
         if projectToUpdate.finalDeadlineDate != originalProject?.finalDeadlineDate {
              print("ProjectEditorView: Final deadline changed. Recalculating template-linked sub-deadline dates...")
@@ -361,6 +481,16 @@ struct ProjectEditorView: View {
         // Call the ViewModel's update function
         print("ProjectEditorView: Saving changes for project '\(projectToUpdate.title)'.")
         viewModel.updateProject(projectToUpdate)
+        
+        // Handle repetition changes
+        let oldHadRepetition = originalProject?.repetitionPattern != nil && originalProject?.repetitionPattern?.type != .none
+        let newHasRepetition = projectToUpdate.repetitionPattern != nil && projectToUpdate.repetitionPattern?.type != .none
+        
+        if oldHadRepetition != newHasRepetition || 
+           (oldHadRepetition && originalProject?.repetitionPattern != projectToUpdate.repetitionPattern) {
+            // Repetition settings changed, update occurrences
+            viewModel.updateProjectRepetitionOccurrences(for: projectToUpdate)
+        }
     }
 }
 

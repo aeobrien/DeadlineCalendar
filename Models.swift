@@ -174,6 +174,166 @@ struct Template: Identifiable, Codable, Equatable {
 private let exampleTrigger1ID = UUID()
 private let exampleTrigger2ID = UUID()
 
+// MARK: - Repetition Pattern Types
+enum RepetitionType: String, Codable, CaseIterable, Identifiable {
+    case fixedInterval = "Fixed Interval" // Every X days/weeks/months
+    case dayOfMonth = "Day of Month" // First/Last/Nth weekday of month
+    case none = "None" // No repetition
+    
+    var id: String { self.rawValue }
+}
+
+// MARK: - Day of Month Position
+enum DayOfMonthPosition: String, Codable, CaseIterable, Identifiable {
+    case first = "First"
+    case second = "Second"
+    case third = "Third"
+    case fourth = "Fourth"
+    case last = "Last"
+    
+    var id: String { self.rawValue }
+}
+
+// MARK: - Weekday for monthly repetition
+enum RepetitionWeekday: Int, Codable, CaseIterable, Identifiable {
+    case sunday = 1
+    case monday = 2
+    case tuesday = 3
+    case wednesday = 4
+    case thursday = 5
+    case friday = 6
+    case saturday = 7
+    
+    var id: Int { self.rawValue }
+    
+    var displayName: String {
+        switch self {
+        case .sunday: return "Sunday"
+        case .monday: return "Monday"
+        case .tuesday: return "Tuesday"
+        case .wednesday: return "Wednesday"
+        case .thursday: return "Thursday"
+        case .friday: return "Friday"
+        case .saturday: return "Saturday"
+        }
+    }
+}
+
+// MARK: - Repetition Pattern
+struct RepetitionPattern: Codable, Equatable, Hashable {
+    var type: RepetitionType = .none
+    
+    // For fixed interval repetition
+    var intervalValue: Int = 1
+    var intervalUnit: TimeOffsetUnit = .weeks
+    
+    // For day of month repetition
+    var dayOfMonthPosition: DayOfMonthPosition = .first
+    var dayOfMonthWeekday: RepetitionWeekday = .monday
+    var dayOfMonthDay: Int? = nil // For "day N of month" (1-31), nil for weekday-based
+    
+    // Common settings
+    var maxOccurrences: Int? = nil // nil means infinite
+    var endDate: Date? = nil // Optional end date for repetition
+    
+    // Calculate next occurrence date based on pattern
+    func nextOccurrence(after date: Date) -> Date? {
+        let calendar = Calendar.current
+        
+        switch type {
+        case .none:
+            return nil
+            
+        case .fixedInterval:
+            var component: Calendar.Component
+            switch intervalUnit {
+            case .days:
+                component = .day
+            case .weeks:
+                component = .weekOfYear
+            case .months:
+                component = .month
+            }
+            return calendar.date(byAdding: component, value: intervalValue, to: date)
+            
+        case .dayOfMonth:
+            // If using a specific day number (1-31)
+            if let dayNumber = dayOfMonthDay {
+                var components = calendar.dateComponents([.year, .month], from: date)
+                components.day = dayNumber
+                
+                // Try current month first
+                if let candidate = calendar.date(from: components),
+                   candidate > date {
+                    return candidate
+                }
+                
+                // Move to next month
+                components.month = (components.month ?? 0) + 1
+                return calendar.date(from: components)
+            }
+            
+            // Using weekday-based pattern (e.g., "Second Tuesday")
+            var currentDate = date
+            for _ in 0..<24 { // Search up to 24 months ahead (safety limit)
+                if let nextDate = findNextWeekdayInMonth(after: currentDate) {
+                    return nextDate
+                }
+                // Move to next month
+                guard let nextMonth = calendar.date(byAdding: .month, value: 1, to: currentDate) else {
+                    break
+                }
+                currentDate = calendar.startOfDay(for: nextMonth)
+            }
+            return nil
+        }
+    }
+    
+    private func findNextWeekdayInMonth(after date: Date) -> Date? {
+        let calendar = Calendar.current
+        var components = calendar.dateComponents([.year, .month], from: date)
+        components.day = 1
+        
+        guard let monthStart = calendar.date(from: components) else { return nil }
+        
+        // Find all occurrences of the target weekday in the month
+        var occurrences: [Date] = []
+        var currentDate = monthStart
+        
+        while calendar.component(.month, from: currentDate) == components.month {
+            if calendar.component(.weekday, from: currentDate) == dayOfMonthWeekday.rawValue {
+                occurrences.append(currentDate)
+            }
+            guard let nextDay = calendar.date(byAdding: .day, value: 1, to: currentDate) else {
+                break
+            }
+            currentDate = nextDay
+        }
+        
+        // Select the appropriate occurrence based on position
+        let targetDate: Date?
+        switch dayOfMonthPosition {
+        case .first:
+            targetDate = occurrences.first
+        case .second:
+            targetDate = occurrences.count > 1 ? occurrences[1] : nil
+        case .third:
+            targetDate = occurrences.count > 2 ? occurrences[2] : nil
+        case .fourth:
+            targetDate = occurrences.count > 3 ? occurrences[3] : nil
+        case .last:
+            targetDate = occurrences.last
+        }
+        
+        // Return only if it's after the reference date
+        if let targetDate = targetDate, targetDate > date {
+            return targetDate
+        }
+        
+        return nil
+    }
+}
+
 // MARK: - SubDeadline Model (Instance)
 // Represents an actual sub-deadline instance within a specific project.
 struct SubDeadline: Identifiable, Codable, Equatable, Hashable {
@@ -184,9 +344,12 @@ struct SubDeadline: Identifiable, Codable, Equatable, Hashable {
     var subtasks: [Subtask] // Associated subtasks (if any)
     let templateSubDeadlineID: UUID? // Optional link back to the template definition it came from
     var triggerID: UUID? // <-- ADDED: Optional link to a Trigger
+    var repetitionPattern: RepetitionPattern? // Optional repetition pattern
+    var repetitionSourceID: UUID? // ID of the original deadline this was repeated from
+    var repetitionOccurrenceNumber: Int? // Which occurrence number this is (1st, 2nd, etc.)
 
     // Initializer - Updated
-    init(id: UUID = UUID(), title: String, date: Date, isCompleted: Bool = false, subtasks: [Subtask] = [], templateSubDeadlineID: UUID? = nil, triggerID: UUID? = nil) {
+    init(id: UUID = UUID(), title: String, date: Date, isCompleted: Bool = false, subtasks: [Subtask] = [], templateSubDeadlineID: UUID? = nil, triggerID: UUID? = nil, repetitionPattern: RepetitionPattern? = nil, repetitionSourceID: UUID? = nil, repetitionOccurrenceNumber: Int? = nil) {
         self.id = id
         self.title = title
         self.date = date
@@ -194,6 +357,9 @@ struct SubDeadline: Identifiable, Codable, Equatable, Hashable {
         self.subtasks = subtasks
         self.templateSubDeadlineID = templateSubDeadlineID // Store the link
         self.triggerID = triggerID // <-- ADDED Assignment
+        self.repetitionPattern = repetitionPattern
+        self.repetitionSourceID = repetitionSourceID
+        self.repetitionOccurrenceNumber = repetitionOccurrenceNumber
     }
 }
 
@@ -207,6 +373,9 @@ struct Project: Identifiable, Codable, Equatable {
     var triggers: [Trigger] // <-- ADDED: List of triggers associated with this project
     var templateID: UUID? // Optional ID of the template used to create this project
     var templateName: String? // Store template name for display purposes
+    var repetitionPattern: RepetitionPattern? // Optional repetition pattern for the project
+    var repetitionSourceID: UUID? // ID of the original project this was repeated from
+    var repetitionOccurrenceNumber: Int? // Which occurrence number this is (1st, 2nd, etc.)
 
     // Computed property to check if all sub-deadlines are completed
     var isFullyCompleted: Bool {
@@ -214,7 +383,7 @@ struct Project: Identifiable, Codable, Equatable {
     }
 
     // Initializer
-    init(id: UUID = UUID(), title: String, finalDeadlineDate: Date, subDeadlines: [SubDeadline] = [], triggers: [Trigger] = [], templateID: UUID? = nil, templateName: String? = nil) {
+    init(id: UUID = UUID(), title: String, finalDeadlineDate: Date, subDeadlines: [SubDeadline] = [], triggers: [Trigger] = [], templateID: UUID? = nil, templateName: String? = nil, repetitionPattern: RepetitionPattern? = nil, repetitionSourceID: UUID? = nil, repetitionOccurrenceNumber: Int? = nil) {
         self.id = id
         self.title = title
         self.finalDeadlineDate = finalDeadlineDate
@@ -222,6 +391,9 @@ struct Project: Identifiable, Codable, Equatable {
         self.triggers = triggers
         self.templateID = templateID
         self.templateName = templateName
+        self.repetitionPattern = repetitionPattern
+        self.repetitionSourceID = repetitionSourceID
+        self.repetitionOccurrenceNumber = repetitionOccurrenceNumber
     }
 }
 

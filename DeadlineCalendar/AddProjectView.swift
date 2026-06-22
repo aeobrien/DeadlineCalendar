@@ -20,6 +20,20 @@ struct AddProjectView: View {
     // NEW State: Track whether to use a template or add manually
     @State private var useTemplate: Bool = true // Default to using a template
     
+    // State variables for repetition settings
+    @State private var enableRepetition: Bool = false
+    @State private var repetitionType: RepetitionType = .fixedInterval
+    @State private var intervalValue: Int = 1
+    @State private var intervalUnit: TimeOffsetUnit = .months
+    @State private var dayOfMonthPosition: DayOfMonthPosition = .first
+    @State private var dayOfMonthWeekday: RepetitionWeekday = .monday
+    @State private var useDayNumber: Bool = false
+    @State private var dayNumber: Int = 1
+    @State private var hasEndDate: Bool = false
+    @State private var endDate: Date = Calendar.current.date(byAdding: .year, value: 1, to: Date()) ?? Date()
+    @State private var hasMaxOccurrences: Bool = false
+    @State private var maxOccurrences: Int = 10
+    
     // Date formatter for sub-deadline rows
     private let subDeadlineDateFormatter: DateFormatter = {
         let formatter = DateFormatter()
@@ -118,10 +132,15 @@ struct AddProjectView: View {
                 Section(header: Text(useTemplate ? "Derived Sub-Deadlines" : "Manual Sub-Deadlines").foregroundColor(.gray)) {
                     // List the editable sub-deadlines
                     List {
-                        // Use the simple display row, not the editable one
-                        ForEach(projectSubDeadlines) { subDeadline in // Iterate over immutable array
-                            // Editable Row for SubDeadline - Remove dateFormatter argument
-                            AddProjectSubDeadlineRow(subDeadline: subDeadline)
+                        // Use editable rows when not using a template, display-only when using template
+                        ForEach(projectSubDeadlines.indices, id: \.self) { index in
+                            if useTemplate {
+                                // Read-only display for template-derived sub-deadlines
+                                AddProjectSubDeadlineRow(subDeadline: projectSubDeadlines[index])
+                            } else {
+                                // Editable row for manual sub-deadlines
+                                EditableAddProjectSubDeadlineRow(subDeadline: $projectSubDeadlines[index])
+                            }
                         }
                         .onDelete(perform: deleteSubDeadline)
                         // Add .onMove if reordering is desired
@@ -137,6 +156,80 @@ struct AddProjectView: View {
                         }
                     }
                     .buttonStyle(.borderless)
+                }
+                
+                // Section for repetition settings
+                Section(header: Text("Repetition Settings").foregroundColor(.gray)) {
+                    Toggle("Repeat Project", isOn: $enableRepetition.animation())
+                    
+                    if enableRepetition {
+                        Picker("Repetition Type", selection: $repetitionType) {
+                            Text("Fixed Interval").tag(RepetitionType.fixedInterval)
+                            Text("Day of Month").tag(RepetitionType.dayOfMonth)
+                        }
+                        .pickerStyle(.segmented)
+                        
+                        if repetitionType == .fixedInterval {
+                            // Fixed interval settings
+                            HStack {
+                                Text("Every")
+                                Picker("Value", selection: $intervalValue) {
+                                    ForEach(1..<100) { value in
+                                        Text("\(value)").tag(value)
+                                    }
+                                }
+                                .pickerStyle(.menu)
+                                .frame(width: 80)
+                                
+                                Picker("Unit", selection: $intervalUnit) {
+                                    Text("Day(s)").tag(TimeOffsetUnit.days)
+                                    Text("Week(s)").tag(TimeOffsetUnit.weeks)
+                                    Text("Month(s)").tag(TimeOffsetUnit.months)
+                                }
+                                .pickerStyle(.menu)
+                            }
+                        } else if repetitionType == .dayOfMonth {
+                            // Day of month settings
+                            Toggle("Use specific day number", isOn: $useDayNumber.animation())
+                            
+                            if useDayNumber {
+                                Picker("Day of month", selection: $dayNumber) {
+                                    ForEach(1...31, id: \.self) { day in
+                                        Text("\(day)").tag(day)
+                                    }
+                                }
+                                .pickerStyle(.menu)
+                            } else {
+                                HStack {
+                                    Picker("Position", selection: $dayOfMonthPosition) {
+                                        ForEach(DayOfMonthPosition.allCases) { position in
+                                            Text(position.rawValue).tag(position)
+                                        }
+                                    }
+                                    .pickerStyle(.menu)
+                                    
+                                    Picker("Weekday", selection: $dayOfMonthWeekday) {
+                                        ForEach(RepetitionWeekday.allCases) { weekday in
+                                            Text(weekday.displayName).tag(weekday)
+                                        }
+                                    }
+                                    .pickerStyle(.menu)
+                                }
+                            }
+                        }
+                        
+                        // End date settings
+                        Toggle("End date", isOn: $hasEndDate.animation())
+                        if hasEndDate {
+                            DatePicker("End by", selection: $endDate, in: finalDeadlineDate..., displayedComponents: .date)
+                        }
+                        
+                        // Max occurrences settings
+                        Toggle("Limit occurrences", isOn: $hasMaxOccurrences.animation())
+                        if hasMaxOccurrences {
+                            Stepper("Max \(maxOccurrences) occurrences", value: $maxOccurrences, in: 1...100)
+                        }
+                    }
                 }
             }
             // Set the navigation bar title.
@@ -267,8 +360,23 @@ struct AddProjectView: View {
         
         print("AddProjectView: Saving project '\(trimmedTitle)' with final date \(finalDeadlineDate). Template Used: \(currentTemplateName ?? "None")")
         
+        // Create repetition pattern if enabled
+        var repetitionPattern: RepetitionPattern? = nil
+        if enableRepetition {
+            repetitionPattern = RepetitionPattern(
+                type: repetitionType,
+                intervalValue: intervalValue,
+                intervalUnit: intervalUnit,
+                dayOfMonthPosition: dayOfMonthPosition,
+                dayOfMonthWeekday: dayOfMonthWeekday,
+                dayOfMonthDay: useDayNumber ? dayNumber : nil,
+                maxOccurrences: hasMaxOccurrences ? maxOccurrences : nil,
+                endDate: hasEndDate ? endDate : nil
+            )
+        }
+        
         // Create the project using the template if one was selected
-        let newProject: Project
+        var newProject: Project
         if useTemplate, let template = selectedTemplate {
             // Use createProjectFromTemplate to properly create triggers
             newProject = viewModel.createProjectFromTemplate(
@@ -276,6 +384,8 @@ struct AddProjectView: View {
                 title: trimmedTitle,
                 finalDeadline: finalDeadlineDate
             )
+            // Add repetition pattern after creation
+            newProject.repetitionPattern = repetitionPattern
         } else {
             // Create without template
             newProject = Project(
@@ -283,14 +393,23 @@ struct AddProjectView: View {
                 finalDeadlineDate: finalDeadlineDate,
                 subDeadlines: projectSubDeadlines.sorted { $0.date < $1.date }, // Ensure sorted on save
                 templateID: nil,
-                templateName: nil
+                templateName: nil,
+                repetitionPattern: repetitionPattern
             )
         }
         
         // Add the newly created project using the ViewModel.
         viewModel.addProject(newProject)
         
+        // If repetition is enabled, also create future occurrences
+        if let pattern = repetitionPattern, pattern.type != .none {
+            viewModel.generateProjectRepetitionOccurrences(for: newProject)
+        }
+        
         print("AddProjectView: Project added successfully.")
+        if repetitionPattern != nil {
+            print("  - With repetition pattern: \(repetitionPattern!.type.rawValue)")
+        }
     }
     
     // REMOVED: Helper function to calculate preview dates - no longer needed
@@ -316,6 +435,35 @@ private struct AddProjectSubDeadlineRow: View {
             Text(subDeadline.date, formatter: Self.dateFormatter)
                 .font(.subheadline)
                 .foregroundColor(.gray)
+        }
+    }
+}
+
+// MARK: - Editable Sub-Deadline Row for AddProjectView
+// Allows editing of manually added sub-deadlines
+private struct EditableAddProjectSubDeadlineRow: View {
+    @Binding var subDeadline: SubDeadline
+    
+    // Date formatter for display
+    private static let dateFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .medium
+        formatter.timeStyle = .none
+        return formatter
+    }()
+
+    var body: some View {
+        HStack {
+            // Editable Title
+            TextField("Sub-deadline Title", text: $subDeadline.title)
+                .textFieldStyle(PlainTextFieldStyle())
+            
+            Spacer()
+            
+            // Editable Date
+            DatePicker("", selection: $subDeadline.date, displayedComponents: .date)
+                .labelsHidden()
+                .datePickerStyle(.compact)
         }
     }
 }
