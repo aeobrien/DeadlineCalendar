@@ -9,13 +9,13 @@ modules:
     project: DeadlineCalendar
     subsystem: Planning Engine
     name: Template authoring and sync
-    capability: Defines reusable deadline templates with trigger-linked steps and can propagate template edits into projects created from them.
+    capability: Defines reusable deadline templates with trigger-linked sub-deadlines and can propagate template changes into template-backed projects.
     status: working
-    approach: SwiftUI template editors mutate `Template` and `TemplateTrigger` models, and `DeadlineViewModel` computes diffs to update linked project triggers and sub-deadlines.
+    approach: SwiftUI template editors mutate `Template`, `TemplateSubDeadline`, and `TemplateTrigger` data, and `DeadlineViewModel` diffs template state to add, remove, or relink project triggers and sub-deadlines.
     tech: [SwiftUI, Foundation, Calendar, Codable]
     io:
       in: template names, trigger definitions, sub-deadline offsets, existing template-backed projects
-      out: saved templates and optionally synced project schedules and trigger links
+      out: saved templates and synced project trigger/sub-deadline links
     code_refs:
       - Models.swift
       - DeadlineCalendar/TemplateManagerView.swift
@@ -25,7 +25,7 @@ modules:
       - DeadlineCalendar/ContentView.swift
     known_gaps:
       - Template editors still have TODOs for missing user feedback alerts when actions fail or need confirmation.
-      - Template/project sync logic lives inside the very large `DeadlineViewModel` implementation in `ContentView.swift`.
+      - Template/project sync logic is embedded inside the large `DeadlineViewModel` in `DeadlineCalendar/ContentView.swift`.
       - There are no meaningful automated tests covering template diff-and-sync behavior.
     match_keywords:
       - deadline template editor
@@ -38,11 +38,11 @@ modules:
     name: Project lifecycle editing
     capability: Creates and edits projects and standalone deadlines from manual input or template-derived schedules.
     status: working
-    approach: SwiftUI add/edit forms collect project fields, derive dated sub-deadlines from template offsets, and persist changes through `DeadlineViewModel` CRUD methods.
+    approach: SwiftUI add and edit flows collect project fields, derive dated sub-deadlines from template offsets, and persist CRUD changes through `DeadlineViewModel`.
     tech: [SwiftUI, Foundation, Calendar, UserDefaults]
     io:
       in: project titles, final deadline dates, selected templates, manual sub-deadlines, repetition settings
-      out: created or updated `Project` records plus standalone deadline entries
+      out: created or updated `Project` records and standalone deadline entries
     code_refs:
       - Models.swift
       - DeadlineCalendar/AddProjectView.swift
@@ -51,8 +51,8 @@ modules:
       - DeadlineCalendar/ProjectDetailView.swift
       - DeadlineCalendar/ContentView.swift
     known_gaps:
-      - Add and edit flows each embed their own schedule editing logic instead of sharing a smaller form module.
-      - Standalone deadlines depend on a hard-coded synthetic project UUID.
+      - Add and edit flows each carry overlapping schedule-editing logic instead of sharing a smaller form module.
+      - Standalone deadlines are represented through a hard-coded synthetic project UUID.
       - Validation is mostly limited to non-empty titles.
     match_keywords:
       - project deadline editor
@@ -63,13 +63,13 @@ modules:
     project: DeadlineCalendar
     subsystem: Planning Engine
     name: Trigger and repetition execution
-    capability: Gates deadline visibility behind trigger activation and generates recurring deadline and project occurrences.
+    capability: Gates sub-deadline visibility behind trigger activation and generates recurring project or deadline occurrences from repetition rules.
     status: partial
-    approach: "`DeadlineViewModel` stores project-scoped `Trigger` instances, checks activation before exposing sub-deadlines, and uses `RepetitionPattern` calendar calculations to materialize future occurrences."
+    approach: `DeadlineViewModel` stores project-scoped `Trigger` instances, checks trigger activation before exposing linked sub-deadlines, and uses `RepetitionPattern` calendar calculations to materialize future occurrences.
     tech: [Foundation, Calendar, SwiftUI, Codable]
     io:
-      in: trigger definitions, trigger activations, repetition rules, projects and sub-deadlines
-      out: active/inactive task visibility and generated recurring projects or deadlines
+      in: trigger definitions, trigger activations, repetition rules, projects, sub-deadlines
+      out: active/inactive deadline visibility and generated future occurrences
     code_refs:
       - Models.swift
       - DeadlineCalendar/ContentView.swift
@@ -78,9 +78,9 @@ modules:
       - DeadlineCalendar/TriggerProjectRow.swift
       - DeadlineCalendar/CompletedTriggersView.swift
     known_gaps:
-      - Trigger migration code exists because older data can still lack trigger dates.
-      - Repetition generation and cleanup are embedded in the monolithic view model and are not isolated for testing.
-      - The test target is still scaffold-only, so this stateful scheduling logic is effectively untested.
+      - Trigger migration code is still needed because some older saved data lacks trigger dates.
+      - Repetition generation and cleanup live inside the monolithic view model rather than an isolated scheduling service.
+      - The XCTest target is still scaffold-only, so this stateful scheduling logic is effectively untested.
     match_keywords:
       - dependency-triggered tasks
       - recurring deadline engine
@@ -90,13 +90,13 @@ modules:
     project: DeadlineCalendar
     subsystem: Data Exchange
     name: Shared state sync
-    capability: Persists the canonical dataset locally and in iCloud and reloads app state when the shared JSON changes externally.
+    capability: Persists the canonical dataset locally and in iCloud and reloads app state when the shared JSON file changes externally.
     status: working
-    approach: The app mirrors state into app-group `UserDefaults`, while `SharedDataStore` coordinates iCloud JSON reads and writes with `NSFileCoordinator` and monitors external changes with `NSMetadataQuery`.
+    approach: The app mirrors state into app-group `UserDefaults`, while `SharedDataStore` coordinates iCloud JSON reads and writes with `NSFileCoordinator` and monitors changes with `NSMetadataQuery`.
     tech: [Foundation, UserDefaults, NSFileCoordinator, NSMetadataQuery, iCloud Drive, Codable]
     io:
       in: projects, templates, triggers, app settings, external edits to `DeadlineCalendar.json`
-      out: in-memory app state, shared app-group defaults, and the canonical iCloud JSON file
+      out: in-memory app state, mirrored app-group defaults, and the canonical iCloud JSON file
     code_refs:
       - Models.swift
       - DeadlineCalendar/SharedDataStore.swift
@@ -104,9 +104,9 @@ modules:
       - deadline-cli/Sources/DataStore.swift
       - deadline-cli/Sources/Models.swift
     known_gaps:
-      - The shared data schema is duplicated between the app and CLI and must be kept byte-compatible by hand.
-      - Data loading, migration, and persistence concerns are concentrated in `ContentView.swift`.
-      - The widget consumes mirrored `UserDefaults` data instead of the canonical shared JSON file directly.
+      - The shared data schema is duplicated between the app and CLI and must be kept compatible by hand.
+      - Data loading, migration, and persistence concerns are concentrated in `DeadlineCalendar/ContentView.swift`.
+      - The widget reads mirrored `UserDefaults` data instead of the canonical shared JSON directly.
     match_keywords:
       - shared json datastore
       - icloud document sync
@@ -116,13 +116,13 @@ modules:
     project: DeadlineCalendar
     subsystem: Data Exchange
     name: Backup and restore exchange
-    capability: Exports and imports full datasets through clipboard JSON and manages versioned iCloud backup documents for restore and deletion flows.
+    capability: Exports and imports full datasets through clipboard JSON and manages versioned iCloud backup files for restore and deletion flows.
     status: working
-    approach: "`BackupManager` serializes models to pasteboard JSON, while `iCloudBackupManager` and `DeadlineCalendarBackupDocument` create and restore `.deadlinebackup` files stored in iCloud Drive."
+    approach: `BackupManager` serializes models to pasteboard JSON, while `iCloudBackupManager` and `DeadlineCalendarBackupDocument` create, list, restore, and delete `.deadlinebackup` documents in iCloud Drive.
     tech: [Foundation, SwiftUI, UIKit, UIDocument, UIPasteboard, NSMetadataQuery, iCloud Drive]
     io:
       in: projects, templates, triggers, app settings, clipboard contents, selected backup documents
-      out: clipboard backups, `.deadlinebackup` files, restored in-app state
+      out: clipboard backups, `.deadlinebackup` files, and restored in-app state
     code_refs:
       - BackupManager.swift
       - DeadlineCalendar/iCloudBackupManager.swift
@@ -133,8 +133,8 @@ modules:
       - DeadlineCalendar/BackupDetailView.swift
     known_gaps:
       - Clipboard import still contains compatibility reconstruction for older backup formats.
-      - The backup document path and the live shared JSON path are separate exchange mechanisms to maintain.
-      - There are no automated tests for export/import or restore workflows.
+      - The backup-document flow and the live shared-JSON flow are separate exchange mechanisms that both need maintenance.
+      - There are no automated tests for export, import, restore, or backup listing behavior.
     match_keywords:
       - json backup restore
       - icloud document backup
@@ -146,10 +146,10 @@ modules:
     name: CLI automation
     capability: Provides terminal commands to inspect and mutate the deadline dataset from macOS.
     status: working
-    approach: A Swift ArgumentParser executable loads the shared JSON with backup fallback, resolves top-level triggers back into projects, and rewrites the shared dataset after mutations.
+    approach: A Swift ArgumentParser executable loads the shared JSON with legacy-backup fallback, resolves top-level triggers back into projects for display, and rewrites the shared dataset after mutations.
     tech: [Swift ArgumentParser, Foundation, iCloud Drive, JSONEncoder, JSONDecoder]
     io:
-      in: command-line subcommands and arguments plus the shared deadline data files
+      in: subcommands, command arguments, shared deadline data files
       out: terminal summaries, JSON export, and saved dataset mutations
     code_refs:
       - deadline-cli/Package.swift
@@ -158,8 +158,8 @@ modules:
       - deadline-cli/Sources/Models.swift
       - deadline-cli/NOTES.md
     known_gaps:
-      - The CLI carries its own replica of the app models and shared data container.
-      - `deadline-cli/NOTES.md` still documents the older backup-only architecture rather than the current shared-JSON-first flow.
+      - The CLI maintains its own copy of the app models and shared data container.
+      - `deadline-cli/NOTES.md` still documents the older backup-first architecture rather than the current shared-JSON-first flow.
       - There are no CLI-specific tests.
     match_keywords:
       - command line deadline manager
@@ -170,13 +170,13 @@ modules:
     project: DeadlineCalendar
     subsystem: User Surfaces
     name: Deadline workspace UI
-    capability: Presents the main app workflows for browsing projects and deadlines, completing work, and opening project-specific editing flows.
+    capability: Presents the main app workflows for browsing projects and deadlines, completing work, editing projects, and managing templates and triggers.
     status: working
     approach: SwiftUI navigation, sheets, and list views sit on top of a single `ObservableObject` view model, with both legacy and redesigned screens sharing the same model layer.
     tech: [SwiftUI, Combine]
     io:
-      in: app state, user taps, search text, completion actions, edit actions
-      out: list and detail screens, sheet presentations, and project/deadline mutations
+      in: app state, user taps, search/filter input, completion actions, edit actions
+      out: list and detail screens, sheet presentations, and deadline/project mutations
     code_refs:
       - DeadlineCalendar/ContentView.swift
       - DeadlineCalendar/AllDeadlinesView.swift
@@ -187,10 +187,11 @@ modules:
       - DeadlineCalendar/CompletedDeadlinesView.swift
       - DeadlineCalendar/CompletedProjectsView.swift
       - DeadlineCalendar/DesignSystem.swift
+      - DeadlineCalendar/DesignSystemExample.swift
     known_gaps:
-      - Legacy and redesigned screens coexist, which creates parallel UI paths to maintain.
-      - Business logic is mixed into view files rather than split into smaller feature view models.
-      - The XCTest target is still boilerplate only.
+      - Legacy and redesigned screens coexist, creating parallel UI paths to maintain.
+      - Business logic remains mixed into view files rather than split into smaller feature-level view models.
+      - The test target is still boilerplate only.
     match_keywords:
       - swiftui deadline dashboard
       - project milestone workspace
@@ -202,11 +203,11 @@ modules:
     name: Notification digest
     capability: Builds and schedules recurring reminder notifications from upcoming active deadlines and user formatting preferences.
     status: working
-    approach: "`DeadlineViewModel` gathers active upcoming deadlines, formats them with `AppSettings`, and schedules `UserNotifications` using either calendar-based or interval-based triggers."
+    approach: `DeadlineViewModel` gathers active upcoming deadlines, formats them with `NotificationFormatSettings`, and schedules `UserNotifications` using either calendar-based or interval-based triggers.
     tech: [UserNotifications, SwiftUI, UserDefaults, Foundation]
     io:
       in: upcoming deadlines, notification frequency and time preferences, notification formatting settings
-      out: scheduled local notification requests and test notification previews
+      out: scheduled local notification requests and formatted reminder content
     code_refs:
       - Models.swift
       - DeadlineCalendar/Deadline_CalendarApp.swift
@@ -214,7 +215,7 @@ modules:
       - DeadlineCalendar/BackupRestoreView.swift
       - DeadlineCalendar/BackupRestoreViewRedesigned.swift
     known_gaps:
-      - Some notification preferences are stored in raw `UserDefaults` keys outside `AppSettings`.
+      - Notification frequency, item count, and time are still stored in raw `UserDefaults` keys outside `AppSettings`.
       - Notification assembly and scheduling logic live inside the large main view model.
       - There are no tests around content formatting or scheduling behavior.
     match_keywords:
@@ -226,9 +227,9 @@ modules:
     project: DeadlineCalendar
     subsystem: User Surfaces
     name: Widget deadline feed
-    capability: Shows upcoming deadlines on the home screen through WidgetKit timeline entries and family-specific layouts.
+    capability: Shows upcoming active deadlines on the home screen through WidgetKit timeline entries and family-specific layouts.
     status: partial
-    approach: The widget extension reads shared app-group `UserDefaults`, filters incomplete active sub-deadlines, and renders compact SwiftUI rows through a `TimelineProvider`.
+    approach: The widget extension reads shared app-group `UserDefaults`, filters incomplete trigger-eligible sub-deadlines, and renders compact SwiftUI rows through a `TimelineProvider`.
     tech: [WidgetKit, SwiftUI, AppIntents, ActivityKit, UserDefaults]
     io:
       in: mirrored shared app data and widget family context
@@ -241,9 +242,9 @@ modules:
       - DeadlineCalendarWidget/DeadlineCalendarWidgetLiveActivity.swift
       - DeadlineCalendarWidget/SharedDeadlineViewModel.swift
     known_gaps:
-      - `AppIntent.swift` and `DeadlineCalendarWidgetLiveActivity.swift` are stock placeholder implementations rather than real deadline features.
-      - The widget reimplements deadline filtering instead of reusing a shared projection layer.
-      - `SharedDeadlineViewModel.swift` is currently unused.
+      - `DeadlineCalendarWidget/AppIntent.swift` is still the stock example configuration intent.
+      - `DeadlineCalendarWidget/DeadlineCalendarWidgetLiveActivity.swift` is still the stock emoji live-activity example rather than a deadline feature.
+      - `DeadlineCalendarWidget/SharedDeadlineViewModel.swift` is currently unused.
     match_keywords:
       - widgetkit deadline widget
       - home screen task feed
