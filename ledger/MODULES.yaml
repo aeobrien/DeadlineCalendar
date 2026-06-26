@@ -65,7 +65,7 @@ modules:
     name: Trigger and repetition execution
     capability: Gates deadline visibility behind trigger activation and generates recurring deadline and project occurrences.
     status: partial
-    approach: `DeadlineViewModel` stores project-scoped `Trigger` instances, checks activation before exposing sub-deadlines, and uses `RepetitionPattern` calendar calculations to materialize future occurrences.
+    approach: "`DeadlineViewModel` stores project-scoped `Trigger` instances, checks activation before exposing sub-deadlines, and uses `RepetitionPattern` calendar calculations to materialize future occurrences."
     tech: [Foundation, Calendar, SwiftUI, Codable]
     io:
       in: trigger definitions, trigger activations, repetition rules, projects and sub-deadlines
@@ -118,7 +118,7 @@ modules:
     name: Backup and restore exchange
     capability: Exports and imports full datasets through clipboard JSON and manages versioned iCloud backup documents for restore and deletion flows.
     status: working
-    approach: `BackupManager` serializes models to pasteboard JSON, while `iCloudBackupManager` and `DeadlineCalendarBackupDocument` create and restore `.deadlinebackup` files stored in iCloud Drive.
+    approach: "`BackupManager` serializes models to pasteboard JSON, while `iCloudBackupManager` and `DeadlineCalendarBackupDocument` create and restore `.deadlinebackup` files stored in iCloud Drive."
     tech: [Foundation, SwiftUI, UIKit, UIDocument, UIPasteboard, NSMetadataQuery, iCloud Drive]
     io:
       in: projects, templates, triggers, app settings, clipboard contents, selected backup documents
@@ -202,7 +202,7 @@ modules:
     name: Notification digest
     capability: Builds and schedules recurring reminder notifications from upcoming active deadlines and user formatting preferences.
     status: working
-    approach: `DeadlineViewModel` gathers active upcoming deadlines, formats them with `AppSettings`, and schedules `UserNotifications` using either calendar-based or interval-based triggers.
+    approach: "`DeadlineViewModel` gathers active upcoming deadlines, formats them with `AppSettings`, and schedules `UserNotifications` using either calendar-based or interval-based triggers."
     tech: [UserNotifications, SwiftUI, UserDefaults, Foundation]
     io:
       in: upcoming deadlines, notification frequency and time preferences, notification formatting settings
