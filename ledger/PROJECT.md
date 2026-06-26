@@ -7,6 +7,7 @@ Work deadline management app. Enter one delivery date and the app auto-calculate
 Active / maintenance
 
 ## Status
+**Lane:** work
 **Current state:** Actively used. Shared iCloud data layer live with two-way CLI sync.
 **Last updated:** 2026-04-06
 
