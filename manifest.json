@@ -1,0 +1,23 @@
+{
+  "capture_finished_at_utc": "2026-07-28T00:58:50Z",
+  "capture_started_at_utc": "2026-07-28T00:58:48Z",
+  "captured_at_utc": "2026-07-28T00:58:48Z",
+  "captured_byte_estimate": 5130489,
+  "captured_path_count": 167,
+  "consistency_retry_count": 0,
+  "excluded": [],
+  "github_hard_limit_bytes": 100000000,
+  "guardian_version": "2.0-sidecar",
+  "head_state": "symbolic",
+  "host": "aidans-mac-mini",
+  "racy_capture": false,
+  "repository_id": "DeadlineCalendar-f82e04703a5b",
+  "schema_version": 1,
+  "snapshot_blob_threshold_bytes": 94371840,
+  "snapshot_consistency": "stable",
+  "source_branch": "main",
+  "source_head_oid": "48576699607c85fcfd6cfa7443af8162647b6206",
+  "source_index_sha256": "e65116833d80d2c64d3b58ea1029b2ce666bcc44c8fc88955a8e5825222a0e9b",
+  "source_path": "/Users/aidanobrien/Dev/DeadlineCalendar",
+  "upstream_observed": "origin/main"
+}
