@@ -1,0 +1,13 @@
+version: "Apple Swift version 6.1 (swiftlang-6.1.0.110.21 clang-1700.0.13.3)"
+options: "2a2aed4bc5e261aca67098f7c42f6a737cce0001afcea767c244cbc52282e5b7"
+build_start_time: [1750006030, 798470000]
+build_end_time: [1750006034, 378000000]
+inputs:
+  "/Users/aidan/Documents/XCode/Deadline Calendar/DeadlineCalendarWidget/AppIntent.swift": [1729107932, 453608751]
+  "/Users/aidan/Documents/XCode/Deadline Calendar/DeadlineCalendarWidget/DeadlineCalendarWidgetBundle.swift": [1744648073, 840558413]
+  "/Users/aidan/Documents/XCode/Deadline Calendar/DeadlineCalendarWidget/DeadlineCalendarWidgetLiveActivity.swift": [1729107932, 449872732]
+  "/Users/aidan/Documents/XCode/Deadline Calendar/DeadlineCalendarWidget/DeadlineProvider.swift": [1750006014, 980691491]
+  "/Users/aidan/Documents/XCode/Deadline Calendar/DeadlineCalendarWidget/DeadlineWidgetEntryView.swift": [1750005443, 442762151]
+  "/Users/aidan/Documents/XCode/Deadline Calendar/Models.swift": [1746120156, 587824414]
+  ? "/Users/aidan/Documents/XCode/Deadline Calendar/build/Deadline Calendar.build/Release-iphoneos/DeadlineCalendarWidgetExtension.build/DerivedSources/GeneratedAssetSymbols.swift"
+  : [1750006030, 582947010]
