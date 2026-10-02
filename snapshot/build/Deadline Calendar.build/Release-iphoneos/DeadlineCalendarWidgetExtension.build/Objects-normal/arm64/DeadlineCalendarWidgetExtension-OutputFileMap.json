@@ -1,0 +1,45 @@
+{
+  "" : {
+    "const-values" : "/Users/aidan/Documents/XCode/Deadline Calendar/build/Deadline Calendar.build/Release-iphoneos/DeadlineCalendarWidgetExtension.build/Objects-normal/arm64/DeadlineCalendarWidgetExtension-master.swiftconstvalues",
+    "dependencies" : "/Users/aidan/Documents/XCode/Deadline Calendar/build/Deadline Calendar.build/Release-iphoneos/DeadlineCalendarWidgetExtension.build/Objects-normal/arm64/DeadlineCalendarWidgetExtension-master.d",
+    "diagnostics" : "/Users/aidan/Documents/XCode/Deadline Calendar/build/Deadline Calendar.build/Release-iphoneos/DeadlineCalendarWidgetExtension.build/Objects-normal/arm64/DeadlineCalendarWidgetExtension-master.dia",
+    "emit-module-dependencies" : "/Users/aidan/Documents/XCode/Deadline Calendar/build/Deadline Calendar.build/Release-iphoneos/DeadlineCalendarWidgetExtension.build/Objects-normal/arm64/DeadlineCalendarWidgetExtension-master-emit-module.d",
+    "emit-module-diagnostics" : "/Users/aidan/Documents/XCode/Deadline Calendar/build/Deadline Calendar.build/Release-iphoneos/DeadlineCalendarWidgetExtension.build/Objects-normal/arm64/DeadlineCalendarWidgetExtension-master-emit-module.dia",
+    "swift-dependencies" : "/Users/aidan/Documents/XCode/Deadline Calendar/build/Deadline Calendar.build/Release-iphoneos/DeadlineCalendarWidgetExtension.build/Objects-normal/arm64/DeadlineCalendarWidgetExtension-master.swiftdeps"
+  },
+  "/Users/aidan/Documents/XCode/Deadline Calendar/DeadlineCalendarWidget/AppIntent.swift" : {
+    "index-unit-output-path" : "/Deadline Calendar.build/Release-iphoneos/DeadlineCalendarWidgetExtension.build/Objects-normal/arm64/AppIntent.o",
+    "llvm-bc" : "/Users/aidan/Documents/XCode/Deadline Calendar/build/Deadline Calendar.build/Release-iphoneos/DeadlineCalendarWidgetExtension.build/Objects-normal/arm64/AppIntent.bc",
+    "object" : "/Users/aidan/Documents/XCode/Deadline Calendar/build/Deadline Calendar.build/Release-iphoneos/DeadlineCalendarWidgetExtension.build/Objects-normal/arm64/AppIntent.o"
+  },
+  "/Users/aidan/Documents/XCode/Deadline Calendar/DeadlineCalendarWidget/DeadlineCalendarWidgetBundle.swift" : {
+    "index-unit-output-path" : "/Deadline Calendar.build/Release-iphoneos/DeadlineCalendarWidgetExtension.build/Objects-normal/arm64/DeadlineCalendarWidgetBundle.o",
+    "llvm-bc" : "/Users/aidan/Documents/XCode/Deadline Calendar/build/Deadline Calendar.build/Release-iphoneos/DeadlineCalendarWidgetExtension.build/Objects-normal/arm64/DeadlineCalendarWidgetBundle.bc",
+    "object" : "/Users/aidan/Documents/XCode/Deadline Calendar/build/Deadline Calendar.build/Release-iphoneos/DeadlineCalendarWidgetExtension.build/Objects-normal/arm64/DeadlineCalendarWidgetBundle.o"
+  },
+  "/Users/aidan/Documents/XCode/Deadline Calendar/DeadlineCalendarWidget/DeadlineCalendarWidgetLiveActivity.swift" : {
+    "index-unit-output-path" : "/Deadline Calendar.build/Release-iphoneos/DeadlineCalendarWidgetExtension.build/Objects-normal/arm64/DeadlineCalendarWidgetLiveActivity.o",
+    "llvm-bc" : "/Users/aidan/Documents/XCode/Deadline Calendar/build/Deadline Calendar.build/Release-iphoneos/DeadlineCalendarWidgetExtension.build/Objects-normal/arm64/DeadlineCalendarWidgetLiveActivity.bc",
+    "object" : "/Users/aidan/Documents/XCode/Deadline Calendar/build/Deadline Calendar.build/Release-iphoneos/DeadlineCalendarWidgetExtension.build/Objects-normal/arm64/DeadlineCalendarWidgetLiveActivity.o"
+  },
+  "/Users/aidan/Documents/XCode/Deadline Calendar/DeadlineCalendarWidget/DeadlineProvider.swift" : {
+    "index-unit-output-path" : "/Deadline Calendar.build/Release-iphoneos/DeadlineCalendarWidgetExtension.build/Objects-normal/arm64/DeadlineProvider.o",
+    "llvm-bc" : "/Users/aidan/Documents/XCode/Deadline Calendar/build/Deadline Calendar.build/Release-iphoneos/DeadlineCalendarWidgetExtension.build/Objects-normal/arm64/DeadlineProvider.bc",
+    "object" : "/Users/aidan/Documents/XCode/Deadline Calendar/build/Deadline Calendar.build/Release-iphoneos/DeadlineCalendarWidgetExtension.build/Objects-normal/arm64/DeadlineProvider.o"
+  },
+  "/Users/aidan/Documents/XCode/Deadline Calendar/DeadlineCalendarWidget/DeadlineWidgetEntryView.swift" : {
+    "index-unit-output-path" : "/Deadline Calendar.build/Release-iphoneos/DeadlineCalendarWidgetExtension.build/Objects-normal/arm64/DeadlineWidgetEntryView.o",
+    "llvm-bc" : "/Users/aidan/Documents/XCode/Deadline Calendar/build/Deadline Calendar.build/Release-iphoneos/DeadlineCalendarWidgetExtension.build/Objects-normal/arm64/DeadlineWidgetEntryView.bc",
+    "object" : "/Users/aidan/Documents/XCode/Deadline Calendar/build/Deadline Calendar.build/Release-iphoneos/DeadlineCalendarWidgetExtension.build/Objects-normal/arm64/DeadlineWidgetEntryView.o"
+  },
+  "/Users/aidan/Documents/XCode/Deadline Calendar/Models.swift" : {
+    "index-unit-output-path" : "/Deadline Calendar.build/Release-iphoneos/DeadlineCalendarWidgetExtension.build/Objects-normal/arm64/Models.o",
+    "llvm-bc" : "/Users/aidan/Documents/XCode/Deadline Calendar/build/Deadline Calendar.build/Release-iphoneos/DeadlineCalendarWidgetExtension.build/Objects-normal/arm64/Models.bc",
+    "object" : "/Users/aidan/Documents/XCode/Deadline Calendar/build/Deadline Calendar.build/Release-iphoneos/DeadlineCalendarWidgetExtension.build/Objects-normal/arm64/Models.o"
+  },
+  "/Users/aidan/Documents/XCode/Deadline Calendar/build/Deadline Calendar.build/Release-iphoneos/DeadlineCalendarWidgetExtension.build/DerivedSources/GeneratedAssetSymbols.swift" : {
+    "index-unit-output-path" : "/Deadline Calendar.build/Release-iphoneos/DeadlineCalendarWidgetExtension.build/Objects-normal/arm64/GeneratedAssetSymbols.o",
+    "llvm-bc" : "/Users/aidan/Documents/XCode/Deadline Calendar/build/Deadline Calendar.build/Release-iphoneos/DeadlineCalendarWidgetExtension.build/Objects-normal/arm64/GeneratedAssetSymbols.bc",
+    "object" : "/Users/aidan/Documents/XCode/Deadline Calendar/build/Deadline Calendar.build/Release-iphoneos/DeadlineCalendarWidgetExtension.build/Objects-normal/arm64/GeneratedAssetSymbols.o"
+  }
+}
