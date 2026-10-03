@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>colors</key>
+	<array>
+		<dict>
+			<key>catalogPath</key>
+			<string>/Users/aidan/Documents/XCode/Deadline Calendar/Deadline Calendar/Assets.xcassets</string>
+			<key>objcSymbol</key>
+			<string>ACColorNameAppBackground</string>
+			<key>relativePath</key>
+			<string>./AppBackground.colorset</string>
+			<key>swiftSymbol</key>
+			<string>appBackground</string>
+		</dict>
+		<dict>
+			<key>catalogPath</key>
+			<string>/Users/aidan/Documents/XCode/Deadline Calendar/Deadline Calendar/Assets.xcassets</string>
+			<key>objcSymbol</key>
+			<string>ACColorNameAppPrimaryText</string>
+			<key>relativePath</key>
+			<string>./AppPrimaryText.colorset</string>
+			<key>swiftSymbol</key>
+			<string>appPrimaryText</string>
+		</dict>
+		<dict>
+			<key>catalogPath</key>
+			<string>/Users/aidan/Documents/XCode/Deadline Calendar/Deadline Calendar/Assets.xcassets</string>
+			<key>objcSymbol</key>
+			<string>ACColorNameAppSecondaryText</string>
+			<key>relativePath</key>
+			<string>./AppSecondaryText.colorset</string>
+			<key>swiftSymbol</key>
+			<string>appSecondaryText</string>
+		</dict>
+		<dict>
+			<key>catalogPath</key>
+			<string>/Users/aidan/Documents/XCode/Deadline Calendar/Deadline Calendar/Assets.xcassets</string>
+			<key>objcSymbol</key>
+			<string>ACColorNameWidgetBackground</string>
+			<key>relativePath</key>
+			<string>./WidgetBackground.colorset</string>
+			<key>swiftSymbol</key>
+			<string>widgetBackground</string>
+		</dict>
+		<dict>
+			<key>catalogPath</key>
+			<string>/Users/aidan/Documents/XCode/Deadline Calendar/Deadline Calendar/Assets.xcassets</string>
+			<key>objcSymbol</key>
+			<string>ACColorNameWidgetPrimaryText</string>
+			<key>relativePath</key>
+			<string>./WidgetPrimaryText.colorset</string>
+			<key>swiftSymbol</key>
+			<string>widgetPrimaryText</string>
+		</dict>
+		<dict>
+			<key>catalogPath</key>
+			<string>/Users/aidan/Documents/XCode/Deadline Calendar/Deadline Calendar/Assets.xcassets</string>
+			<key>objcSymbol</key>
+			<string>ACColorNameWidgetSecondaryText</string>
+			<key>relativePath</key>
+			<string>./WidgetSecondaryText.colorset</string>
+			<key>swiftSymbol</key>
+			<string>widgetSecondaryText</string>
+		</dict>
+	</array>
+	<key>images</key>
+	<array/>
+	<key>symbols</key>
+	<array/>
+</dict>
+</plist>
