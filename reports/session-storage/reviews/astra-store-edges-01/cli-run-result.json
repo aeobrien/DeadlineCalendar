@@ -1,0 +1,22 @@
+{
+  "ok": false,
+  "exit_code": 251,
+  "timed_out": false,
+  "duration_s": 7.376,
+  "stdout_tail": "",
+  "stderr_tail": "Swift/ErrorType.swift:254: Fatal error: Error raised at top level: Error Domain=NSCocoaErrorDomain Code=256 \"The file \u201cexisting.json\u201d couldn\u2019t be opened.\" UserInfo={NSURL=file:///var/folders/4q/7s70w8ys4f5gwsf4grw_njlh0000gn/T/456217E1-25E7-425D-8387-03C773754914/existing.json}\n",
+  "truncated": false,
+  "assertions": [
+    {
+      "kind": "exit==",
+      "expected": 0,
+      "actual": 251,
+      "ok": false
+    }
+  ],
+  "files": {
+    "created": [],
+    "modified": [],
+    "deleted": []
+  }
+}

@@ -248,8 +248,7 @@ struct AddProjectView: View {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Save") {
                         print("AddProjectView: Save button tapped.")
-                        saveProject() // Call the modified save function.
-                        dismiss() // Dismiss the view after saving.
+                        if saveProject() { dismiss() }
                     }
                     // Disable the Save button if the form is not valid.
                     .disabled(!isFormValid)
@@ -280,6 +279,7 @@ struct AddProjectView: View {
         }
         // Apply dark color scheme consistent with the rest of the app
         .preferredColorScheme(.dark)
+            .safeAreaInset(edge: .bottom) { DeadlineSaveNotice(viewModel: viewModel) }
     }
 
     // --- Helper Functions ---
@@ -346,10 +346,10 @@ struct AddProjectView: View {
     }
 
     // MODIFIED Function called when the Save button is tapped.
-    private func saveProject() {
+    private func saveProject() -> Bool {
+        viewModel.performChanges {
         let trimmedTitle = projectTitle.trimmingCharacters(in: .whitespaces)
         guard !trimmedTitle.isEmpty else {
-            print("AddProjectView Error: Project title cannot be empty.")
             // Optionally show an alert
             return
         }
@@ -358,7 +358,6 @@ struct AddProjectView: View {
         let currentTemplateID = useTemplate ? selectedTemplateID : nil
         let currentTemplateName = useTemplate ? selectedTemplate?.name : nil
         
-        print("AddProjectView: Saving project '\(trimmedTitle)' with final date \(finalDeadlineDate). Template Used: \(currentTemplateName ?? "None")")
         
         // Create repetition pattern if enabled
         var repetitionPattern: RepetitionPattern? = nil
@@ -406,10 +405,9 @@ struct AddProjectView: View {
             viewModel.generateProjectRepetitionOccurrences(for: newProject)
         }
         
-        print("AddProjectView: Project added successfully.")
         if repetitionPattern != nil {
-            print("  - With repetition pattern: \(repetitionPattern!.type.rawValue)")
         }
+            }
     }
     
     // REMOVED: Helper function to calculate preview dates - no longer needed

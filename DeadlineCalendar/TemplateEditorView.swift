@@ -186,12 +186,12 @@ struct TemplateEditorView: View {
                         return
                     }
                     // Call new ViewModel function to update template AND sync projects
-                    viewModel.updateTemplateAndSyncProjects(original: original, updated: savedTemplate)
+                    guard viewModel.updateTemplateAndSyncProjects(original: original, updated: savedTemplate) else { return }
                     dismiss() // Dismiss after initiating update and sync
                 }
                 Button("Just Save Template", role: .cancel) {
                     // Call the original ViewModel function to only update the template definition
-                    viewModel.updateTemplate(savedTemplate)
+                    guard viewModel.updateTemplate(savedTemplate) else { return }
                     dismiss() // Dismiss after saving just the template
                 }
             } message: { savedTemplate in
@@ -285,6 +285,7 @@ struct TemplateEditorView: View {
                 }
             }
         }
+            .safeAreaInset(edge: .bottom) { DeadlineSaveNotice(viewModel: viewModel) }
     }
 
     // MARK: - Data Handling Functions
@@ -386,7 +387,7 @@ struct TemplateEditorView: View {
                                        subDeadlines: subDeadlines,
                                        templateTriggers: templateTriggers // <-- Include triggers
                                        )
-            viewModel.addTemplate(newTemplate)
+            guard viewModel.addTemplate(newTemplate) else { return }
             print("TemplateEditorView: Adding new template: \(newTemplate.name)")
             dismiss() // Dismiss immediately when creating a new template
         }

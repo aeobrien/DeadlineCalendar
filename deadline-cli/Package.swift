@@ -17,5 +17,6 @@ let package = Package(
             ],
             path: "Sources"
         ),
+        .testTarget(name: "DeadlineStorageTests", dependencies: ["deadline-cli"], path: "Tests"),
     ]
 )

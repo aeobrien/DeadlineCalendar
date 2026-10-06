@@ -32,33 +32,41 @@ class DeadlineViewModel: ObservableObject {
     private let userDefaults: UserDefaults
 
     // Shared iCloud data store for cross-platform sync.
-    private let sharedStore = SharedDataStore.shared
+    private let sharedStore: SharedDataStore
+    private let effectsEnabled: Bool
+    private let commitObserver: (() -> Void)?
+    private let notificationObserver: (() -> Void)?
+    private var currentLoadAvailable = false
+    private var committedSnapshot: SharedData?
+    private var batchDepth = 0
+    @Published var saveError: String?
+    @Published var newerDataAvailable = false
+    @Published var editorGeneration = UUID()
+    @Published private(set) var pendingSnapshot: SharedData?
+    var pendingChangeJSON: String? {
+        guard let pendingSnapshot else { return nil }
+        let encoder = JSONEncoder(); encoder.dateEncodingStrategy = .iso8601
+        encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+        return (try? encoder.encode(pendingSnapshot)).flatMap { String(data: $0, encoding: .utf8) }
+    }
+
 
     // Observer token for external change notifications.
     private var externalChangeObserver: NSObjectProtocol?
 
     // Initializer: Sets up UserDefaults and shared store monitoring.
-    init() {
-        // Check both shared and standard UserDefaults
-        if let sharedDefaults = UserDefaults(suiteName: "group.com.yourapp.deadlines") {
-            self.userDefaults = sharedDefaults
-            print("ViewModel Init: Using shared UserDefaults (group.com.yourapp.deadlines).")
-        } else {
-            print("ViewModel Init: Failed to get shared UserDefaults. Using standard.")
-            self.userDefaults = UserDefaults.standard
-        }
-
-        // Request notification permissions (but don't schedule yet - data isn't loaded)
-        requestNotificationPermissions()
-
-        // Start monitoring the shared iCloud file for external changes.
-        sharedStore.startMonitoring()
-        externalChangeObserver = NotificationCenter.default.addObserver(
-            forName: SharedDataStore.didDetectExternalChange,
-            object: nil,
-            queue: .main
-        ) { [weak self] _ in
-            self?.handleExternalSharedDataChange()
+    init(store: SharedDataStore? = nil, defaults: UserDefaults? = nil,
+         effectsEnabled: Bool = true, onCommit: (() -> Void)? = nil, onNotifications: (() -> Void)? = nil) {
+        self.sharedStore = store ?? SharedDataStore()
+        self.userDefaults = defaults ?? UserDefaults(suiteName: "group.com.yourapp.deadlines") ?? .standard
+        self.effectsEnabled = effectsEnabled
+        self.commitObserver = onCommit
+        self.notificationObserver = onNotifications
+        if effectsEnabled {
+            sharedStore.startMonitoring()
+            externalChangeObserver = NotificationCenter.default.addObserver(
+                forName: SharedDataStore.didDetectExternalChange, object: nil, queue: .main
+            ) { [weak self] _ in self?.handleExternalSharedDataChange() }
         }
     }
 
@@ -69,579 +77,236 @@ class DeadlineViewModel: ObservableObject {
         sharedStore.stopMonitoring()
     }
 
-    /// Reload data when the shared iCloud file is modified externally (e.g. by the CLI).
-    private func handleExternalSharedDataChange() {
-        print("ViewModel: External shared data change detected — reloading...")
-        if let sharedData = sharedStore.load() {
-            self.projects = sharedData.projects
-            self.templates = sharedData.templates
-            self.triggers = sharedData.triggers
-            self.appSettings = sharedData.appSettings
-            print("ViewModel: Reloaded from shared file (lastModifiedBy: \(sharedData.lastModifiedBy))")
+    /// Keep the editing baseline until the user explicitly reloads. Advancing it
+    /// behind an open sheet would authorize stale form contents against new data.
+    func handleExternalSharedDataChange() {
+        currentLoadAvailable = false
+        newerDataAvailable = true
+        saveError = "Deadlines changed elsewhere. Reload to see the current data before editing."
+    }
 
-            // Also update UserDefaults so the widget stays current.
-            let encoder = JSONEncoder()
-            if let encoded = try? encoder.encode(projects) {
-                userDefaults.set(encoded, forKey: projectsKey)
-            }
-            if let encoded = try? encoder.encode(templates) {
-                userDefaults.set(encoded, forKey: templatesKey)
-            }
-            if let encoded = try? encoder.encode(triggers) {
-                userDefaults.set(encoded, forKey: triggersKey)
-            }
-            if let encoded = try? encoder.encode(appSettings) {
-                userDefaults.set(encoded, forKey: appSettingsKey)
-            }
+    private func install(_ document: SharedData) {
+        projects = document.projects; templates = document.templates
+        triggers = document.triggers; appSettings = document.appSettings
+    }
 
-            reloadWidgets()
-            updateNotifications()
+    private var currentSnapshot: SharedData {
+        SharedData(projects: projects, templates: templates, triggers: triggers,
+                   appSettings: appSettings, lastModified: Date(), lastModifiedBy: "app")
+    }
+
+    /// Reads legacy local caches without removing keys or replacing bad data.
+    /// An existing undecodable cache stops migration instead of becoming empty.
+    private func localSnapshot() throws -> SharedData {
+        func read<T: Decodable & Equatable>(_ type: T.Type, keys: [String], fallback: T, decode: ((Data) throws -> T)? = nil) throws -> T {
+            let sources = effectsEnabled ? [userDefaults, UserDefaults.standard] : [userDefaults]
+            var decoded: T?
+            for source in sources {
+                for key in keys {
+                    guard let existing = source.object(forKey: key) else { continue }
+                    guard let bytes = existing as? Data else { throw SnapshotError.unavailable }
+                    let value: T
+                    if let decode { value = try decode(bytes) }
+                    else { value = try JSONDecoder().decode(type, from: bytes) }
+                    if let previous = decoded, previous != value { throw SnapshotError.conflict }
+                    decoded = value
+                }
+            }
+            return decoded ?? fallback
+        }
+        struct LegacyCompatibleTemplate: Decodable {
+            let value: Template
+            enum Keys: String, CodingKey { case id, name, subDeadlines, templateTriggers }
+            init(from decoder: Decoder) throws {
+                let fields = try decoder.container(keyedBy: Keys.self)
+                if fields.contains(.templateTriggers) {
+                    // Present but malformed is corruption, not an old format.
+                    value = try Template(from: decoder)
+                } else {
+                    value = Template(id: try fields.decode(UUID.self, forKey: .id),
+                        name: try fields.decode(String.self, forKey: .name),
+                        subDeadlines: try fields.decode([TemplateSubDeadline].self, forKey: .subDeadlines),
+                        templateTriggers: [])
+                }
+            }
+        }
+        return try SharedData(
+            projects: read([Project].self, keys: [projectsKey, "projects_key", "projects", "SavedProjects"], fallback: []),
+            templates: read([Template].self, keys: [templatesKey, "templates"], fallback: [], decode: {
+                try JSONDecoder().decode([LegacyCompatibleTemplate].self, from: $0).map(\.value)
+            }),
+            triggers: read([Trigger].self, keys: [triggersKey, "triggers_key"], fallback: []),
+            appSettings: read(AppSettings.self, keys: [appSettingsKey], fallback: AppSettings()),
+            lastModified: Date(), lastModifiedBy: "app")
+    }
+
+    /// Preserve the existing trigger-date migration, but stage it before a single
+    /// coordinated commit instead of publishing caches or deleting legacy keys.
+    private func migratingTriggerDates(_ source: SharedData) -> SharedData {
+        var document = source
+        for i in document.triggers.indices where document.triggers[i].date == nil {
+            guard let project = document.projects.first(where: { $0.id == document.triggers[i].projectID }) else { continue }
+            var calculated: Date?
+            if let templateID = project.templateID,
+               let template = document.templates.first(where: { $0.id == templateID }),
+               let originatingID = document.triggers[i].originatingTemplateTriggerID,
+               let trigger = template.templateTriggers.first(where: { $0.id == originatingID }) {
+                calculated = try? trigger.offset.calculateDate(from: project.finalDeadlineDate)
+            }
+            document.triggers[i].date = calculated ?? Calendar.current.date(byAdding: .day, value: -7, to: project.finalDeadlineDate) ?? Date()
+        }
+        return document
+    }
+
+    @discardableResult
+    func reloadCurrentData() -> Bool {
+        currentLoadAvailable = false
+        do {
+            if let loaded = try sharedStore.loadSnapshot() {
+                var document = migratingTriggerDates(loaded)
+                if document != loaded {
+                    document = try sharedStore.saveSnapshot(projects: document.projects, templates: document.templates,
+                        triggers: document.triggers, appSettings: document.appSettings)
+                }
+                install(document); committedSnapshot = document
+                currentLoadAvailable = true
+                try cacheCommitted(document)
+            } else {
+                let local = migratingTriggerDates(try localSnapshot())
+                let document = try sharedStore.saveSnapshot(projects: local.projects, templates: local.templates,
+                    triggers: local.triggers, appSettings: local.appSettings)
+                install(document); committedSnapshot = document
+                currentLoadAvailable = true
+                try cacheCommitted(document)
+            }
+            newerDataAvailable = false
+            saveError = nil
+            // Old sheets are dismissed; pendingSnapshot remains available for review,
+            // but is never automatically written over the newly loaded document.
+            editorGeneration = UUID()
+            return true
+        } catch {
+            currentLoadAvailable = false
+            saveError = "Could not load deadlines. Existing data was preserved. " + error.localizedDescription
+            return false
         }
     }
 
-    // New function to load data asynchronously
-    @MainActor // Ensure UI updates happen on the main thread
+    @MainActor
     func loadInitialData() async {
-        print("ViewModel: Starting initial data load...")
         isLoading = true
-
-        // --- Shared iCloud file: try loading first ---
-        var loadedFromSharedFile = false
-        if let sharedData = sharedStore.load() {
-            print("ViewModel: Loaded data from shared iCloud file (lastModifiedBy: \(sharedData.lastModifiedBy))")
-            self.projects = sharedData.projects
-            self.templates = sharedData.templates
-            self.triggers = sharedData.triggers
-            self.appSettings = sharedData.appSettings
-            loadedFromSharedFile = true
-
-            // Sync to UserDefaults so the widget stays up to date.
-            let encoder = JSONEncoder()
-            if let encoded = try? encoder.encode(projects) {
-                userDefaults.set(encoded, forKey: projectsKey)
-            }
-            if let encoded = try? encoder.encode(templates) {
-                userDefaults.set(encoded, forKey: templatesKey)
-            }
-            if let encoded = try? encoder.encode(triggers) {
-                userDefaults.set(encoded, forKey: triggersKey)
-            }
-            if let encoded = try? encoder.encode(appSettings) {
-                userDefaults.set(encoded, forKey: appSettingsKey)
-            }
-        }
-
-        if !loadedFromSharedFile {
-            // Fall back to UserDefaults
-            print("ViewModel: Shared file not available, falling back to UserDefaults")
-
-            // Try to recover data from standard UserDefaults if shared is empty
-            attemptDataRecovery()
-
-            // Perform loading (these are synchronous for now)
-            loadProjects()
-            loadTemplates()
-            loadTriggers()
-            loadAppSettings()
-
-            // First-launch migration: write current data to shared file if it doesn't exist.
-            if !sharedStore.sharedFileExists {
-                print("ViewModel: Shared file does not exist — migrating UserDefaults data to iCloud shared file")
-                sharedStore.save(projects: projects, templates: templates, triggers: triggers, appSettings: appSettings)
-            }
-        }
-
-        // Migrate existing triggers to have dates
-        migrateTriggersWithoutDates()
-
-        // Removed default template creation - templates are now user-created only
-
+        guard reloadCurrentData() else { isLoading = false; return }
         isLoading = false
-        print("ViewModel: Initial data load complete.")
-        
-        // Print summary of loaded data
-        print("\n=== DATA LOAD SUMMARY ===")
-        print("Projects: \(projects.count)")
-        print("Templates: \(templates.count)")
-        for template in templates {
-            print("  - '\(template.name)' (ID: \(template.id))")
+        if effectsEnabled {
+            requestNotificationPermissions()
+            scheduleDailyNotifications()
+            await checkForAutomaticBackup()
         }
-        print("Triggers: \(triggers.count)")
-        print("========================\n")
-        
-        // Schedule notifications now that data is loaded
-        scheduleDailyNotifications()
-        
-        // Check for automatic iCloud backup
-        await checkForAutomaticBackup()
-    }
-    
-    // Attempt to recover data from various sources
-    private func attemptDataRecovery() {
-        print("\n--- Attempting Data Recovery ---")
-        
-        // First, let's see what's in the shared container
-        print("Current data in shared container:")
-        if let sharedData = userDefaults.data(forKey: "templates_key") {
-            print("  - templates_key in shared: \(sharedData.count) bytes")
-            if let templates = try? JSONDecoder().decode([Template].self, from: sharedData) {
-                print("    Contains \(templates.count) templates:")
-                for template in templates {
-                    print("      * '\(template.name)' (ID: \(template.id))")
-                }
-            }
-        }
-        
-        // Check standard UserDefaults
-        let standardDefaults = UserDefaults.standard
-        let possibleKeys = ["projects_v2_key", "projects_key", "projects", "templates_key", "templates", "triggers_v1_key", "triggers_key"]
-        
-        print("\nChecking standard UserDefaults for data...")
-        for key in possibleKeys {
-            if let data = standardDefaults.data(forKey: key) {
-                print("Found data in standard UserDefaults for key: \(key) (size: \(data.count) bytes)")
-                
-                // Special handling for templates since they might need migration
-                if key == "templates_key" || key == "templates" {
-                    print("Attempting to decode and migrate templates from standard UserDefaults...")
-                    print("Current templates count before recovery: \(self.templates.count)")
-                    
-                    // Try new format first
-                    do {
-                        let templates = try JSONDecoder().decode([Template].self, from: data)
-                        print("Successfully decoded \(templates.count) templates in new format from standard UserDefaults")
-                        for template in templates {
-                            print("  - Template: '\(template.name)' (ID: \(template.id))")
-                        }
-                        // Only update if we got more templates than we already have
-                        if templates.count > self.templates.count {
-                            self.templates = templates
-                            saveTemplates() // This will save to shared container
-                            standardDefaults.removeObject(forKey: key)
-                        }
-                        continue
-                    } catch {
-                        print("Failed to decode templates as new format: \(error)")
-                    
-                    // Try old format
-                    struct OldTemplate: Codable {
-                        let id: UUID
-                        var name: String
-                        var subDeadlines: [TemplateSubDeadline]
-                    }
-                    
-                    do {
-                        let oldTemplates = try JSONDecoder().decode([OldTemplate].self, from: data)
-                        print("Successfully decoded \(oldTemplates.count) templates in old format from standard UserDefaults")
-                        let convertedTemplates = oldTemplates.map { oldTemplate in
-                            Template(
-                                id: oldTemplate.id,
-                                name: oldTemplate.name,
-                                subDeadlines: oldTemplate.subDeadlines,
-                                templateTriggers: []
-                            )
-                        }
-                        for template in convertedTemplates {
-                            print("  - Template: '\(template.name)' (ID: \(template.id))")
-                        }
-                        // Only update if we got more templates
-                        if convertedTemplates.count > self.templates.count {
-                            self.templates = convertedTemplates
-                            saveTemplates() // This will save to shared container
-                            standardDefaults.removeObject(forKey: key)
-                        }
-                        continue
-                    } catch {
-                        print("Failed to decode templates as old format: \(error)")
-                    }
-                    
-                    print("Failed to decode templates from standard UserDefaults in any format")
-                }
-                
-                // For other keys, try direct copy (but the CFPrefs error might prevent this)
-                if userDefaults.data(forKey: key) == nil {
-                    // Instead of direct copy which might fail, we'll handle this in the load functions
-                    print("Will attempt to load \(key) from standard UserDefaults in load function")
-                }
-            }
-        }
-        
-        print("--- End Data Recovery ---\n")
-    }
-    }
-    
-    // Migrate existing triggers to have dates if they don't have them
-    private func migrateTriggersWithoutDates() {
-        print("\n--- Migrating Triggers Without Dates ---")
-        var migratedCount = 0
-        
-        for i in triggers.indices {
-            if triggers[i].date == nil {
-                // Find the project this trigger belongs to
-                if let project = projects.first(where: { $0.id == triggers[i].projectID }) {
-                    // Check if this trigger came from a template
-                    if let templateID = project.templateID,
-                       let template = templates.first(where: { $0.id == templateID }),
-                       let originatingID = triggers[i].originatingTemplateTriggerID,
-                       let templateTrigger = template.templateTriggers.first(where: { $0.id == originatingID }) {
-                        // Use the template's offset to calculate the date
-                        do {
-                            let triggerDate = try templateTrigger.offset.calculateDate(from: project.finalDeadlineDate)
-                            triggers[i].date = triggerDate
-                            print("  - Migrated trigger '\(triggers[i].name)' with template-based date: \(triggerDate)")
-                            migratedCount += 1
-                        } catch {
-                            // Fallback to default date
-                            let defaultDate = Calendar.current.date(byAdding: .day, value: -7, to: project.finalDeadlineDate) ?? Date()
-                            triggers[i].date = defaultDate
-                            print("  - Migrated trigger '\(triggers[i].name)' with default date (7 days before): \(defaultDate)")
-                            migratedCount += 1
-                        }
-                    } else {
-                        // No template info, use a default date (7 days before project deadline)
-                        let defaultDate = Calendar.current.date(byAdding: .day, value: -7, to: project.finalDeadlineDate) ?? Date()
-                        triggers[i].date = defaultDate
-                        print("  - Migrated trigger '\(triggers[i].name)' with default date (7 days before): \(defaultDate)")
-                        migratedCount += 1
-                    }
-                }
-            }
-        }
-        
-        if migratedCount > 0 {
-            saveTriggers()
-            print("Migrated \(migratedCount) triggers with dates.")
-        } else {
-            print("No triggers needed migration.")
-        }
-        
-        print("--- End Trigger Migration ---\n")
     }
 
-    // --- DATA LOADING ---
-
-    // Loads projects from UserDefaults.
-    func loadProjects() {
-        print("ViewModel Load: Attempting to load projects using key '\(projectsKey)'.") // Log key
-        
-        // Debug: Print all keys in UserDefaults
-        print("\n--- DEBUG: All UserDefaults keys ---")
-        let allKeys = userDefaults.dictionaryRepresentation().keys.sorted()
-        for key in allKeys {
-            print("  Key: \(key)")
+    // Shared persistence succeeds before caches, notifications or success signals.
+    private func cacheCommitted(_ document: SharedData) throws {
+        let encoder = JSONEncoder()
+        let encoded = try [encoder.encode(document.projects), encoder.encode(document.templates),
+                           encoder.encode(document.triggers), encoder.encode(document.appSettings)]
+        for (key, bytes) in zip([projectsKey, templatesKey, triggersKey, appSettingsKey], encoded) {
+            userDefaults.set(bytes, forKey: key)
         }
-        print("--- END UserDefaults keys ---\n")
-        
-        // First, try to load from the current key
-        if let data = userDefaults.data(forKey: projectsKey) {
-            print("ViewModel Load: Found data for projects key. Attempting to decode...") // Log data found
-            do {
-                let decodedProjects = try JSONDecoder().decode([Project].self, from: data)
-                self.projects = decodedProjects
-                print("ViewModel Load: Projects loaded successfully (\(projects.count) projects).")
-                return
-            } catch {
-                print("ViewModel Load: Failed to decode projects from v2 key. Error: \(error)")
-                // Try to decode with old structure if needed
-            }
-        }
-        
-        // If no data found with v2 key, try to migrate from old keys
-        let possibleOldKeys = ["projects_key", "projects", "SavedProjects"]
-        for oldKey in possibleOldKeys {
-            if let oldData = userDefaults.data(forKey: oldKey) {
-                print("ViewModel Load: Found data with old key '\(oldKey)'. Attempting migration...")
-                do {
-                    let decodedProjects = try JSONDecoder().decode([Project].self, from: oldData)
-                    self.projects = decodedProjects
-                    print("ViewModel Load: Successfully migrated \(projects.count) projects from old key '\(oldKey)'.")
-                    // Save to new key
-                    saveProjects()
-                    // Remove old key to prevent future confusion
-                    userDefaults.removeObject(forKey: oldKey)
-                    return
-                } catch {
-                    print("ViewModel Load: Failed to decode from key '\(oldKey)': \(error)")
-                }
-            }
-        }
-        
-        print("ViewModel Load: No data found for projects. Initializing empty array.")
-        self.projects = []
+        commitObserver?()
+        if effectsEnabled { reloadWidgets() }
+        updateNotifications()
     }
 
-    // Loads templates from UserDefaults.
-    func loadTemplates() {
-        print("ViewModel Load: Attempting to load templates using key '\(templatesKey)'.") // Log key
-        
-        // If we already have templates from recovery, don't overwrite them
-        if !templates.isEmpty {
-            print("ViewModel Load: Templates already loaded from recovery (\(templates.count) templates). Skipping load.")
-            return
-        }
-        
-        // First try the shared container
-        if let data = userDefaults.data(forKey: templatesKey) {
-            print("ViewModel Load: Found data for templates key. Attempting to decode...") // Log data found
-            do {
-                let decodedTemplates = try JSONDecoder().decode([Template].self, from: data)
-                self.templates = decodedTemplates
-                print("ViewModel Load: Templates loaded successfully (\(templates.count) templates).")
-                // Print template names for debugging
-                for template in templates {
-                    print("  - Template: '\(template.name)' (ID: \(template.id))")
-                }
-                return
-            } catch {
-                print("ViewModel Load: Failed to decode templates. Error: \(error)")
-                // Try to decode with old template structure (without templateTriggers field)
-                do {
-                    // Define old template structure
-                    struct OldTemplate: Codable {
-                        let id: UUID
-                        var name: String
-                        var subDeadlines: [TemplateSubDeadline]
-                    }
-                    
-                    let oldTemplates = try JSONDecoder().decode([OldTemplate].self, from: data)
-                    print("ViewModel Load: Detected old template format. Migrating \(oldTemplates.count) templates...")
-                    
-                    // Convert to new format
-                    self.templates = oldTemplates.map { oldTemplate in
-                        Template(
-                            id: oldTemplate.id,
-                            name: oldTemplate.name,
-                            subDeadlines: oldTemplate.subDeadlines,
-                            templateTriggers: [] // Old templates had no triggers
-                        )
-                    }
-                    
-                    print("ViewModel Load: Successfully migrated \(templates.count) templates from old format.")
-                    // Save in new format
-                    saveTemplates()
-                    return
-                } catch {
-                    print("ViewModel Load: Failed to decode as old template format. Error: \(error)")
-                }
-            }
-        }
-        
-        // If not found in shared, check standard UserDefaults
-        let standardDefaults = UserDefaults.standard
-        if let standardData = standardDefaults.data(forKey: templatesKey) {
-            print("ViewModel Load: Found templates in standard UserDefaults. Attempting migration...")
-            do {
-                let decodedTemplates = try JSONDecoder().decode([Template].self, from: standardData)
-                self.templates = decodedTemplates
-                print("ViewModel Load: Successfully loaded \(templates.count) templates from standard UserDefaults.")
-                // Print template names for debugging
-                for template in templates {
-                    print("  - Template: '\(template.name)' (ID: \(template.id))")
-                }
-                // Save to shared container
-                saveTemplates()
-                // Remove from standard to avoid confusion
-                standardDefaults.removeObject(forKey: templatesKey)
-                return
-            } catch {
-                print("ViewModel Load: Failed to decode templates from standard UserDefaults. Error: \(error)")
-                
-                // Try old format from standard UserDefaults
-                struct OldTemplate: Codable {
-                    let id: UUID
-                    var name: String
-                    var subDeadlines: [TemplateSubDeadline]
-                }
-                
-                if let oldTemplates = try? JSONDecoder().decode([OldTemplate].self, from: standardData) {
-                    print("ViewModel Load: Detected old template format in standard UserDefaults. Migrating \(oldTemplates.count) templates...")
-                    self.templates = oldTemplates.map { oldTemplate in
-                        Template(
-                            id: oldTemplate.id,
-                            name: oldTemplate.name,
-                            subDeadlines: oldTemplate.subDeadlines,
-                            templateTriggers: []
-                        )
-                    }
-                    print("ViewModel Load: Successfully migrated \(templates.count) templates from old format.")
-                    for template in templates {
-                        print("  - Template: '\(template.name)' (ID: \(template.id))")
-                    }
-                    saveTemplates()
-                    standardDefaults.removeObject(forKey: templatesKey)
-                    return
-                }
-            }
-        }
-        
-        print("ViewModel Load: No templates found. Initializing empty array.")
-        self.templates = []
-    }
-
-    // Loads triggers from UserDefaults.
-    func loadTriggers() {
-        print("ViewModel Load: Attempting to load triggers using key '\(triggersKey)'.") // Log key
-        guard let data = userDefaults.data(forKey: triggersKey) else {
-            print("ViewModel Load: No data found for triggers key '\(triggersKey)'. Initializing empty array.")
-            self.triggers = []
-            return
-        }
-        print("ViewModel Load: Found data for triggers key. Attempting to decode...") // Log data found
-        
-        let decoder = JSONDecoder()
+    @discardableResult
+    func saveAll() -> Bool {
+        if batchDepth > 0 { return true }
+        let candidate = currentSnapshot
         do {
-            self.triggers = try decoder.decode([Trigger].self, from: data)
-            print("ViewModel Load: Triggers loaded successfully (\(triggers.count) triggers).")
+            let saved = try sharedStore.saveSnapshot(projects: candidate.projects, templates: candidate.templates,
+                triggers: candidate.triggers, appSettings: candidate.appSettings)
+            let changed = saved != committedSnapshot
+            install(saved)
+            committedSnapshot = saved
+            currentLoadAvailable = true
+            if changed { try cacheCommitted(saved) }
+            pendingSnapshot = nil; saveError = nil
+            return true
         } catch {
-            // --- Enhanced Error Logging --- 
-            print("\n--- ViewModel FATAL ERROR: Failed to decode TRIGGERS from UserDefaults --- ")
-            print("Error Description: \(error.localizedDescription)")
-            print("Full Error: \(error)")
-            if let decodingError = error as? DecodingError {
-                print("Decoding Error Type: \(decodingError)")
-                switch decodingError {
-                case .typeMismatch(let type, let context): print("  Type Mismatch: '\(type)' at path \(context.codingPath.map { $0.stringValue }.joined(separator: ".")). Context: \(context.debugDescription)")
-                case .valueNotFound(let type, let context): print("  Value Not Found: '\(type)' at path \(context.codingPath.map { $0.stringValue }.joined(separator: ".")). Context: \(context.debugDescription)")
-                case .keyNotFound(let key, let context): print("  Key Not Found: '\(key.stringValue)' at path \(context.codingPath.map { $0.stringValue }.joined(separator: ".")). Context: \(context.debugDescription)")
-                case .dataCorrupted(let context): print("  Data Corrupted at path \(context.codingPath.map { $0.stringValue }.joined(separator: ".")). Context: \(context.debugDescription)")
-                @unknown default: print("  Unknown DecodingError occurred.")
-                }
-            }
-            print("--- END TRIGGER DECODING ERROR ---\n")
-            
-            // Resetting to empty array.
-            print("ViewModel Load: Resetting triggers to empty array due to decoding failure.")
-            self.triggers = []
+            currentLoadAvailable = false
+            pendingSnapshot = candidate
+            if let committedSnapshot { install(committedSnapshot) }
+            saveError = "Could not save deadlines. Your attempted change is retained in this session. " + error.localizedDescription
+            return false
         }
     }
 
-    // Loads app settings from UserDefaults.
-    func loadAppSettings() {
-        print("ViewModel Load: Attempting to load app settings using key '\(appSettingsKey)'.") 
-        guard let data = userDefaults.data(forKey: appSettingsKey) else {
-            print("ViewModel Load: No data found for app settings key '\(appSettingsKey)'. Using default settings.")
-            self.appSettings = AppSettings()
-            return
+    /// All nested changes (including recurrence and linked triggers) commit once.
+    @discardableResult
+    func performChanges(_ changes: () -> Void) -> Bool {
+        guard committedSnapshot != nil else {
+            saveError = "Load the current deadlines successfully before editing."
+            return false
         }
-        print("ViewModel Load: Found data for app settings key. Attempting to decode...") 
-        
-        let decoder = JSONDecoder()
-        do {
-            self.appSettings = try decoder.decode(AppSettings.self, from: data)
-            print("ViewModel Load: App settings loaded successfully.")
-        } catch {
-            print("ViewModel Load: Failed to decode app settings from UserDefaults. Error: \(error)")
-            print("ViewModel Load: Using default settings.")
-            self.appSettings = AppSettings()
-        }
+        batchDepth += 1
+        changes()
+        batchDepth -= 1
+        return batchDepth > 0 ? true : saveAll()
     }
 
-    // --- DATA SAVING ---
+    @discardableResult func saveProjects() -> Bool { saveAll() }
+    @discardableResult func saveTemplates() -> Bool { saveAll() }
+    @discardableResult func saveTriggers() -> Bool { saveAll() }
+    @discardableResult func saveAppSettings() -> Bool { saveAll() }
 
-    // Saves the current state of projects to UserDefaults and the shared iCloud file.
-    func saveProjects() {
-        let encoder = JSONEncoder()
-        if let encoded = try? encoder.encode(projects) {
-            userDefaults.set(encoded, forKey: projectsKey)
-            print("ViewModel: saveProjects() completed. (\(projects.count) projects)")
-            reloadWidgets()
-            updateNotifications()
-        } else {
-            print("ViewModel Error: Failed to encode projects for saving.")
-        }
-        // Write to shared iCloud file
-        saveToSharedFile()
-    }
-
-    // Saves the current state of templates to UserDefaults and the shared iCloud file.
-    func saveTemplates() {
-        let encoder = JSONEncoder()
-        if let encoded = try? encoder.encode(templates) {
-            userDefaults.set(encoded, forKey: templatesKey)
-            print("ViewModel: saveTemplates() completed. (\(templates.count) templates)")
-            // Widgets might not directly use templates, but reloading ensures consistency if needed.
-            // reloadWidgets() // Decide if widgets need template updates.
-        } else {
-            print("ViewModel Error: Failed to encode templates for saving.")
-        }
-        // Write to shared iCloud file
-        saveToSharedFile()
-    }
-
-    // Saves the current state of triggers to UserDefaults and the shared iCloud file.
-    func saveTriggers() {
-        let encoder = JSONEncoder()
-        if let encoded = try? encoder.encode(triggers) {
-            userDefaults.set(encoded, forKey: triggersKey)
-            print("ViewModel: saveTriggers() completed. (\(triggers.count) triggers)")
-            // Trigger widget reload since trigger changes affect widget content
-            reloadWidgets()
-        } else {
-            print("ViewModel Error: Failed to encode triggers for saving.")
-        }
-        // Write to shared iCloud file
-        saveToSharedFile()
-    }
-
-    // Saves the current state of app settings to UserDefaults and the shared iCloud file.
-    func saveAppSettings() {
-        let encoder = JSONEncoder()
-        if let encoded = try? encoder.encode(appSettings) {
-            userDefaults.set(encoded, forKey: appSettingsKey)
-            print("ViewModel: saveAppSettings() completed.")
-        } else {
-            print("ViewModel Error: Failed to encode app settings for saving.")
-        }
-        // Write to shared iCloud file
-        saveToSharedFile()
-    }
-
-    // Utility function to reload widget timelines.
     func reloadWidgets() {
+        guard effectsEnabled else { return }
         WidgetCenter.shared.reloadAllTimelines()
-        print("ViewModel: Widget timelines reloaded.")
     }
-
-    /// Write all current data to the shared iCloud JSON file.
-    private func saveToSharedFile() {
-        sharedStore.save(projects: projects, templates: templates, triggers: triggers, appSettings: appSettings)
-    }
-
 
     // --- PROJECT CRUD OPERATIONS ---
 
     // Adds a new project to the list and saves.
-    func addProject(_ project: Project) {
+    @discardableResult
+    func addProject(_ project: Project) -> Bool {
+        performChanges {
+
         // Optional: Add validation to prevent duplicate projects if needed.
         // e.g., if !projects.contains(where: { $0.title == project.title }) { ... }
         projects.append(project)
-        print("ViewModel: Added project '\(project.title)' (ID: \(project.id)).")
         saveProjects() // Save changes immediately.
+
+        }
     }
 
     // Updates an existing project in the list and saves.
-    func updateProject(_ project: Project) {
+    @discardableResult
+    func updateProject(_ project: Project) -> Bool {
+        performChanges {
+
         // Find the index of the project with the matching ID.
         if let index = projects.firstIndex(where: { $0.id == project.id }) {
             projects[index] = project // Replace the old project with the updated one.
-            print("ViewModel: Updated project '\(project.title)' (ID: \(project.id)).")
             saveProjects() // Save changes.
         } else {
             // Log if the project to update wasn't found.
-            print("ViewModel Warning: Attempted to update a project (ID: \(project.id)) that does not exist.")
+        }
+
         }
     }
 
     // Deletes a project from the list and saves.
-    func deleteProject(_ project: Project) {
+    @discardableResult
+    func deleteProject(_ project: Project) -> Bool {
+        performChanges {
+
         // Remove the project with the matching ID.
         if let index = projects.firstIndex(where: { $0.id == project.id }) {
             let deletedTitle = projects[index].title
             projects.remove(at: index)
-            print("ViewModel: Deleted project '\(deletedTitle)' (ID: \(project.id)).")
             saveProjects() // Save changes.
         } else {
-             print("ViewModel Warning: Attempted to delete a project (ID: \(project.id)) that does not exist.")
+        }
+
         }
     }
 
@@ -649,7 +314,10 @@ class DeadlineViewModel: ObservableObject {
     // --- SUB-DEADLINE OPERATIONS ---
 
     // Adds a new standalone sub-deadline by finding or creating a special project to house it.
-    func addStandaloneDeadline(_ deadline: SubDeadline) {
+    @discardableResult
+    func addStandaloneDeadline(_ deadline: SubDeadline) -> Bool {
+        performChanges {
+
         let standaloneProjectName = "Standalone Deadlines"
         
         // Check if the standalone project already exists.
@@ -657,7 +325,6 @@ class DeadlineViewModel: ObservableObject {
             // Project exists, add the deadline to it.
             projects[projectIndex].subDeadlines.append(deadline)
             projects[projectIndex].subDeadlines.sort { $0.date < $1.date }
-            print("ViewModel: Added standalone deadline '\(deadline.title)' to existing project '\(standaloneProjectName)'.")
             saveProjects() // Save the updated projects list.
         } else {
             // Project doesn't exist, create a new one with this deadline.
@@ -668,20 +335,22 @@ class DeadlineViewModel: ObservableObject {
                 subDeadlines: [deadline] // Start with the new deadline.
             )
             addProject(newProject) // addProject handles appending and saving.
-            print("ViewModel: Created new project '\(standaloneProjectName)' for standalone deadline '\(deadline.title)'.")
+        }
+
         }
     }
     
     // MARK: - Repetition Management
     
     /// Generates future occurrences of a deadline based on its repetition pattern
-    func generateRepetitionOccurrences(for deadline: SubDeadline) {
+    @discardableResult
+    func generateRepetitionOccurrences(for deadline: SubDeadline) -> Bool {
+        performChanges {
+
         guard let pattern = deadline.repetitionPattern, pattern.type != .none else {
-            print("ViewModel: No repetition pattern to generate for deadline '\(deadline.title)'")
             return
         }
         
-        print("ViewModel: Generating repetition occurrences for '\(deadline.title)'")
         
         var currentDate = deadline.date
         var occurrenceCount = 1 // The original is occurrence #1
@@ -694,19 +363,16 @@ class DeadlineViewModel: ObservableObject {
         while occurrenceCount < maxOccurrences {
             // Calculate the next occurrence date
             guard let nextDate = pattern.nextOccurrence(after: currentDate) else {
-                print("ViewModel: Could not calculate next occurrence")
                 break
             }
             
             // Check if we've exceeded the end date
             if let endDate = pattern.endDate, nextDate > endDate {
-                print("ViewModel: Reached end date limit")
                 break
             }
             
             // Check if we've gone too far into the future (safety check)
             if nextDate > maxDate {
-                print("ViewModel: Reached maximum date limit")
                 break
             }
             
@@ -729,7 +395,6 @@ class DeadlineViewModel: ObservableObject {
             currentDate = nextDate
         }
         
-        print("ViewModel: Generated \(generatedDeadlines.count) repetition occurrences")
         
         // Add all generated deadlines to the standalone project
         if !generatedDeadlines.isEmpty {
@@ -739,10 +404,15 @@ class DeadlineViewModel: ObservableObject {
                 saveProjects()
             }
         }
+
+        }
     }
     
     /// Removes all future occurrences of a repeating deadline
-    func removeRepetitionOccurrences(for deadline: SubDeadline) {
+    @discardableResult
+    func removeRepetitionOccurrences(for deadline: SubDeadline) -> Bool {
+        performChanges {
+
         guard let projectIndex = projects.firstIndex(where: { $0.id == DeadlineViewModel.standaloneProjectID }) else {
             return
         }
@@ -750,12 +420,16 @@ class DeadlineViewModel: ObservableObject {
         // Remove all deadlines that have this deadline as their repetition source
         projects[projectIndex].subDeadlines.removeAll { $0.repetitionSourceID == deadline.id }
         
-        print("ViewModel: Removed repetition occurrences for deadline '\(deadline.title)'")
         saveProjects()
+
+        }
     }
     
     /// Updates repetition occurrences when the pattern changes
-    func updateRepetitionOccurrences(for deadline: SubDeadline) {
+    @discardableResult
+    func updateRepetitionOccurrences(for deadline: SubDeadline) -> Bool {
+        performChanges {
+
         // First remove old occurrences
         removeRepetitionOccurrences(for: deadline)
         
@@ -763,18 +437,21 @@ class DeadlineViewModel: ObservableObject {
         if let pattern = deadline.repetitionPattern, pattern.type != .none {
             generateRepetitionOccurrences(for: deadline)
         }
+
+        }
     }
     
     // MARK: - Project Repetition Management
     
     /// Generates future occurrences of a project based on its repetition pattern
-    func generateProjectRepetitionOccurrences(for project: Project) {
+    @discardableResult
+    func generateProjectRepetitionOccurrences(for project: Project) -> Bool {
+        performChanges {
+
         guard let pattern = project.repetitionPattern, pattern.type != .none else {
-            print("ViewModel: No repetition pattern to generate for project '\(project.title)'")
             return
         }
         
-        print("ViewModel: Generating repetition occurrences for project '\(project.title)'")
         
         var currentDate = project.finalDeadlineDate
         var occurrenceCount = 1 // The original is occurrence #1
@@ -787,19 +464,16 @@ class DeadlineViewModel: ObservableObject {
         while occurrenceCount < maxOccurrences {
             // Calculate the next occurrence date
             guard let nextDate = pattern.nextOccurrence(after: currentDate) else {
-                print("ViewModel: Could not calculate next occurrence")
                 break
             }
             
             // Check if we've exceeded the end date
             if let endDate = pattern.endDate, nextDate > endDate {
-                print("ViewModel: Reached end date limit")
                 break
             }
             
             // Check if we've gone too far into the future (safety check)
             if nextDate > maxDate {
-                print("ViewModel: Reached maximum date limit")
                 break
             }
             
@@ -858,7 +532,6 @@ class DeadlineViewModel: ObservableObject {
             currentDate = nextDate
         }
         
-        print("ViewModel: Generated \(generatedProjects.count) project repetition occurrences")
         
         // Add all generated projects
         for generatedProject in generatedProjects {
@@ -885,10 +558,15 @@ class DeadlineViewModel: ObservableObject {
                 addTrigger(trigger)
             }
         }
+
+        }
     }
     
     /// Removes all future occurrences of a repeating project
-    func removeProjectRepetitionOccurrences(for project: Project) {
+    @discardableResult
+    func removeProjectRepetitionOccurrences(for project: Project) -> Bool {
+        performChanges {
+
         // Remove all projects that have this project as their repetition source
         projects.removeAll { $0.repetitionSourceID == project.id }
         
@@ -897,13 +575,17 @@ class DeadlineViewModel: ObservableObject {
             projects.contains { $0.repetitionSourceID == project.id && $0.id == trigger.projectID }
         }
         
-        print("ViewModel: Removed repetition occurrences for project '\(project.title)'")
         saveProjects()
         saveTriggers()
+
+        }
     }
     
     /// Updates project repetition occurrences when the pattern changes
-    func updateProjectRepetitionOccurrences(for project: Project) {
+    @discardableResult
+    func updateProjectRepetitionOccurrences(for project: Project) -> Bool {
+        performChanges {
+
         // First remove old occurrences
         removeProjectRepetitionOccurrences(for: project)
         
@@ -911,18 +593,21 @@ class DeadlineViewModel: ObservableObject {
         if let pattern = project.repetitionPattern, pattern.type != .none {
             generateProjectRepetitionOccurrences(for: project)
         }
+
+        }
     }
 
     // Updates a specific sub-deadline within a project.
-    func updateSubDeadline(_ subDeadline: SubDeadline, in project: Project) {
+    @discardableResult
+    func updateSubDeadline(_ subDeadline: SubDeadline, in project: Project) -> Bool {
+        performChanges {
+
         // Find the project index.
         guard let projectIndex = projects.firstIndex(where: { $0.id == project.id }) else {
-            print("ViewModel Error: Project not found for updating sub-deadline (Project ID: \(project.id)).")
             return
         }
         // Find the sub-deadline index within that project.
         guard let subDeadlineIndex = projects[projectIndex].subDeadlines.firstIndex(where: { $0.id == subDeadline.id }) else {
-            print("ViewModel Error: Sub-deadline not found within project '\(project.title)' (SubDeadline ID: \(subDeadline.id)).")
             return
         }
 
@@ -930,40 +615,47 @@ class DeadlineViewModel: ObservableObject {
         projects[projectIndex].subDeadlines[subDeadlineIndex] = subDeadline
         // Ensure subdeadlines within the project remain sorted after update
         projects[projectIndex].subDeadlines.sort { $0.date < $1.date }
-        print("ViewModel: Updated sub-deadline '\(subDeadline.title)' in project '\(project.title)'.")
         saveProjects() // Save changes.
+
+        }
     }
 
     // Toggles the completion status of a sub-deadline.
-    func toggleSubDeadlineCompletion(_ subDeadline: SubDeadline, in project: Project) {
+    @discardableResult
+    func toggleSubDeadlineCompletion(_ subDeadline: SubDeadline, in project: Project) -> Bool {
+        performChanges {
+
         var mutableSubDeadline = subDeadline
         mutableSubDeadline.isCompleted.toggle() // Flip the completion status
-        print("ViewModel: Toggled completion for sub-deadline '\(mutableSubDeadline.title)' to \(mutableSubDeadline.isCompleted).")
         // Call the update function to modify the project and save.
         updateSubDeadline(mutableSubDeadline, in: project)
+
+        }
     }
 
     // Deletes a specific sub-deadline from a specific project.
-    func deleteSubDeadline(subDeadlineID: UUID, fromProjectID: UUID) {
+    @discardableResult
+    func deleteSubDeadline(subDeadlineID: UUID, fromProjectID: UUID) -> Bool {
+        performChanges {
+
         // Find the index of the project.
         guard let projectIndex = projects.firstIndex(where: { $0.id == fromProjectID }) else {
-            print("ViewModel Error: Project not found for deleting sub-deadline (Project ID: \(fromProjectID)).")
             return
         }
         
         // Find the index of the sub-deadline within that project.
         guard let subDeadlineIndex = projects[projectIndex].subDeadlines.firstIndex(where: { $0.id == subDeadlineID }) else {
-            print("ViewModel Error: Sub-deadline not found for deletion within project '\(projects[projectIndex].title)' (SubDeadline ID: \(subDeadlineID)).")
             return
         }
         
         // Remove the sub-deadline from the project's array.
         let deletedTitle = projects[projectIndex].subDeadlines[subDeadlineIndex].title
         projects[projectIndex].subDeadlines.remove(at: subDeadlineIndex)
-        print("ViewModel: Deleted sub-deadline '\(deletedTitle)' from project '\(projects[projectIndex].title)'.")
         
         // Save the updated projects array.
         saveProjects()
+
+        }
     }
 
 
@@ -1050,53 +742,62 @@ class DeadlineViewModel: ObservableObject {
     }
     
     // Wrapper function that creates a template from a project and adds it to the templates list
-    func createTemplateFromProject(_ project: Project) -> String {
+    func createTemplateFromProject(_ project: Project) -> String? {
         let template = createTemplateFromProjectInternal(project)
-        addTemplate(template)
+        guard addTemplate(template) else { return nil }
         return template.name
     }
 
     // Adds a new template and saves.
-    func addTemplate(_ template: Template) {
+    @discardableResult
+    func addTemplate(_ template: Template) -> Bool {
+        performChanges {
+
         // Optional: Add validation, e.g., prevent duplicate template names.
          if !templates.contains(where: { $0.name == template.name }) {
             templates.append(template)
-            print("ViewModel: Added template '\(template.name)' (ID: \(template.id)).")
             saveTemplates() // Save changes.
          } else {
-             print("ViewModel Warning: Attempted to add a template with a duplicate name '\(template.name)'.")
          }
+
+        }
     }
 
     // Updates an existing template and saves.
     // Consider implications for existing projects using this template.
     // Currently, this only updates the template definition itself.
-    func updateTemplate(_ template: Template) {
+    @discardableResult
+    func updateTemplate(_ template: Template) -> Bool {
+        performChanges {
+
         // Find the index of the template with the matching ID.
         if let index = templates.firstIndex(where: { $0.id == template.id }) {
             templates[index] = template // Replace the old template.
-            print("ViewModel: Updated template '\(template.name)' (ID: \(template.id)).")
             saveTemplates() // Save changes.
             // Add logic here if template updates should optionally update existing projects.
         } else {
-            print("ViewModel Warning: Attempted to update a template (ID: \(template.id)) that does not exist.")
+        }
+
         }
     }
 
     // Deletes a template.
-    func deleteTemplate(_ template: Template) {
+    @discardableResult
+    func deleteTemplate(_ template: Template) -> Bool {
+        performChanges {
+
         // Find the index and remove the template.
          if let index = templates.firstIndex(where: { $0.id == template.id }) {
              let deletedName = templates[index].name
              templates.remove(at: index)
-             print("ViewModel: Deleted template '\(deletedName)' (ID: \(template.id)).")
              saveTemplates() // Save changes.
              // Consider what happens to projects linked to this template ID.
              // Maybe clear the templateID field in associated projects?
              // For now, just deleting the template definition.
          } else {
-             print("ViewModel Warning: Attempted to delete a template (ID: \(template.id)) that does not exist.")
          }
+
+        }
     }
 
 
@@ -1183,8 +884,10 @@ class DeadlineViewModel: ObservableObject {
 
     // Updates projects based on the *differences* between an old and new template version.
     // Handles changes in sub-deadline defs (title, offset, trigger link) and trigger defs (add, delete, rename).
-    func updateProjects(from oldTemplate: Template, to updatedTemplate: Template) {
-        print("ViewModel: Comparing template versions ('\(oldTemplate.name)' -> '\(updatedTemplate.name)') to update projects.")
+    @discardableResult
+    func updateProjects(from oldTemplate: Template, to updatedTemplate: Template) -> Bool {
+        performChanges {
+
 
         // --- Calculate Template SubDeadline Differences ---
         let oldSubDefs = Dictionary(uniqueKeysWithValues: oldTemplate.subDeadlines.map { ($0.id, $0) })
@@ -1239,7 +942,6 @@ class DeadlineViewModel: ObservableObject {
 
             var projectDidChange = false
             let project = projects[i] // Immutable copy for reading ID/Date
-            print("  - Syncing Project: '\(project.title)' (ID: \(project.id))")
 
             // Maps templateTriggerID -> actual Trigger.id *for this specific project*
             var currentProjectTriggerMap: [UUID: UUID] = [:]
@@ -1252,7 +954,6 @@ class DeadlineViewModel: ObservableObject {
 
             // Handle Added Template Triggers: Create real Triggers for this project
             if !addedTriggerDefs.isEmpty {
-                print("    - Handling added template triggers for project '\(project.title)'...")
                 for trigDefToAdd in addedTriggerDefs {
                     // Avoid duplicates if sync runs multiple times (shouldn't happen ideally)
                      if !self.triggers(for: project.id).contains(where: {$0.originatingTemplateTriggerID == trigDefToAdd.id}) {
@@ -1267,9 +968,7 @@ class DeadlineViewModel: ObservableObject {
                             self.addTrigger(newRealTrigger) // Add to main list & save
                             currentProjectTriggerMap[trigDefToAdd.id] = newRealTrigger.id // Update map
                             projectDidChange = true // Indicate change might have happened indirectly
-                            print("      - Created real trigger '\(newRealTrigger.name)' with date \(triggerDate) from added template trigger.")
                         } catch {
-                            print("      - Error calculating date for trigger '\(trigDefToAdd.name)': \(error)")
                         }
                      }
                 }
@@ -1277,11 +976,9 @@ class DeadlineViewModel: ObservableObject {
 
             // Handle Deleted Template Triggers: Delete real Triggers in this project
             if !deletedTrigDefIDs.isEmpty {
-                 print("    - Handling deleted template triggers for project '\(project.title)'...")
                  for deletedTrigDefID in deletedTrigDefIDs {
                      // Find the real trigger in this project that originated from the deleted template trigger
                      if let realTriggerToDelete = self.triggers(for: project.id).first(where: { $0.originatingTemplateTriggerID == deletedTrigDefID }) {
-                         print("      - Deleting real trigger '\(realTriggerToDelete.name)' (and unlinking sub-deadlines) due to template trigger deletion.")
                          self.deleteTrigger(triggerID: realTriggerToDelete.id) // Deletes & saves triggers/projects
                          projectDidChange = true // Indicate change
                          // Remove from map if needed, though deletion handles this
@@ -1292,7 +989,6 @@ class DeadlineViewModel: ObservableObject {
 
             // Handle Renamed Template Triggers: Update real Triggers in this project
             if !trigDefNameChanges.isEmpty || !trigDefOffsetChanges.isEmpty {
-                 print("    - Handling updated template triggers for project '\(project.title)'...")
                  for trigDefID in commonTrigDefIDs {
                      if let realTriggerToUpdate = self.triggers(for: project.id).first(where: { $0.originatingTemplateTriggerID == trigDefID }) {
                          var needsUpdate = false
@@ -1300,7 +996,6 @@ class DeadlineViewModel: ObservableObject {
                          
                          // Check for name change
                          if let newName = trigDefNameChanges[trigDefID], realTriggerToUpdate.name != newName {
-                             print("      - Renaming real trigger '\(realTriggerToUpdate.name)' to '\(newName)'.")
                              mutableTrigger.name = newName
                              needsUpdate = true
                          }
@@ -1310,12 +1005,10 @@ class DeadlineViewModel: ObservableObject {
                              do {
                                  let newDate = try newOffset.calculateDate(from: project.finalDeadlineDate)
                                  if mutableTrigger.date != newDate {
-                                     print("      - Updating trigger date for '\(mutableTrigger.name)': \(mutableTrigger.date) -> \(newDate)")
                                      mutableTrigger.date = newDate
                                      needsUpdate = true
                                  }
                              } catch {
-                                 print("      - Error calculating new date for trigger '\(mutableTrigger.name)': \(error)")
                              }
                          }
                          
@@ -1328,7 +1021,6 @@ class DeadlineViewModel: ObservableObject {
             }
 
             // --- Handle SubDeadline Definition Changes ---
-            print("    - Handling sub-deadline definition changes for project '\(project.title)'...")
             var subDeadlinesToAdd: [SubDeadline] = []
 
             // Apply changes to existing sub-deadlines
@@ -1342,7 +1034,6 @@ class DeadlineViewModel: ObservableObject {
                 // Apply title change if needed
                 if let newTitle = subDefTitleChanges[templateSubDeadlineID], projects[i].subDeadlines[j].title != newTitle {
                     if projects[i].subDeadlines[j].title != newTitle {
-                        print("      - Updating sub-deadline title: '\(projects[i].subDeadlines[j].title)' -> '\(newTitle)'")
                         projects[i].subDeadlines[j].title = newTitle
                         subDeadlineNeedsSave = true
                     }
@@ -1353,12 +1044,10 @@ class DeadlineViewModel: ObservableObject {
                     do {
                         let newDate = try newOffset.calculateDate(from: projects[i].finalDeadlineDate)
                         if projects[i].subDeadlines[j].date != newDate {
-                            print("      - Updating sub-deadline date for '\(projects[i].subDeadlines[j].title)': \(projects[i].subDeadlines[j].date) -> \(newDate)")
                             projects[i].subDeadlines[j].date = newDate
                             subDeadlineNeedsSave = true
                         }
                     } catch {
-                        print("ViewModel Error (sync): Could not recalc date for '\(projects[i].subDeadlines[j].title)': \(error)")
                     }
                 }
 
@@ -1366,7 +1055,6 @@ class DeadlineViewModel: ObservableObject {
                 if let newTemplateTriggerID = subDefTriggerLinkChanges[templateSubDeadlineID] { // Note: newTemplateTriggerID can be nil
                    let newRealTriggerID = newTemplateTriggerID.flatMap { currentProjectTriggerMap[$0] }
                     if projects[i].subDeadlines[j].triggerID != newRealTriggerID {
-                        print("      - Updating trigger link for '\(projects[i].subDeadlines[j].title)' to trigger ID: \(newRealTriggerID?.uuidString ?? "None")")
                         projects[i].subDeadlines[j].triggerID = newRealTriggerID
                         subDeadlineNeedsSave = true
                     }
@@ -1379,7 +1067,6 @@ class DeadlineViewModel: ObservableObject {
 
             // Add newly defined SubDeadlines
             if !addedSubDeadlineDefs.isEmpty {
-                print("    - Adding new sub-deadlines based on template changes...")
                 for subDefToAdd in addedSubDeadlineDefs {
                     // Check if already added (e.g., if sync runs twice)
                     if !projects[i].subDeadlines.contains(where: {$0.templateSubDeadlineID == subDefToAdd.id}) {
@@ -1391,7 +1078,6 @@ class DeadlineViewModel: ObservableObject {
                                                    templateSubDeadlineID: subDefToAdd.id,
                                                    triggerID: realTriggerID)
                             subDeadlinesToAdd.append(newSub)
-                            print("      - Added new sub-deadline: '\(newSub.title)', Trigger: \(realTriggerID != nil)")
                             projectDidChange = true
                         } catch { print("ViewModel Error (sync): Could not calc date for new sub-deadline '\(subDefToAdd.title)': \(error)") }
                     }
@@ -1406,95 +1092,105 @@ class DeadlineViewModel: ObservableObject {
             if projectDidChange {
                 projects[i].subDeadlines.sort { $0.date < $1.date } // Re-sort
                 updatedProjectCount += 1
-                print("    - Project '\(project.title)' was modified.")
                 // Save projects at the end, outside the loop
             }
         }
 
         // Save projects array if any changes were made across all projects
         if updatedProjectCount > 0 {
-            print("ViewModel: Finished syncing projects. \(updatedProjectCount) project(s) modified. Saving projects...")
             saveProjects()
         } else {
-            print("ViewModel: Finished syncing projects. No projects required updates based on template diff.")
+        }
+
         }
     }
 
     // New function to handle updating template definition AND syncing projects based on changes
-    func updateTemplateAndSyncProjects(original oldTemplate: Template, updated newTemplate: Template) {
-        print("ViewModel: Updating template '\(newTemplate.name)' AND syncing projects.")
+    @discardableResult
+    func updateTemplateAndSyncProjects(original oldTemplate: Template, updated newTemplate: Template) -> Bool {
+        performChanges {
+
         // 1. Update the template definition in the main array
         if let index = templates.firstIndex(where: { $0.id == newTemplate.id }) {
             templates[index] = newTemplate
             saveTemplates() // Save the updated templates list
-            print("  - Template definition updated successfully.")
             // 2. Trigger the project update logic, passing both old and new versions
             updateProjects(from: oldTemplate, to: newTemplate)
         } else {
-            print("ViewModel Warning: Could not find template with ID \(newTemplate.id) to update.")
             // If the template wasn't found, we probably shouldn't try to update projects either.
+        }
+
         }
     }
 
     // --- TRIGGER CRUD OPERATIONS ---
 
     // Adds a new trigger for a specific project.
-    func addTrigger(_ trigger: Trigger) {
+    @discardableResult
+    func addTrigger(_ trigger: Trigger) -> Bool {
+        performChanges {
+
         // Make sure trigger with same ID doesn't already exist
         if !triggers.contains(where: { $0.id == trigger.id }) {
             triggers.append(trigger)
-            print("ViewModel: Added trigger '\(trigger.name)' for project ID \(trigger.projectID).")
             saveTriggers()
         } else {
-            print("ViewModel Warning: Attempted to add trigger with duplicate ID \(trigger.id).")
+        }
+
         }
     }
 
     // Activates a specific trigger.
-    func activateTrigger(triggerID: UUID) {
+    @discardableResult
+    func activateTrigger(triggerID: UUID) -> Bool {
+        performChanges {
+
         if let index = triggers.firstIndex(where: { $0.id == triggerID }) {
             if !triggers[index].isActive { // Only activate if not already active
                 triggers[index].isActive = true
                 triggers[index].activationDate = Date() // Record activation time
                 let triggerName = triggers[index].name
-                print("ViewModel: Activated trigger '\(triggerName)' (ID: \(triggerID)).")
                 saveTriggers()
                 // Notify observers things have changed
                 objectWillChange.send()
             } else {
-                print("ViewModel Info: Trigger ID \(triggerID) was already active.")
             }
         } else {
-            print("ViewModel Warning: Attempted to activate a trigger (ID: \(triggerID)) that does not exist.")
+        }
+
         }
     }
     
     // Deactivates a trigger (allows re-activation later)
-    func deactivateTrigger(triggerID: UUID) {
+    @discardableResult
+    func deactivateTrigger(triggerID: UUID) -> Bool {
+        performChanges {
+
         if let index = triggers.firstIndex(where: { $0.id == triggerID }) {
             if triggers[index].isActive { // Only deactivate if currently active
                 triggers[index].isActive = false
                 // Keep activationDate for history
                 let triggerName = triggers[index].name
-                print("ViewModel: Deactivated trigger '\(triggerName)' (ID: \(triggerID)).")
                 saveTriggers()
                 // Notify observers things have changed
                 objectWillChange.send()
             } else {
-                print("ViewModel Info: Trigger ID \(triggerID) was already inactive.")
             }
         } else {
-            print("ViewModel Warning: Attempted to deactivate a trigger (ID: \(triggerID)) that does not exist.")
+        }
+
         }
     }
 
     // Deletes a trigger and unlinks associated sub-deadlines.
-    func deleteTrigger(triggerID: UUID) {
+    @discardableResult
+    func deleteTrigger(triggerID: UUID) -> Bool {
+        performChanges {
+
         if let index = triggers.firstIndex(where: { $0.id == triggerID }) {
             let deletedName = triggers[index].name
             let deletedProjectID = triggers[index].projectID
             triggers.remove(at: index)
-            print("ViewModel: Deleted trigger '\(deletedName)' (ID: \(triggerID)).")
             saveTriggers()
 
             // Unlink sub-deadlines in the associated project
@@ -1504,7 +1200,6 @@ class DeadlineViewModel: ObservableObject {
                     if projects[projectIndex].subDeadlines[subIndex].triggerID == triggerID {
                         projects[projectIndex].subDeadlines[subIndex].triggerID = nil
                         projectDidChange = true
-                        print("  - Unlinked sub-deadline '\(projects[projectIndex].subDeadlines[subIndex].title)' in project '\(projects[projectIndex].title)'.")
                     }
                 }
                 if projectDidChange {
@@ -1512,20 +1207,24 @@ class DeadlineViewModel: ObservableObject {
                 }
             }
         } else {
-            print("ViewModel Warning: Attempted to delete a trigger (ID: \(triggerID)) that does not exist.")
+        }
+
         }
     }
 
     // Updates trigger details (e.g., name)
-    func updateTrigger(_ trigger: Trigger) {
+    @discardableResult
+    func updateTrigger(_ trigger: Trigger) -> Bool {
+        performChanges {
+
          if let index = triggers.firstIndex(where: { $0.id == trigger.id }) {
              triggers[index] = trigger
-             print("ViewModel: Updated trigger '\(trigger.name)' (ID: \(trigger.id)).")
              saveTriggers()
          } else {
-             print("ViewModel Warning: Attempted to update trigger (ID: \(trigger.id)) that does not exist.")
          }
-     }
+
+        }
+    }
 
     // --- HELPER FUNCTIONS ---
 
@@ -1665,6 +1364,9 @@ class DeadlineViewModel: ObservableObject {
     
     // Update notifications when projects are modified
     func updateNotifications() {
+        guard currentLoadAvailable, committedSnapshot != nil, batchDepth == 0 else { return }
+        if let notificationObserver { notificationObserver(); return }
+        guard effectsEnabled else { return }
         scheduleDailyNotifications()
     }
     
@@ -1676,21 +1378,28 @@ class DeadlineViewModel: ObservableObject {
     // --- APP SETTINGS OPERATIONS ---
     
     // Updates color settings and saves
-    func updateColorSettings(_ colorSettings: ColorSettings) {
+    @discardableResult
+    func updateColorSettings(_ colorSettings: ColorSettings) -> Bool {
+        performChanges {
+
         guard colorSettings.isValid else {
-            print("ViewModel Error: Invalid color settings provided")
             return
         }
         self.appSettings.colorSettings = colorSettings
         saveAppSettings()
-        print("ViewModel: Color settings updated")
+
+        }
     }
     
     // Updates notification format settings and saves
-    func updateNotificationFormatSettings(_ notificationFormatSettings: NotificationFormatSettings) {
+    @discardableResult
+    func updateNotificationFormatSettings(_ notificationFormatSettings: NotificationFormatSettings) -> Bool {
+        performChanges {
+
         self.appSettings.notificationFormatSettings = notificationFormatSettings
         saveAppSettings()
-        print("ViewModel: Notification format settings updated")
+
+        }
     }
     
     // MARK: - iCloud Backup Methods
@@ -1831,10 +1540,20 @@ struct ContentView: View {
                     Label("Settings", systemImage: "gearshape.fill") // Icon for settings
                 }
         }
+        .id(viewModel.editorGeneration)
+        .safeAreaInset(edge: .bottom) { DeadlineSaveNotice(viewModel: viewModel) }
+        .alert("Deadline data needs attention", isPresented: Binding(
+            get: { viewModel.saveError != nil }, set: { if !$0 { viewModel.saveError = nil } }
+        )) {
+            Button("Reload current data", role: .destructive) { viewModel.reloadCurrentData() }
+            Button("Keep editing", role: .cancel) { }
+        } message: {
+            Text((viewModel.saveError ?? "") + " Reload closes open editors. A failed attempted change remains retained until a later save.")
+        }
         // --- ADDED .task MODIFIER --- 
         .task {
             // Load initial data when the TabView first appears
-            await viewModel.loadInitialData()
+            if viewModel.isLoading { await viewModel.loadInitialData() }
         }
         // --- END ADDED MODIFIER --- 
         // Apply design system styling
@@ -2013,3 +1732,21 @@ struct ContentView_Previews: PreviewProvider {
 
 // Remove the old ContentView body, keep the ViewModel and helper structs/extensions if they were outside the old ContentView body.
 
+
+/// Visible inside presented editors as well as the main tabs; no failed save
+/// relies on a parent alert hidden behind its still-open sheet.
+struct DeadlineSaveNotice: View {
+    @ObservedObject var viewModel: DeadlineViewModel
+    var body: some View {
+        if viewModel.saveError != nil || viewModel.pendingSnapshot != nil {
+            VStack(alignment: .leading, spacing: 8) {
+                Text(viewModel.saveError ?? "A copy of the unsuccessful change is still available. Review it before making a new edit.").font(.callout)
+                if let attempted = viewModel.pendingChangeJSON {
+                    ShareLink("Save a copy of the attempted changes", item: attempted)
+                }
+                Button("Reload current data and close editors") { viewModel.reloadCurrentData() }
+            }
+            .padding().background(.regularMaterial)
+        }
+    }
+}

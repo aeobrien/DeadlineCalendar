@@ -2,13 +2,15 @@
 // Provides read/write access to the shared iCloud JSON file for cross-platform sync.
 
 import Foundation
+import Combine
+import Darwin
 
 // MARK: - Shared Data Container
 
 /// The canonical data format stored in iCloud Drive at
 /// `iCloud~AOTondra~Deadline-Calendar/Documents/DeadlineCalendar.json`.
 /// Both the iOS app and the macOS CLI read/write this file.
-struct SharedData: Codable {
+struct SharedData: Codable, Equatable {
     var projects: [Project]
     var templates: [Template]
     var triggers: [Trigger]
@@ -42,29 +44,30 @@ class SharedDataStore: NSObject, ObservableObject {
     /// Returns the URL for the shared JSON file inside iCloud Drive,
     /// or `nil` if iCloud is not available.
     var sharedFileURL: URL? {
-        guard let containerURL = FileManager.default.url(forUbiquityContainerIdentifier: nil) else {
+        if let explicitURL { return explicitURL }
+        guard let containerURL = containerProvider() else {
             print("SharedDataStore: iCloud container not available")
             return nil
         }
         let documentsURL = containerURL.appendingPathComponent("Documents")
-
-        // Ensure the Documents directory exists.
-        if !FileManager.default.fileExists(atPath: documentsURL.path) {
-            do {
-                try FileManager.default.createDirectory(at: documentsURL, withIntermediateDirectories: true)
-                print("SharedDataStore: Created iCloud Documents directory")
-            } catch {
-                print("SharedDataStore: Failed to create Documents directory: \(error)")
-                return nil
-            }
-        }
 
         return documentsURL.appendingPathComponent(sharedFileName)
     }
 
     // MARK: - Init
 
-    private override init() {
+    private let explicitURL: URL?
+    private var baseline: Data?
+    private var loadedURL: URL?
+    private let containerProvider: () -> URL?
+    private var hasLoaded = false
+    private let availabilityCheck: ((URL) throws -> Void)?
+
+    init(fileURL: URL? = nil, availabilityCheck: ((URL) throws -> Void)? = nil,
+         containerProvider: @escaping () -> URL? = { FileManager.default.url(forUbiquityContainerIdentifier: nil) }) {
+        self.explicitURL = fileURL
+        self.containerProvider = containerProvider
+        self.availabilityCheck = availabilityCheck
         super.init()
     }
 
@@ -72,7 +75,7 @@ class SharedDataStore: NSObject, ObservableObject {
 
     /// Begin watching for iCloud-driven file changes via `NSMetadataQuery`.
     func startMonitoring() {
-        guard metadataQuery == nil else { return }
+        guard explicitURL == nil, metadataQuery == nil else { return }
 
         let query = NSMetadataQuery()
         query.searchScopes = [NSMetadataQueryUbiquitousDocumentsScope]
@@ -138,98 +141,83 @@ class SharedDataStore: NSObject, ObservableObject {
         }
     }
 
-    // MARK: - Read
-
-    /// Load data from the shared JSON file using coordinated file access.
-    /// Returns `nil` if the file doesn't exist or can't be read.
-    func load() -> SharedData? {
-        guard let fileURL = sharedFileURL else { return nil }
-        guard FileManager.default.fileExists(atPath: fileURL.path) else {
-            print("SharedDataStore: Shared file does not exist yet")
-            return nil
-        }
-
-        var coordinatorError: NSError?
-        var result: SharedData?
-
-        let coordinator = NSFileCoordinator()
-        coordinator.coordinate(readingItemAt: fileURL, options: [], error: &coordinatorError) { readURL in
-            do {
-                let data = try Data(contentsOf: readURL)
-                let decoder = JSONDecoder()
-                decoder.dateDecodingStrategy = .iso8601
-                result = try decoder.decode(SharedData.self, from: data)
-                print("SharedDataStore: Loaded shared data (lastModifiedBy: \(result?.lastModifiedBy ?? "unknown"))")
-            } catch {
-                print("SharedDataStore: Failed to read/decode shared file: \(error)")
-            }
-        }
-
-        if let error = coordinatorError {
-            print("SharedDataStore: File coordination error on read: \(error)")
-        }
-
-        return result
+    // A failed load invalidates write permission. Only a successful read of absence
+    // permits first-launch initialization; unavailable or corrupt is never absence.
+    func loadSnapshot() throws -> SharedData? {
+        hasLoaded = false
+        guard let url = sharedFileURL else { throw SnapshotError.unavailable }
+        let bytes = try SnapshotFile(url: url, availabilityCheck: availabilityCheck).read()
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
+        let document = try bytes.map { try decoder.decode(SharedData.self, from: $0) }
+        baseline = bytes
+        loadedURL = url
+        hasLoaded = true
+        return document
     }
 
-    // MARK: - Write
-
-    /// Write data to the shared JSON file using coordinated file access.
-    /// Returns `true` on success.
     @discardableResult
-    func save(projects: [Project], templates: [Template], triggers: [Trigger], appSettings: AppSettings) -> Bool {
-        guard let fileURL = sharedFileURL else {
-            print("SharedDataStore: Cannot save — iCloud not available")
-            return false
-        }
-
-        let sharedData = SharedData(
-            projects: projects,
-            templates: templates,
-            triggers: triggers,
-            appSettings: appSettings,
-            lastModified: Date(),
-            lastModifiedBy: "app"
-        )
-
-        var coordinatorError: NSError?
-        var success = false
-
-        let coordinator = NSFileCoordinator()
-        coordinator.coordinate(writingItemAt: fileURL, options: .forReplacing, error: &coordinatorError) { writeURL in
-            do {
-                let encoder = JSONEncoder()
-                encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
-                encoder.dateEncodingStrategy = .iso8601
-                let jsonData = try encoder.encode(sharedData)
-                try jsonData.write(to: writeURL, options: .atomic)
-
-                // Record the modification date so we can ignore our own write
-                // in the metadata query callback.
-                if let attrs = try? FileManager.default.attributesOfItem(atPath: writeURL.path),
-                   let modDate = attrs[.modificationDate] as? Date {
-                    self.lastKnownModificationDate = modDate
+    func saveSnapshot(projects: [Project], templates: [Template], triggers: [Trigger], appSettings: AppSettings) throws -> SharedData {
+        guard hasLoaded else { throw SnapshotError.unavailable }
+        guard let url = loadedURL else { throw SnapshotError.unavailable }
+        if baseline == nil && explicitURL == nil { try prepareInitialDocumentsDirectory(for: url) }
+        let document = SharedData(projects: projects, templates: templates, triggers: triggers,
+                                  appSettings: appSettings, lastModified: Date(), lastModifiedBy: "app")
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+        encoder.dateEncodingStrategy = .iso8601
+        let bytes = try encoder.encode(document)
+        let decoder = JSONDecoder(); decoder.dateDecodingStrategy = .iso8601
+        let canonical = try decoder.decode(SharedData.self, from: bytes)
+        let savedBytes = try SnapshotFile(url: url, availabilityCheck: availabilityCheck).update(expected: .bytes(baseline)) { current in
+            if let current {
+                let previous = try decoder.decode(SharedData.self, from: current)
+                if previous.projects == canonical.projects && previous.templates == canonical.templates &&
+                    previous.triggers == canonical.triggers && previous.appSettings == canonical.appSettings {
+                    return current
                 }
-
-                success = true
-                print("SharedDataStore: Saved shared data to iCloud (\(jsonData.count) bytes)")
-            } catch {
-                print("SharedDataStore: Failed to write shared file: \(error)")
+            }
+            return bytes
+        }
+        guard let savedBytes else { throw SnapshotError.coordination }
+        baseline = savedBytes
+        lastKnownModificationDate = (try? FileManager.default.attributesOfItem(atPath: url.path))?[.modificationDate] as? Date
+        return try decoder.decode(SharedData.self, from: savedBytes)
+    }
+    /// Only the normal default store may create its Documents directory, and only
+    /// after a successful missing-file read. Selected-file paths are never created.
+    private func prepareInitialDocumentsDirectory(for url: URL) throws {
+        let documents = url.deletingLastPathComponent()
+        let container = documents.deletingLastPathComponent()
+        func checkDirectory(_ directory: URL, missingAllowed: Bool) throws -> Bool {
+            var info = stat()
+            guard lstat(directory.path, &info) == 0 else {
+                if errno == ENOENT && missingAllowed { return false }
+                throw SnapshotError.unavailable
+            }
+            guard (info.st_mode & S_IFMT) == S_IFDIR, (info.st_flags & UInt32(SF_DATALESS)) == 0 else {
+                throw SnapshotError.unavailable
+            }
+            let values = try directory.resourceValues(forKeys: [.isUbiquitousItemKey, .ubiquitousItemDownloadingStatusKey])
+            if values.isUbiquitousItem == true && values.ubiquitousItemDownloadingStatus == .notDownloaded {
+                throw SnapshotError.unavailable
+            }
+            return true
+        }
+        _ = try checkDirectory(container, missingAllowed: false)
+        if try checkDirectory(documents, missingAllowed: true) { return }
+        var error: NSError?
+        var result: Result<Void, Error>?
+        NSFileCoordinator().coordinate(writingItemAt: documents, options: .forMerging, error: &error) { path in
+            result = Result {
+                _ = try checkDirectory(container, missingAllowed: false)
+                if try !checkDirectory(path, missingAllowed: true) {
+                    try FileManager.default.createDirectory(at: path, withIntermediateDirectories: false)
+                }
             }
         }
-
-        if let error = coordinatorError {
-            print("SharedDataStore: File coordination error on write: \(error)")
-        }
-
-        return success
-    }
-
-    // MARK: - Migration
-
-    /// Check whether the shared file exists. Used for first-launch migration.
-    var sharedFileExists: Bool {
-        guard let fileURL = sharedFileURL else { return false }
-        return FileManager.default.fileExists(atPath: fileURL.path)
+        if let error { throw error }
+        guard let result else { throw SnapshotError.coordination }
+        try result.get()
     }
 }

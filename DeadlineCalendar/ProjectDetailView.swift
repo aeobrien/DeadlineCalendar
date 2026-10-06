@@ -180,7 +180,7 @@ extension ProjectDetailView {
     
     /// Creates a new template based on the current project
     private func createTemplateFromProject() {
-        let templateName = viewModel.createTemplateFromProject(project)
+        guard let templateName = viewModel.createTemplateFromProject(project) else { return }
         createdTemplateName = templateName
         showingTemplateCreatedAlert = true
     }

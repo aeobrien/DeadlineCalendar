@@ -4,7 +4,7 @@ from pathlib import Path
 root=Path(__file__).resolve().parents[2]
 with tempfile.TemporaryDirectory(prefix='deadline-baseline-') as tmp:
  p=Path(tmp);docs=p/'data';docs.mkdir()
- source=(root/'deadline-cli/Sources/DataStore.swift').read_text()
+ source=subprocess.check_output(['git','show','4857669:deadline-cli/Sources/DataStore.swift'],cwd=root,text=True)
  old='NSHomeDirectory() + "/Library/Mobile Documents/iCloud~AOTondra~Deadline-Calendar/Documents"'
  assert source.count(old)==1
  source=source.replace(old,'ProcessInfo.processInfo.environment["DEADLINE_FIXTURE_ROOT"]!')

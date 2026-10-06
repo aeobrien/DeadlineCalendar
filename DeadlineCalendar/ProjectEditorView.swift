@@ -200,7 +200,7 @@ struct ProjectEditorView: View {
                                 // Create trigger with a default date (7 days before project deadline)
                                 let defaultDate = Calendar.current.date(byAdding: .day, value: -7, to: finalDeadlineDate) ?? Date()
                                 let newTrigger = Trigger(name: newTriggerSectionName, projectID: projectToEditID, date: defaultDate)
-                                viewModel.addTrigger(newTrigger)
+                                guard viewModel.addTrigger(newTrigger) else { return }
                                 newTriggerSectionName = "" // Reset
                             } // else: Handle empty name?
                         }
@@ -320,8 +320,7 @@ struct ProjectEditorView: View {
                     // Save Button
                     ToolbarItem(placement: .navigationBarTrailing) {
                         Button("Save") {
-                            saveProjectChanges()
-                            dismiss()
+                            if saveProjectChanges() { dismiss() }
                         }
                         .disabled(!isFormValid)
                     }
@@ -361,30 +360,30 @@ struct ProjectEditorView: View {
                         }
                         ToolbarItem(placement: .navigationBarTrailing) {
                             Button("Save") {
-                                saveTriggerDate()
-                                showingTriggerDatePicker = false
+                                if saveTriggerDate() { showingTriggerDatePicker = false }
                             }
                         }
                     }
                 }
                 .preferredColorScheme(.dark)
+                .safeAreaInset(edge: .bottom) { DeadlineSaveNotice(viewModel: viewModel) }
             }
         }
+            .safeAreaInset(edge: .bottom) { DeadlineSaveNotice(viewModel: viewModel) }
     }
 
     // MARK: - Data Handling
     
-    private func saveTriggerDate() {
+    private func saveTriggerDate() -> Bool {
         guard let triggerID = editingTriggerID,
               let trigger = viewModel.triggers.first(where: { $0.id == triggerID }) else {
             print("ProjectEditorView: Could not find trigger to update")
-            return
+            return false
         }
         
         var updatedTrigger = trigger
         updatedTrigger.date = editingTriggerDate
-        viewModel.updateTrigger(updatedTrigger)
-        print("ProjectEditorView: Updated trigger '\(trigger.name)' with date \(editingTriggerDate)")
+        return viewModel.updateTrigger(updatedTrigger)
     }
 
     private func addNewSubDeadline() {
@@ -420,7 +419,8 @@ struct ProjectEditorView: View {
         }
     }
 
-    private func saveProjectChanges() {
+    private func saveProjectChanges() -> Bool {
+        viewModel.performChanges {
         guard var projectToUpdate = originalProject else {
             print("ProjectEditorView Error: Original project data not loaded. Cannot save.")
             return
@@ -491,6 +491,7 @@ struct ProjectEditorView: View {
             // Repetition settings changed, update occurrences
             viewModel.updateProjectRepetitionOccurrences(for: projectToUpdate)
         }
+            }
     }
 }
 
@@ -567,7 +568,7 @@ struct EditableSubDeadlineRow: View {
                 Button("Create & Link") {
                     if !newTriggerName.isEmpty {
                         let newTrigger = Trigger(name: newTriggerName, projectID: projectID)
-                        viewModel.addTrigger(newTrigger)
+                        guard viewModel.addTrigger(newTrigger) else { return }
                         // Link the new trigger immediately after creation
                         subDeadline.triggerID = newTrigger.id
                         newTriggerName = "" // Reset field
