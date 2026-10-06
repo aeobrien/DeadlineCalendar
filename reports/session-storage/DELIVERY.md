@@ -20,3 +20,7 @@ Other documented limits: attempted edits remain in memory rather than a durable 
 ## Build identity
 
 Original plan docs/BUILD-SESSION-STORAGE.md; manifest build-BUILD-SESSION-STORAGE-4d4889c6; build0ce3c0c89cab1aeb1740; session01a0fcb2-7788-7d21-9627-c24c34f60149-deadline-storage. No plan rewrite, reseal, replacement manifest or scope reduction was used. No slice-specific saved procedure could be located during resumption; the broad SessionManual audit procedure was left untouched.
+
+## Source completion
+
+Reviewed source is committed as73e3814; evidence-only header/declaration correction is dfa9a8d633ec4afe80dd65af5a4d67f5b482a99a. Committed Understudy review diffjudge-dfa9a8d6 reports Informational/all checks pass ($0.0692). The original checkpoint advanced through every promise, and original canonical run run-1791310820-36645 passed with lifecycle complete and ALLOW_COMPLETE at this exact source commit. The initial committed-review Block and restricted-permission Swift checkpoint failure remain preserved. No reviewed runtime/test bytes changed. These results complete the isolated build, not the broad catalogue capability or deployment.

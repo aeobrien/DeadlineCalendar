@@ -25,3 +25,5 @@ Optional Fable findings:
 ## Final acceptance update
 
 The candidate03 actual iOS suite now passes14/14 under Understudy, with all21reviewed hashes unchanged (root-resume-20261006). Earlier pending statements above describe their historical review stage. No additional source changes or paid review followed this acceptance. Committed review and original completion gates follow before delivery is marked complete.
+
+Committed-review closure: the original Block concerned an undeclared existing review-only OpenRouter dependency and a historical empty bridging-header output. The supported explicit review allowlist and explanatory header comment resolved these without changing runtime/test source. The subsequent committed review passed all applicable checks; the original checkpoint and canonical completion passed. Exact receipts remain under root-resume-20261006.
