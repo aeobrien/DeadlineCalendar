@@ -1,0 +1,23 @@
+# Review findings and correction record
+
+The candidate remains uncommitted and incomplete until final tests and both independent reviews pass.
+
+- Initial missing default Documents directory: reproduced by independent actual SharedDataStore fixture. Repaired only the default-container branch with an injectable container resolver; reads never create directories, selected-file paths still refuse missing parents, and the initial save requires a successful absent-file read.
+- Unchanged app save altered bytes/metadata and invalidated another window: reproduced by independent actual native fixture. Same canonical content returns the original bytes inside coordination.
+- Fractional dates still changed an equivalent save: independent DateNoop.swift failed before correction, unchanged probe passes date-noop-green-01. Comparison now uses the same serialized representation as the saved data, and the ViewModel installs successful readback.
+- Trigger-date picker ignored failed update and dismissed: source finding accepted, Bool now reaches the button and the picker contains a failure notice. Actual visible tapping remains separate from compiled caller/persistence tests.
+- Settings could reschedule after unavailable startup: source finding accepted. Notification entrypoint now requires a successful current load and no pending batch; failed loads/saves and external-change notices invalidate it. An injected scheduling observer tests this without real notifications.
+- Removed legacy migration behavior: author caught SavedProjects alias, old templates without templateTriggers, and missing trigger-date migration. Targeted tests added; first run hit simulator launcher Mach -308 then timeout, second used an old descriptor with no tests. Those are harness failures, not genuine red assertions. The registered-scheme retry also timed out under severe host load. A separate exact whole-ViewModel native probe then produced three real assertion failures in legacy-native-red-01. The first correction still missed the migration call site (legacy-native-green-01 retained); corrected code passed all three paths in legacy-native-green-02, 14.433s. This supplemental test does not replace final actual iOS acceptance.
+
+No historical failures are replaced with passing labels. No live iCloud, record, account, notification, widget, backup or screen acceptance is inferred.
+
+Independent Astra candidate03 SOURCE PASS is recorded in reviews/astra-candidate03.md/.json against all 21 hashes. Four additional actual whole-ViewModel sequences passed in astra-model-final-01 (18.497s). The final actual iOS run remains pending. The separate Fable02 run returned no visible verdict after using its completion allowance; it is incomplete, not a source PASS, and its raw response/cost are retained.
+
+Fable03 SOURCE PASS is retained in fable-03/review.md with package hash and raw response. Cost $1.14564; with incomplete Fable02 ($1.59904), total $2.74468 of the $3 budget. The retry contained complete persistence/CLI/ViewModel/models/app tests and caller diffs. New untracked CLI test files appeared as empty diffs in that package, so this review does not claim to have inspected them; independent executed CLI/storage evidence remains separate.
+
+Optional Fable findings:
+- The stable sibling advisory lock can be visible/synced in the default Documents folder. A new lock location would split coordination with existing participants and is not adopted casually. The helper creates an empty regular lock file, never reads or writes its contents, checks its file type/link count after opening, and bounds lock acquisition to five seconds. No offline/dataless lock hang has been demonstrated in the supported cooperative path. The potential system-level materialization behavior is not claimed verified and remains a nonblocking follow-up; no source change or new lock identity is introduced.
+- Empty-title editor actions are disabled; an obsolete missing-original editor normally loses its generation on reload, while external notices retain the old baseline and saves conflict. No broad editor redesign is included; visible interaction acceptance remains separate.
+- A CLI-created standalone container uses its first due date rather than the app's distant-future date. No deadline is lost; ordering differences remain a known presentation limit.
+- ISO8601 decoding remains the existing supported encoder/decoder format. Arbitrary external fractional timestamp strings are not newly supported; malformed documents are preserved and reported, never overwritten.
+- The ViewModel lacks a new MainActor annotation, as before. Existing metadata monitoring posts on main; actor-isolation refactoring is outside this storage change.

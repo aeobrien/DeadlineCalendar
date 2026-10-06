@@ -1,0 +1,23 @@
+{
+  "capture_finished_at_utc": "2026-10-06T18:06:57Z",
+  "capture_started_at_utc": "2026-10-06T18:06:55Z",
+  "captured_at_utc": "2026-10-06T18:06:55Z",
+  "captured_byte_estimate": 7211507,
+  "captured_path_count": 278,
+  "consistency_retry_count": 0,
+  "excluded": [],
+  "github_hard_limit_bytes": 100000000,
+  "guardian_version": "2.0-sidecar",
+  "head_state": "symbolic",
+  "host": "aidans-laptop",
+  "racy_capture": false,
+  "repository_id": "DeadlineCalendar-session-storage-c424219bb145",
+  "schema_version": 1,
+  "snapshot_blob_threshold_bytes": 94371840,
+  "snapshot_consistency": "stable",
+  "source_branch": "deadline-session-storage",
+  "source_head_oid": "fb7ef219d79cf4cf5c694600595b4a3075d44fff",
+  "source_index_sha256": "6f60d804e57c05b8bb7b6a8f9cc32867e9eecb77db44b6aa10f6a6f857aef52b",
+  "source_path": "/Users/aidan/Dev/DeadlineCalendar-session-storage",
+  "upstream_observed": null
+}
