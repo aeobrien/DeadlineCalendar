@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		AA00000000000001000000CD /* SnapshotFile.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000000000002000000CD /* SnapshotFile.swift */; };
 		DD6A58722DADB712006A064E /* BackupManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD6A58712DADB711006A064E /* BackupManager.swift */; };
 		DD70B5052E1C03F800673D79 /* iCloudBackupManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD70B5032E1C03F800673D79 /* iCloudBackupManager.swift */; };
 		AA00000000000001000000CC /* SharedDataStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000000000002000000CC /* SharedDataStore.swift */; };
@@ -111,6 +112,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		AA00000000000002000000CD /* SnapshotFile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "deadline-cli/Sources/SnapshotFile.swift"; sourceTree = SOURCE_ROOT; };
 		DD6A58712DADB711006A064E /* BackupManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = BackupManager.swift; sourceTree = "<group>"; };
 		DD70B5002E1C03F800673D79 /* BackupDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackupDetailView.swift; sourceTree = "<group>"; };
 		DD70B5012E1C03F800673D79 /* BackupRestoreViewRedesigned.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackupRestoreViewRedesigned.swift; sourceTree = "<group>"; };
@@ -221,6 +223,7 @@
 				DD70B5022E1C03F800673D79 /* DeadlineCalendarBackupDocument.swift */,
 				DD70B5032E1C03F800673D79 /* iCloudBackupManager.swift */,
 				AA00000000000002000000CC /* SharedDataStore.swift */,
+				AA00000000000002000000CD /* SnapshotFile.swift */,
 				DD70B5042E1C03F800673D79 /* iCloudBackupRestoreView.swift */,
 				DDC363552E1BE25700FC322D /* TemplateManagerViewRedesigned.swift */,
 				DDC363532E1BDDF900FC322D /* BackupRestoreViewRedesigned.swift */,
@@ -500,6 +503,7 @@
 				DD75C9162E06F75000AA393B /* ProjectEditorView.swift in Sources */,
 				DD70B5052E1C03F800673D79 /* iCloudBackupManager.swift in Sources */,
 				AA00000000000001000000CC /* SharedDataStore.swift in Sources */,
+				AA00000000000001000000CD /* SnapshotFile.swift in Sources */,
 				DD70B5062E1C03F800673D79 /* BackupDetailView.swift in Sources */,
 				DD70B5072E1C03F800673D79 /* BackupRestoreViewRedesigned.swift in Sources */,
 				DD70B5082E1C03F800673D79 /* iCloudBackupRestoreView.swift in Sources */,

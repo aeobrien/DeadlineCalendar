@@ -253,10 +253,12 @@ struct BackupRestoreView: View {
             viewModel.appSettings = importedData.appSettings // <-- Assign the imported settings
 
             // 3. Save the new data via ViewModel's save functions
-            viewModel.saveProjects()
-            viewModel.saveTemplates()
-            viewModel.saveTriggers() // <-- Save the triggers
-            viewModel.saveAppSettings() // <-- Save the settings
+            guard viewModel.saveAll() else {
+                alertTitle = "Import Not Saved"
+                alertMessage = viewModel.saveError ?? "Could not save restored data."
+                showingAlert = true
+                return
+            }
 
             print("BackupRestoreView: Import successful. ViewModel data replaced and saved.")
 

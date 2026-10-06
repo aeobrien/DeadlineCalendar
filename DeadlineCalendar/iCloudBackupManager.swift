@@ -300,10 +300,7 @@ class iCloudBackupManager: ObservableObject {
         viewModel.appSettings = backupData.appSettings
         
         // Save to UserDefaults
-        viewModel.saveProjects()
-        viewModel.saveTemplates()
-        viewModel.saveTriggers()
-        viewModel.saveAppSettings()
+        guard viewModel.saveAll() else { throw iCloudBackupError.backupRestorationFailed(viewModel.saveError ?? "Could not save restored data.") }
         
         print("iCloudBackupManager: Restore completed successfully")
         print("  - Projects: \(restoredProjects.count)")

@@ -573,10 +573,12 @@ struct BackupRestoreViewRedesigned: View {
             viewModel.appSettings = importedData.appSettings
             
             // Save the new data
-            viewModel.saveProjects()
-            viewModel.saveTemplates()
-            viewModel.saveTriggers()
-            viewModel.saveAppSettings()
+            guard viewModel.saveAll() else {
+                alertTitle = "Import Not Saved"
+                alertMessage = viewModel.saveError ?? "Could not save restored data."
+                showingAlert = true
+                return
+            }
             
             alertTitle = "Import Successful"
             alertMessage = "Successfully restored \(importedData.projects.count) projects, \(importedData.templates.count) templates, \(importedData.triggers.count) triggers, and settings from the clipboard."

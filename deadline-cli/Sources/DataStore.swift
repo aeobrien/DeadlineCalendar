@@ -3,10 +3,11 @@
 // with fallback to legacy backup files.
 
 import Foundation
+import CryptoKit
 
 // MARK: - Shared Data Container (matches the iOS app's SharedData struct)
 
-struct SharedData: Codable {
+struct SharedData: Codable, Equatable {
     var projects: [Project]
     var templates: [Template]
     var triggers: [Trigger]
@@ -46,32 +47,24 @@ struct DataStore {
     let sharedFileURL: URL
     let backupsDirectory: URL?
 
-    init() throws {
-        let sharedURL = URL(fileURLWithPath: sharedFilePath)
-        self.sharedFileURL = sharedURL
+    let explicitFile: Bool
 
-        // Backups directory is optional — only needed for fallback.
-        let backupsURL = URL(fileURLWithPath: iCloudBackupsPath)
-        if FileManager.default.fileExists(atPath: backupsURL.path) {
-            self.backupsDirectory = backupsURL
-        } else {
-            self.backupsDirectory = nil
-        }
+    init(dataFileURL: URL? = nil) throws {
+        explicitFile = dataFileURL != nil
+        sharedFileURL = dataFileURL ?? URL(fileURLWithPath: sharedFilePath)
+        // Explicit stores never reach the default iCloud path or backup folder.
+        backupsDirectory = dataFileURL == nil ? URL(fileURLWithPath: iCloudBackupsPath) : nil
+    }
 
-        // Verify iCloud Documents directory exists.
-        let docsURL = URL(fileURLWithPath: iCloudDocumentsPath)
-        guard FileManager.default.fileExists(atPath: docsURL.path) else {
-            throw DataStoreError.iCloudNotAvailable(
-                """
-                Could not find iCloud Documents directory at:
-                  \(iCloudDocumentsPath)
+    private func decode(_ data: Data) throws -> SharedData {
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
+        return try decoder.decode(SharedData.self, from: data)
+    }
 
-                Ensure:
-                  1. iCloud Drive is enabled and syncing.
-                  2. DeadlineCalendar has been launched at least once.
-                """
-            )
-        }
+    func loadCurrent() throws -> SharedData {
+        guard let data = try SnapshotFile(url: sharedFileURL).read() else { throw SnapshotError.missing }
+        return try decode(data)
     }
 
     // MARK: - Read (Shared File — Primary)
@@ -79,13 +72,8 @@ struct DataStore {
     /// Load data from the shared JSON file.
     /// Returns `nil` if the file doesn't exist.
     func loadSharedFile() throws -> SharedData? {
-        guard FileManager.default.fileExists(atPath: sharedFileURL.path) else {
-            return nil
-        }
-        let data = try Data(contentsOf: sharedFileURL)
-        let decoder = JSONDecoder()
-        decoder.dateDecodingStrategy = .iso8601
-        return try decoder.decode(SharedData.self, from: data)
+        guard let data = try SnapshotFile(url: sharedFileURL).read() else { return nil }
+        return try decode(data)
     }
 
     // MARK: - Read (Legacy Backup — Fallback)
@@ -114,7 +102,7 @@ struct DataStore {
     /// Load the full dataset from the most recent backup.
     func loadLatestBackup() throws -> BackupFileData {
         let url = try latestBackupURL()
-        let data = try Data(contentsOf: url)
+        guard let data = try SnapshotFile(url: url).read() else { throw SnapshotError.missing }
         let decoder = JSONDecoder()
         decoder.dateDecodingStrategy = .iso8601
         do {
@@ -135,13 +123,14 @@ struct DataStore {
         let appSettings: AppSettings
 
         if let shared = try loadSharedFile() {
-            print("DataStore: Loaded from shared iCloud file (lastModifiedBy: \(shared.lastModifiedBy))")
+
             projects = shared.projects
             templates = shared.templates
             triggers = shared.triggers
             appSettings = shared.appSettings
         } else {
-            print("DataStore: Shared file not found, falling back to latest backup")
+            guard !explicitFile else { throw SnapshotError.missing }
+            FileHandle.standardError.write(Data("Reading legacy backup; this is not the current shared file.\n".utf8))
             let backup = try loadLatestBackup()
             projects = backup.projects
             templates = backup.templates
@@ -162,44 +151,47 @@ struct DataStore {
         return (resolvedProjects, templates, triggers, appSettings)
     }
 
-    // MARK: - Write (Shared File)
+    func readDocument() throws -> SharedData {
+        if let shared = try loadSharedFile() { return shared }
+        guard !explicitFile else { throw SnapshotError.missing }
+        let backup = try loadLatestBackup()
+        FileHandle.standardError.write(Data("Reading legacy backup; mutations require an available shared file.\n".utf8))
+        return SharedData(projects: backup.projects, templates: backup.templates, triggers: backup.triggers,
+                          appSettings: backup.appSettings, lastModified: backup.createdDate, lastModifiedBy: "legacy-backup")
+    }
 
-    /// Save data to the shared JSON file.
-    /// Sets `lastModifiedBy: "cli"`.
+    func currentRevision() throws -> String {
+        guard let bytes = try SnapshotFile(url: sharedFileURL).read() else { throw SnapshotError.missing }
+        return Self.revision(bytes)
+    }
+
+    static func revision(_ bytes: Data) -> String { SHA256.hash(data: bytes).map { String(format: "%02x", $0) }.joined() }
+
+    func currentWithRevision() throws -> (SharedData, String) {
+        guard let bytes = try SnapshotFile(url: sharedFileURL).read() else { throw SnapshotError.missing }
+        return (try decode(bytes), Self.revision(bytes))
+    }
+
+    // Whole read/validate/mutate/replace transaction. Never promotes a backup.
     @discardableResult
-    func save(projects: [Project], templates: [Template], triggers: [Trigger], appSettings: AppSettings) throws -> URL {
-        let sharedData = SharedData(
-            projects: projects,
-            templates: templates,
-            triggers: triggers,
-            appSettings: appSettings,
-            lastModified: Date(),
-            lastModifiedBy: "cli"
-        )
-
-        let encoder = JSONEncoder()
-        encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
-        encoder.dateEncodingStrategy = .iso8601
-
-        let jsonData = try encoder.encode(sharedData)
-        try jsonData.write(to: sharedFileURL, options: .atomic)
-        print("DataStore: Saved shared file (\(jsonData.count) bytes)")
+    func mutate(expectedRevision: String? = nil, _ mutation: (inout [Project], inout [Template], inout [Trigger], inout AppSettings) throws -> Void) throws -> URL {
+        _ = try SnapshotFile(url: sharedFileURL).update { bytes in
+            guard let bytes else { throw SnapshotError.missing }
+            if let expectedRevision, Self.revision(bytes) != expectedRevision { throw SnapshotError.conflict }
+            var current = try decode(bytes)
+            let original = current
+            try mutation(&current.projects, &current.templates, &current.triggers, &current.appSettings)
+            guard current != original else { return bytes }
+            current.lastModified = Date()
+            current.lastModifiedBy = "cli"
+            let encoder = JSONEncoder()
+            encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+            encoder.dateEncodingStrategy = .iso8601
+            return try encoder.encode(current)
+        }
         return sharedFileURL
     }
 
-    /// Load the current data, apply a mutation, and save to the shared file.
-    /// Returns the URL of the written file.
-    @discardableResult
-    func mutate(_ mutation: (inout [Project], inout [Template], inout [Trigger], inout AppSettings) -> Void) throws -> URL {
-        let resolved = try loadProjectsResolved()
-        var projects = resolved.projects
-        var templates = resolved.templates
-        var triggers = resolved.triggers
-        var appSettings = resolved.appSettings
-
-        mutation(&projects, &templates, &triggers, &appSettings)
-        return try save(projects: projects, templates: templates, triggers: triggers, appSettings: appSettings)
-    }
 }
 
 enum DataStoreError: Error, CustomStringConvertible {

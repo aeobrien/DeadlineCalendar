@@ -1,33 +1,47 @@
-// DeadlineCLI.swift
-// Main entry point and command definitions for the deadline-cli tool.
-
 import ArgumentParser
 import Foundation
 
 @main
 struct DeadlineCLI: ParsableCommand {
-    static let configuration = CommandConfiguration(
-        commandName: "deadline-cli",
-        abstract: "Read and write DeadlineCalendar data via iCloud backups.",
-        subcommands: [
-            ListCommand.self,
-            StatusCommand.self,
-            CompleteCommand.self,
-            TriggerCommand.self,
-            AdjustCommand.self,
-            AddCommand.self,
-            ExportCommand.self,
-        ]
-    )
+    static let configuration = CommandConfiguration(commandName: "deadline-cli", abstract: "Read and manage DeadlineCalendar's shared data.", subcommands: [ListCommand.self, StatusCommand.self, ExportCommand.self, AddCommand.self, UpdateCommand.self, CompleteCommand.self, AdjustCommand.self, TriggerCommand.self, DeleteCommand.self])
 }
 
-// MARK: - Shared Helpers
-
-let dateFormatter: DateFormatter = {
-    let f = DateFormatter()
-    f.dateFormat = "yyyy-MM-dd"
-    return f
-}()
+struct StoreOptions: ParsableArguments {
+    @Option(name: .long, help: "Explicit JSON file; never falls back to iCloud or backups.") var dataFile: String?
+    func store() throws -> DataStore { try DataStore(dataFileURL: dataFile.map { URL(fileURLWithPath: $0) }) }
+}
+func emit<T: Encodable>(_ value: T) throws {
+    let encoder = JSONEncoder(); encoder.dateEncodingStrategy = .iso8601; encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+    print(String(decoding: try encoder.encode(value), as: UTF8.self))
+}
+func parseDate(_ text: String) throws -> Date {
+    let f = DateFormatter(); f.locale = Locale(identifier: "en_US_POSIX"); f.calendar = Calendar(identifier: .gregorian)
+    f.dateFormat = "yyyy-MM-dd"; f.isLenient = false
+    guard let date = f.date(from: text), f.string(from: date) == text else { throw ValidationError("Use a valid calendar date in YYYY-MM-DD format.") }
+    return date
+}
+func identifier(_ value: String) throws -> UUID {
+    guard let id = UUID(uuidString: value) else { throw ValidationError("Expected an exact UUID.") }; return id
+}
+func projectIndex(_ projects: [Project], id: String? = nil, title: String? = nil) throws -> Int {
+    let matches: [Int]
+    if let id { let uuid = try identifier(id); matches = projects.indices.filter { projects[$0].id == uuid } }
+    else if let title, !title.isEmpty { matches = projects.indices.filter { projects[$0].title.localizedCaseInsensitiveContains(title) } }
+    else { throw ValidationError("Select a project by ID or unique title.") }
+    guard matches.count == 1 else { throw ValidationError(matches.isEmpty ? "Project not found." : "Project selection is ambiguous or has duplicate IDs.") }
+    return matches[0]
+}
+func deadlineIndex(_ project: Project, id: String? = nil, title: String? = nil) throws -> Int {
+    let matches: [Int]
+    if let id { let uuid = try identifier(id); matches = project.subDeadlines.indices.filter { project.subDeadlines[$0].id == uuid } }
+    else if let title, !title.isEmpty { matches = project.subDeadlines.indices.filter { project.subDeadlines[$0].title.localizedCaseInsensitiveContains(title) } }
+    else { throw ValidationError("Select a deadline by ID or unique title.") }
+    guard matches.count == 1 else { throw ValidationError(matches.isEmpty ? "Deadline not found in this project." : "Deadline selection is ambiguous or has duplicate IDs.") }
+    return matches[0]
+}
+func nonempty(_ value: String) throws -> String {
+    guard !value.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { throw ValidationError("Title must not be empty.") }; return value
+}
 
 let displayDateFormatter: DateFormatter = {
     let f = DateFormatter()
@@ -50,31 +64,19 @@ func urgencyIndicator(_ days: Int) -> String {
     return "in \(days)d"
 }
 
-/// Find projects matching a partial, case-insensitive title.
-func findProjects(_ projects: [Project], matching query: String) -> [Project] {
-    let lower = query.lowercased()
-    return projects.filter { $0.title.lowercased().contains(lower) }
-}
-
-/// Find sub-deadlines matching a partial, case-insensitive title within a project.
-func findSubDeadlines(in project: Project, matching query: String) -> [(index: Int, subDeadline: SubDeadline)] {
-    let lower = query.lowercased()
-    return project.subDeadlines.enumerated().compactMap { (i, sd) in
-        sd.title.lowercased().contains(lower) ? (i, sd) : nil
-    }
-}
-
-// MARK: - List Command
-
 struct ListCommand: ParsableCommand {
     static let configuration = CommandConfiguration(
         commandName: "list",
         abstract: "List all projects sorted by deadline."
     )
 
+    @OptionGroup var storage: StoreOptions
+    @Flag(name: .long) var json = false
+
     func run() throws {
-        let store = try DataStore()
+        let store = try storage.store()
         let (projects, _, _, _) = try store.loadProjectsResolved()
+        if json { try emit(projects); return }
 
         if projects.isEmpty {
             print("No projects found.")
@@ -92,7 +94,7 @@ struct ListCommand: ParsableCommand {
             let deadline = displayDateFormatter.string(from: project.finalDeadlineDate)
             let urgency = urgencyIndicator(days)
 
-            print("\(statusIcon) \(project.title)\(templateStr)")
+            print("\(statusIcon) \(project.title)\(templateStr) [\(project.id.uuidString)]")
             print("    Deadline: \(deadline) (\(urgency))")
 
             if !project.subDeadlines.isEmpty {
@@ -100,34 +102,39 @@ struct ListCommand: ParsableCommand {
                     let check = sd.isCompleted ? "x" : " "
                     let sdDays = daysUntil(sd.date)
                     let sdDate = displayDateFormatter.string(from: sd.date)
-                    print("    [\(check)] \(sd.title) - \(sdDate) (\(urgencyIndicator(sdDays)))")
+                    print("    [\(check)] \(sd.title) - \(sdDate) (\(urgencyIndicator(sdDays))) [\(sd.id.uuidString)]")
                 }
             }
             print()
         }
 
-        // Show data source
-        if FileManager.default.fileExists(atPath: sharedFilePath) {
-            print("(Source: DeadlineCalendar.json — shared iCloud file)")
-        } else if let url = try? store.latestBackupURL() {
-            print("(Source: \(url.lastPathComponent) — legacy backup)")
-        }
     }
 }
-
-// MARK: - Status Command
-
 struct StatusCommand: ParsableCommand {
     static let configuration = CommandConfiguration(
         commandName: "status",
         abstract: "Show active/overdue items — the quick-glance command."
     )
 
+    @OptionGroup var storage: StoreOptions
+    @Flag(name: .long) var json = false
+
     func run() throws {
-        let store = try DataStore()
+        let store = try storage.store()
         let (projects, _, _, _) = try store.loadProjectsResolved()
         let today = Calendar.current.startOfDay(for: Date())
         let fourteenDaysFromNow = Calendar.current.date(byAdding: .day, value: 14, to: today)!
+
+        if json {
+            let visible = projects.map { project -> Project in
+                var project = project
+                project.subDeadlines = project.subDeadlines.filter {
+                    !$0.isCompleted && Calendar.current.startOfDay(for: $0.date) <= fourteenDaysFromNow
+                }
+                return project
+            }.filter { !$0.subDeadlines.isEmpty }
+            try emit(visible); return
+        }
 
         var hasOutput = false
 
@@ -187,310 +194,119 @@ struct StatusCommand: ParsableCommand {
             print("All clear — no overdue or upcoming items in the next 14 days.")
         }
 
-        // Show source
-        if let url = try? store.latestBackupURL() {
-            print("(Source: \(url.lastPathComponent))")
-        }
     }
 }
-
-// MARK: - Complete Command
-
-struct CompleteCommand: ParsableCommand {
-    static let configuration = CommandConfiguration(
-        commandName: "complete",
-        abstract: "Mark a sub-deadline as completed."
-    )
-
-    @Argument(help: "Partial project title to match (case-insensitive).")
-    var projectTitle: String
-
-    @Argument(help: "Partial sub-deadline title to match (case-insensitive).")
-    var subDeadlineTitle: String
-
-    func run() throws {
-        let store = try DataStore()
-        let (projects, _, _, _) = try store.loadProjectsResolved()
-
-        let matchedProjects = findProjects(projects, matching: projectTitle)
-
-        guard !matchedProjects.isEmpty else {
-            print("No projects matching '\(projectTitle)'.")
-            return
-        }
-        guard matchedProjects.count == 1 else {
-            print("Ambiguous project match for '\(projectTitle)':")
-            for p in matchedProjects { print("  - \(p.title)") }
-            return
-        }
-
-        let project = matchedProjects[0]
-        let matches = findSubDeadlines(in: project, matching: subDeadlineTitle)
-
-        guard !matches.isEmpty else {
-            print("No sub-deadlines matching '\(subDeadlineTitle)' in '\(project.title)'.")
-            return
-        }
-        guard matches.count == 1 else {
-            print("Ambiguous sub-deadline match for '\(subDeadlineTitle)':")
-            for m in matches {
-                let check = m.subDeadline.isCompleted ? "x" : " "
-                print("  [\(check)] \(m.subDeadline.title)")
-            }
-            return
-        }
-
-        let sdIndex = matches[0].index
-        if project.subDeadlines[sdIndex].isCompleted {
-            print("'\(matches[0].subDeadline.title)' is already completed.")
-            return
-        }
-
-        let url = try store.mutate { projects, templates, triggers, appSettings in
-            let pi = projects.firstIndex { $0.id == project.id }!
-            projects[pi].subDeadlines[sdIndex].isCompleted = true
-        }
-        print("Marked '\(matches[0].subDeadline.title)' as completed in '\(project.title)'.")
-        print("Saved to: \(url.lastPathComponent)")
-    }
+struct ExportCommand: ParsableCommand {
+    static let configuration = CommandConfiguration(commandName: "export", abstract: "Read the complete saved data as JSON; diagnostics use stderr.")
+    @OptionGroup var storage: StoreOptions
+    func run() throws { try emit(storage.store().readDocument()) }
 }
-
-// MARK: - Trigger Command
-
-struct TriggerCommand: ParsableCommand {
-    static let configuration = CommandConfiguration(
-        commandName: "trigger",
-        abstract: "Activate a trigger on a project."
-    )
-
-    @Argument(help: "Partial project title to match (case-insensitive).")
-    var projectTitle: String
-
-    @Argument(help: "Partial trigger name to match (case-insensitive).")
-    var triggerName: String
-
-    func run() throws {
-        let store = try DataStore()
-        let (projects, _, _, _) = try store.loadProjectsResolved()
-
-        let matchedProjects = findProjects(projects, matching: projectTitle)
-
-        guard !matchedProjects.isEmpty else {
-            print("No projects matching '\(projectTitle)'.")
-            return
-        }
-        guard matchedProjects.count == 1 else {
-            print("Ambiguous project match for '\(projectTitle)':")
-            for p in matchedProjects { print("  - \(p.title)") }
-            return
-        }
-
-        let project = matchedProjects[0]
-        let lower = triggerName.lowercased()
-        let matchedTriggers = project.triggers.filter {
-            $0.name.lowercased().contains(lower)
-        }
-
-        guard !matchedTriggers.isEmpty else {
-            print("No triggers matching '\(triggerName)' in '\(project.title)'.")
-            if !project.triggers.isEmpty {
-                print("Available triggers:")
-                for t in project.triggers {
-                    let status = t.isActive ? "active" : "inactive"
-                    print("  - \(t.name) (\(status))")
-                }
-            }
-            return
-        }
-        guard matchedTriggers.count == 1 else {
-            print("Ambiguous trigger match for '\(triggerName)':")
-            for t in matchedTriggers {
-                let status = t.isActive ? "active" : "inactive"
-                print("  - \(t.name) (\(status))")
-            }
-            return
-        }
-
-        let trigger = matchedTriggers[0]
-        if trigger.isActive {
-            print("Trigger '\(trigger.name)' is already active.")
-            return
-        }
-
-        let url = try store.mutate { projects, templates, triggers, appSettings in
-            // Update in the top-level triggers array
-            if let ti = triggers.firstIndex(where: { $0.id == trigger.id }) {
-                triggers[ti].isActive = true
-                triggers[ti].activationDate = Date()
-            }
-            // Also update if embedded in the project
-            if let pi = projects.firstIndex(where: { $0.id == project.id }) {
-                if let ti = projects[pi].triggers.firstIndex(where: { $0.id == trigger.id }) {
-                    projects[pi].triggers[ti].isActive = true
-                    projects[pi].triggers[ti].activationDate = Date()
-                }
-            }
-        }
-        print("Activated trigger '\(trigger.name)' on '\(project.title)'.")
-        print("Saved to: \(url.lastPathComponent)")
-    }
-}
-
-// MARK: - Adjust Command
-
-struct AdjustCommand: ParsableCommand {
-    static let configuration = CommandConfiguration(
-        commandName: "adjust",
-        abstract: "Change the date of a sub-deadline."
-    )
-
-    @Argument(help: "Partial project title to match (case-insensitive).")
-    var projectTitle: String
-
-    @Argument(help: "Partial sub-deadline title to match (case-insensitive).")
-    var subDeadlineTitle: String
-
-    @Option(name: .long, help: "New date in YYYY-MM-DD format.")
-    var date: String
-
-    func run() throws {
-        let store = try DataStore()
-        let (projects, _, _, _) = try store.loadProjectsResolved()
-
-        guard let newDate = dateFormatter.date(from: date) else {
-            print("Invalid date format '\(date)'. Expected YYYY-MM-DD.")
-            return
-        }
-
-        let matchedProjects = findProjects(projects, matching: projectTitle)
-
-        guard !matchedProjects.isEmpty else {
-            print("No projects matching '\(projectTitle)'.")
-            return
-        }
-        guard matchedProjects.count == 1 else {
-            print("Ambiguous project match for '\(projectTitle)':")
-            for p in matchedProjects { print("  - \(p.title)") }
-            return
-        }
-
-        let project = matchedProjects[0]
-        let matches = findSubDeadlines(in: project, matching: subDeadlineTitle)
-
-        guard !matches.isEmpty else {
-            print("No sub-deadlines matching '\(subDeadlineTitle)' in '\(project.title)'.")
-            return
-        }
-        guard matches.count == 1 else {
-            print("Ambiguous sub-deadline match for '\(subDeadlineTitle)':")
-            for m in matches { print("  - \(m.subDeadline.title)") }
-            return
-        }
-
-        let sdIndex = matches[0].index
-        let oldDate = displayDateFormatter.string(from: project.subDeadlines[sdIndex].date)
-
-        let url = try store.mutate { projects, templates, triggers, appSettings in
-            let pi = projects.firstIndex { $0.id == project.id }!
-            projects[pi].subDeadlines[sdIndex].date = newDate
-        }
-        let newDateStr = displayDateFormatter.string(from: newDate)
-        print("Adjusted '\(matches[0].subDeadline.title)' in '\(project.title)': \(oldDate) -> \(newDateStr)")
-        print("Saved to: \(url.lastPathComponent)")
-    }
-}
-
-// MARK: - Add Command
 
 struct AddCommand: ParsableCommand {
-    static let configuration = CommandConfiguration(
-        commandName: "add",
-        abstract: "Add a standalone deadline or a sub-deadline to a project."
-    )
-
-    @Argument(help: "Title of the deadline.")
-    var title: String
-
-    @Option(name: .long, help: "Due date in YYYY-MM-DD format.")
-    var date: String
-
-    @Option(name: .long, help: "Project to add to (partial match). Defaults to Standalone Deadlines.")
-    var project: String?
-
+    static let configuration = CommandConfiguration(commandName: "add", abstract: "Add a deadline after user approval. Supply --id for safe repeat readback.")
+    @OptionGroup var storage: StoreOptions
+    @Argument var title: String
+    @Option(name: .long) var date: String
+    @Option(name: .long) var project: String?
+    @Option(name: .long) var projectId: String?
+    @Option(name: .long) var id: String?
+    @Flag(name: .long, help: "Acknowledge the user approved this addition; this flag does not obtain consent.") var approved = false
     func run() throws {
-        let store = try DataStore()
-
-        guard let dueDate = dateFormatter.date(from: date) else {
-            print("Invalid date format '\(date)'. Expected YYYY-MM-DD.")
-            return
-        }
-
-        let url = try store.mutate { projects, templates, triggers, appSettings in
-            let targetIndex: Int
-
-            if let projectQuery = project {
-                let matches = findProjects(projects, matching: projectQuery)
-                guard !matches.isEmpty else {
-                    print("No projects matching '\(projectQuery)'.")
-                    return
-                }
-                guard matches.count == 1 else {
-                    print("Ambiguous project match for '\(projectQuery)':")
-                    for p in matches { print("  - \(p.title)") }
-                    return
-                }
-                targetIndex = projects.firstIndex { $0.id == matches[0].id }!
-            } else {
-                // Default to Standalone Deadlines
-                let standaloneID = UUID(uuidString: "00000000-0000-0000-0000-000000000001")!
-                guard let idx = projects.firstIndex(where: { $0.id == standaloneID }) else {
-                    print("Standalone Deadlines project not found.")
-                    return
-                }
-                targetIndex = idx
+        guard approved else { throw ValidationError("Obtain user approval before adding; then pass --approved.") }
+        let title = try nonempty(title); let due = try parseDate(date); let uuid = try id.map(identifier) ?? UUID()
+        let record = SubDeadline(id: uuid, title: title, date: due)
+        let store = try storage.store()
+        try store.mutate { projects,_,_,_ in
+            let standaloneID = UUID(uuidString: "00000000-0000-0000-0000-000000000001")!
+            if projectId == nil && project == nil && !projects.contains(where: { $0.id == standaloneID }) {
+                projects.append(Project(id: standaloneID, title: "Standalone Deadlines", finalDeadlineDate: due))
             }
-
-            let newSubDeadline = SubDeadline(
-                title: title,
-                date: dueDate
-            )
-            projects[targetIndex].subDeadlines.append(newSubDeadline)
+            let pi = try projectIndex(projects, id: projectId ?? (project == nil ? "00000000-0000-0000-0000-000000000001" : nil), title: project)
+            let all = projects.flatMap { p in p.subDeadlines.filter { $0.id == uuid }.map { (p.id, $0) } }
+            if !all.isEmpty {
+                guard all.count == 1, all[0].0 == projects[pi].id, all[0].1 == record else { throw ValidationError("This deadline ID already exists with different data. Read it before retrying.") }
+                return
+            }
+            projects[pi].subDeadlines.append(record)
         }
-        let projectName = project ?? "Standalone Deadlines"
-        let dateStr = displayDateFormatter.string(from: dueDate)
-        print("Added '\(title)' due \(dateStr) to \(projectName).")
-        print("Saved to: \(url.lastPathComponent)")
+        try emit(record)
     }
 }
-
-// MARK: - Export Command
-
-struct ExportCommand: ParsableCommand {
-    static let configuration = CommandConfiguration(
-        commandName: "export",
-        abstract: "Dump the full data as formatted JSON to stdout."
-    )
-
+struct UpdateCommand: ParsableCommand {
+    static let configuration = CommandConfiguration(commandName: "update", abstract: "Edit title, date or completion of one exact deadline.")
+    @OptionGroup var storage: StoreOptions
+    @Option(name: .long) var projectId: String
+    @Option(name: .long) var deadlineId: String
+    @Option(name: .long) var title: String?
+    @Option(name: .long) var date: String?
+    @Option(name: .long) var completed: Bool?
     func run() throws {
-        let store = try DataStore()
-        let (projects, templates, triggers, appSettings) = try store.loadProjectsResolved()
-
-        let exportData = SharedData(
-            projects: projects,
-            templates: templates,
-            triggers: triggers,
-            appSettings: appSettings,
-            lastModified: Date(),
-            lastModifiedBy: "cli-export"
-        )
-
-        let encoder = JSONEncoder()
-        encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
-        encoder.dateEncodingStrategy = .iso8601
-
-        let data = try encoder.encode(exportData)
-        if let json = String(data: data, encoding: .utf8) {
-            print(json)
+        guard title != nil || date != nil || completed != nil else { throw ValidationError("Specify at least one change.") }
+        let name = try title.map(nonempty); let due = try date.map(parseDate); var saved: SubDeadline?
+        try storage.store().mutate { projects,_,_,_ in
+            let pi = try projectIndex(projects,id:projectId); let di = try deadlineIndex(projects[pi],id:deadlineId)
+            if let name { projects[pi].subDeadlines[di].title = name }; if let due { projects[pi].subDeadlines[di].date = due }; if let completed { projects[pi].subDeadlines[di].isCompleted = completed }
+            saved=projects[pi].subDeadlines[di]
         }
+        try emit(saved)
+    }
+}
+struct CompleteCommand: ParsableCommand {
+    static let configuration = CommandConfiguration(commandName: "complete", abstract: "Complete a uniquely named deadline; resolution happens within the transaction.")
+    @OptionGroup var storage: StoreOptions
+    @Argument var projectTitle: String
+    @Argument var subDeadlineTitle: String
+    func run() throws {
+        try storage.store().mutate { projects,_,_,_ in let pi=try projectIndex(projects,title:projectTitle);let di=try deadlineIndex(projects[pi],title:subDeadlineTitle);projects[pi].subDeadlines[di].isCompleted=true }
+        print("Deadline completed.")
+    }
+}
+struct AdjustCommand: ParsableCommand {
+    static let configuration = CommandConfiguration(commandName: "adjust", abstract: "Change the date of a uniquely named deadline.")
+    @OptionGroup var storage: StoreOptions
+    @Argument var projectTitle: String
+    @Argument var subDeadlineTitle: String
+    @Option(name:.long) var date: String
+    func run() throws {
+        let due=try parseDate(date)
+        try storage.store().mutate { projects,_,_,_ in let pi=try projectIndex(projects,title:projectTitle);let di=try deadlineIndex(projects[pi],title:subDeadlineTitle);projects[pi].subDeadlines[di].date=due }
+        print("Deadline date updated.")
+    }
+}
+struct TriggerCommand: ParsableCommand {
+    static let configuration = CommandConfiguration(commandName:"trigger",abstract:"Activate one uniquely named trigger within its project.")
+    @OptionGroup var storage:StoreOptions
+    @Argument var projectTitle:String
+    @Argument var triggerName:String
+    func run() throws {
+        try storage.store().mutate { projects,_,triggers,_ in
+            let pi=try projectIndex(projects,title:projectTitle);let pid=projects[pi].id
+            let entries=projects[pi].triggers + triggers.filter{$0.projectID==pid}
+            let matches=entries.filter{$0.name.localizedCaseInsensitiveContains(triggerName)}
+            let ids=Set(matches.map(\.id));guard ids.count==1,let id=ids.first else {throw ValidationError("Trigger not found or ambiguous.")}
+            let time=Date()
+            for i in projects[pi].triggers.indices where projects[pi].triggers[i].id==id { if !projects[pi].triggers[i].isActive {projects[pi].triggers[i].isActive=true;projects[pi].triggers[i].activationDate=time} }
+            for i in triggers.indices where triggers[i].id==id && triggers[i].projectID==pid { if !triggers[i].isActive {triggers[i].isActive=true;triggers[i].activationDate=time} }
+        }
+        print("Trigger activated.")
+    }
+}
+struct DeleteCommand: ParsableCommand {
+    static let configuration=CommandConfiguration(commandName:"delete",abstract:"Preview and remove exactly one deadline and its nested subtasks after approval.")
+    @OptionGroup var storage:StoreOptions
+    @Option(name:.long) var projectId:String
+    @Option(name:.long) var deadlineId:String
+    @Flag(name:.long) var preview=false
+    @Flag(name:.long,help:"Acknowledge actual user approval of the previewed removal.") var approved=false
+    @Option(name:.long,help:"Exact revision returned by --preview.") var revision:String?
+    struct Preview:Encodable { let revision:String;let projectId:UUID;let deadline:SubDeadline;let removesRecurrenceSiblings:Bool }
+    func run() throws {
+        let store=try storage.store();let (doc,currentRevision)=try store.currentWithRevision();let pi=try projectIndex(doc.projects,id:projectId);let did=try identifier(deadlineId)
+        if !preview && approved && revision != nil && !doc.projects[pi].subDeadlines.contains(where:{$0.id==did}) {print("Deadline is already absent; nothing changed.");return}
+        let di=try deadlineIndex(doc.projects[pi],id:deadlineId)
+        if preview {try emit(Preview(revision:currentRevision,projectId:doc.projects[pi].id,deadline:doc.projects[pi].subDeadlines[di],removesRecurrenceSiblings:false));return}
+        guard approved,let revision else {throw ValidationError("Preview removal, obtain user approval, then pass --approved and --revision.")}
+        try store.mutate(expectedRevision:revision) { projects,_,_,_ in let pi=try projectIndex(projects,id:projectId);let di=try deadlineIndex(projects[pi],id:deadlineId);projects[pi].subDeadlines.remove(at:di) }
+        print("Deadline removed.")
     }
 }

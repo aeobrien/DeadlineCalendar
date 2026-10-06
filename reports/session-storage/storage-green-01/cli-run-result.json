@@ -1,0 +1,22 @@
+{
+  "ok": false,
+  "exit_code": 1,
+  "timed_out": false,
+  "duration_s": 1.532,
+  "stdout_tail": "",
+  "stderr_tail": "[0/1] Planning build\n[1/1] Compiling plugin GenerateManual\n[2/2] Compiling plugin GenerateDoccReference\nBuilding for debugging...\n[2/9] Write sources\n[3/9] Write swift-version--58304C5D6DBC2206.txt\n[5/11] Emitting module deadline_cli\n[6/11] Compiling deadline_cli SnapshotFile.swift\n/Users/aidan/Dev/DeadlineCalendar-session-storage/deadline-cli/Sources/SnapshotFile.swift:44:39: error: cannot find 'UF_DATALESS' in scope\n 42 |         guard (info.st_mode & S_IFMT) == S_IFREG else { throw SnapshotError.unsafePath }\n 43 |         // UF_DATALESS is metadata: refuse before any content read/download.\n 44 |         guard (info.st_flags & UInt32(UF_DATALESS)) == 0 else { throw SnapshotError.unavailable }\n    |                                       `- error: cannot find 'UF_DATALESS' in scope\n 45 |         let values = try path.resourceValues(forKeys: [.isUbiquitousItemKey, .ubiquitousItemDownloadingStatusKey])\n 46 |         if values.isUbiquitousItem == true && values.ubiquitousItemDownloadingStatus == .notDownloaded {\n\n/Users/aidan/Dev/DeadlineCalendar-session-storage/deadline-cli/Sources/SnapshotFile.swift:66:39: error: cannot find 'UF_DATALESS' in scope\n 64 |         guard fstat(fd, &info) == 0 else { throw POSIXError(.EIO) }\n 65 |         guard (info.st_mode & S_IFMT) == S_IFREG else { throw SnapshotError.unsafePath }\n 66 |         guard (info.st_flags & UInt32(UF_DATALESS)) == 0 else { throw SnapshotError.unavailable }\n    |                                       `- error: cannot find 'UF_DATALESS' in scope\n 67 |         return try handle.readToEnd() ?? Data()\n 68 |     }\nerror: fatalError\n",
+  "truncated": false,
+  "assertions": [
+    {
+      "kind": "exit==",
+      "expected": 0,
+      "actual": 1,
+      "ok": false
+    }
+  ],
+  "files": {
+    "created": [],
+    "modified": [],
+    "deleted": []
+  }
+}

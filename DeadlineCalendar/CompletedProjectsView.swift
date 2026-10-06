@@ -99,7 +99,7 @@ struct CompletedProjectsView: View {
         }
         
         // Now update the project in the ViewModel
-        viewModel.updateProject(updatedProject)
+        guard viewModel.updateProject(updatedProject) else { return }
         print("CompletedProjectsView: Project '\(updatedProject.title)' marked as active (all sub-deadlines reset). Updated via ViewModel.")
         
         // Optionally, dismiss the view after marking as active, or let the user stay

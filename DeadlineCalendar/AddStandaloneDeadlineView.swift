@@ -134,6 +134,7 @@ struct AddStandaloneDeadlineView: View {
             }
         }
         .navigationViewStyle(.stack) // Consistent navigation style.
+            .safeAreaInset(edge: .bottom) { DeadlineSaveNotice(viewModel: viewModel) }
     }
     
     /// Creates a new SubDeadline object and adds it via the view model.
@@ -175,6 +176,7 @@ struct AddStandaloneDeadlineView: View {
         )
         
         // Add the deadline using the view model.
+        let saved = viewModel.performChanges {
         viewModel.addStandaloneDeadline(newDeadline)
         
         // If repetition is enabled, also create future occurrences
@@ -182,11 +184,9 @@ struct AddStandaloneDeadlineView: View {
             viewModel.generateRepetitionOccurrences(for: newDeadline)
         }
         
-        print("AddStandaloneDeadlineView: Saved standalone deadline '\(newDeadline.title)' for date \(newDeadline.date)")
-        if repetitionPattern != nil {
-            print("  - With repetition pattern: \(repetitionPattern!.type.rawValue)")
         }
-        
+        guard saved else { return }
+
         // Dismiss the sheet after saving.
         dismiss()
     }

@@ -24,7 +24,11 @@ struct Deadline_CalendarApp: App {
     
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            if NSClassFromString("XCTestCase") == nil && ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] == nil {
+                ContentView()
+            } else {
+                Color.clear
+            }
         }
     }
 }
