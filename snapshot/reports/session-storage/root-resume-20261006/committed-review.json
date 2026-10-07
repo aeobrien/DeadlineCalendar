@@ -1,0 +1,8 @@
+[UNDERSTUDY] diff-judge done
+  run_id:        diffjudge-73e38145
+  range:         48576699607c85fcfd6cfa7443af8162647b6206..73e3814
+  backend:       codex
+  files judged:  143
+  overall_lane:  Block
+  summary:       The change introduces unauthorized outbound OpenRouter access while the manifest permits no network destinations. It also declares an empty artifact despite the non-empty output requirement.
+  cost:          $0.0834
