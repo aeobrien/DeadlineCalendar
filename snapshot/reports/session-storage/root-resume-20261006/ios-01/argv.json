@@ -1,0 +1,17 @@
+[
+  "xcodebuild",
+  "-quiet",
+  "-project",
+  "DeadlineCalendar.xcodeproj",
+  "-scheme",
+  "Deadline Calendar",
+  "-destination",
+  "platform=iOS Simulator,id=DDCF7C0E-E17C-47E3-9FB9-43DC69B7970F",
+  "-derivedDataPath",
+  "/private/tmp/deadline-storage-derived",
+  "-resultBundlePath",
+  "/Users/aidan/Dev/DeadlineCalendar-session-storage/reports/session-storage/root-resume-20261006/ios-01/tests.xcresult",
+  "-only-testing:Deadline CalendarTests",
+  "test",
+  "CODE_SIGNING_ALLOWED=NO"
+]
