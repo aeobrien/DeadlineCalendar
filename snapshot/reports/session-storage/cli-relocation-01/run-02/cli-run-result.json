@@ -1,0 +1,22 @@
+{
+  "ok": true,
+  "exit_code": 0,
+  "timed_out": false,
+  "duration_s": 3.265,
+  "stdout_tail": "",
+  "stderr_tail": "test_full_exact_id_crud_and_retries (retained_fixture.CLI) ... ok\ntest_add_without_approval_preserves_file (retained_fixture.CLI) ... ok\ntest_stale_delete_preview_refuses (retained_fixture.CLI) ... ok\ntest_wrong_target_and_bad_date_preserve_file (retained_fixture.CLI) ... ok\ntest_missing_corrupt_and_unapproved_delete_do_not_write (retained_fixture.CLI) ... ok\ntest_delete_keeps_recurrence_siblings_and_repeated_delete_is_noop (retained_fixture.CLI) ... ok\n\n----------------------------------------------------------------------\nRan 6 tests in 2.913s\n\nOK\n",
+  "truncated": false,
+  "assertions": [
+    {
+      "kind": "exit==",
+      "expected": 0,
+      "actual": 0,
+      "ok": true
+    }
+  ],
+  "files": {
+    "created": [],
+    "modified": [],
+    "deleted": []
+  }
+}

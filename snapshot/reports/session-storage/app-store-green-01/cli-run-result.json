@@ -1,0 +1,22 @@
+{
+  "ok": false,
+  "exit_code": 1,
+  "timed_out": false,
+  "duration_s": 2.923,
+  "stdout_tail": "",
+  "stderr_tail": "/Users/aidan/Dev/DeadlineCalendar-session-storage/DeadlineCalendar/SharedDataStore.swift:144:37: error: missing argument label 'url:' in call\n142 |         hasLoaded = false\n143 |         guard let url = sharedFileURL else { throw SnapshotError.unavailable }\n144 |         let bytes = try SnapshotFile(url, availabilityCheck: availabilityCheck).read()\n    |                                     `- error: missing argument label 'url:' in call\n145 |         let decoder = JSONDecoder()\n146 |         decoder.dateDecodingStrategy = .iso8601\n\n/Users/aidan/Dev/DeadlineCalendar-session-storage/DeadlineCalendar/SharedDataStore.swift:163:25: error: missing argument label 'url:' in call\n161 |         encoder.dateEncodingStrategy = .iso8601\n162 |         let bytes = try encoder.encode(document)\n163 |         try SnapshotFile(url, availabilityCheck: availabilityCheck).update(expected: .bytes(baseline)) { _ in bytes }\n    |                         `- error: missing argument label 'url:' in call\n164 |         baseline = bytes\n165 |         lastKnownModificationDate = (try? FileManager.default.attributesOfItem(atPath: url.path))?[.modificationDate] as? Date\nTraceback (most recent call last):\n  File \"/Users/aidan/Dev/DeadlineCalendar-session-storage/reports/session-storage/run_app_store_probe.py\", line 5, in <module>\n    subprocess.run(['swiftc',str(root/'deadline-cli/Sources/Models.swift'),str(root/'deadline-cli/Sources/SnapshotFile.swift'),str(root/'DeadlineCalendar/SharedDataStore.swift'),str(root/'reports/session-storage/app_store_probe.swift'),'-o',str(binary)],check=True)\n  File \"/Users/aidan/.pyenv/versions/3.10.13/lib/python3.10/subprocess.py\", line 526, in run\n    raise CalledProcessError(retcode, process.args,\nsubprocess.CalledProcessError: Command '['swiftc', '/Users/aidan/Dev/DeadlineCalendar-session-storage/deadline-cli/Sources/Models.swift', '/Users/aidan/Dev/DeadlineCalendar-session-storage/deadline-cli/Sources/SnapshotFile.swift', '/Users/aidan/Dev/DeadlineCalendar-session-storage/DeadlineCalendar/SharedDataStore.swift', '/Users/aidan/Dev/DeadlineCalendar-session-storage/reports/session-storage/app_store_probe.swift', '-o', '/var/folders/4q/7s70w8ys4f5gwsf4grw_njlh0000gn/T/tmpfk_c6wj7/app-store-probe']' returned non-zero exit status 1.\n",
+  "truncated": false,
+  "assertions": [
+    {
+      "kind": "exit==",
+      "expected": 0,
+      "actual": 1,
+      "ok": false
+    }
+  ],
+  "files": {
+    "created": [],
+    "modified": [],
+    "deleted": []
+  }
+}
