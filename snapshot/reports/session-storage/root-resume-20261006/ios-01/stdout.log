@@ -1,0 +1,162 @@
+Writing result bundle at path:
+	/Users/aidan/Dev/DeadlineCalendar-session-storage/reports/session-storage/root-resume-20261006/ios-01/tests.xcresult
+
+/Users/aidan/Dev/DeadlineCalendar-session-storage/DeadlineCalendarWidget/DeadlineWidgetEntryView.swift:76:9: warning: switch must be exhaustive
+        switch family {
+        ^
+/Users/aidan/Dev/DeadlineCalendar-session-storage/DeadlineCalendarWidget/DeadlineWidgetEntryView.swift:76:9: note: add missing case: '.systemExtraLarge'
+        switch family {
+        ^
+/Users/aidan/Dev/DeadlineCalendar-session-storage/DeadlineCalendarWidget/DeadlineWidgetEntryView.swift:76:9: note: add missing case: '.accessoryCircular'
+        switch family {
+        ^
+/Users/aidan/Dev/DeadlineCalendar-session-storage/DeadlineCalendarWidget/DeadlineWidgetEntryView.swift:76:9: note: add missing case: '.accessoryRectangular'
+        switch family {
+        ^
+/Users/aidan/Dev/DeadlineCalendar-session-storage/DeadlineCalendarWidget/DeadlineWidgetEntryView.swift:76:9: note: add missing case: '.accessoryInline'
+        switch family {
+        ^
+/Users/aidan/Dev/DeadlineCalendar-session-storage/DeadlineCalendarWidget/DeadlineWidgetEntryView.swift:76:9: note: add missing cases
+        switch family {
+        ^
+/Users/aidan/Dev/DeadlineCalendar-session-storage/DeadlineCalendarWidget/DeadlineProvider.swift:78:13: warning: initialization of immutable value 'entry' was never used; consider replacing with assignment to '_' or removing it
+        let entry = SubDeadlineEntry(date: Date(), 
+        ~~~~^~~~~
+        _
+/Users/aidan/Dev/DeadlineCalendar-session-storage/DeadlineCalendarWidget/DeadlineProvider.swift:176:17: warning: initialization of immutable value 'today' was never used; consider replacing with assignment to '_' or removing it
+            let today = Date()
+            ~~~~^~~~~
+            _
+/Users/aidan/Dev/DeadlineCalendar-session-storage/DeadlineCalendar/TemplateManagerViewRedesigned.swift:320:9: warning: result of call to 'withAnimation' is unused
+        withAnimation {
+        ^             ~
+/Users/aidan/Dev/DeadlineCalendar-session-storage/DeadlineCalendar/ContentView.swift:304:17: warning: initialization of immutable value 'deletedTitle' was never used; consider replacing with assignment to '_' or removing it
+            let deletedTitle = projects[index].title
+            ~~~~^~~~~~~~~~~~
+            _
+/Users/aidan/Dev/DeadlineCalendar-session-storage/DeadlineCalendar/ContentView.swift:652:13: warning: initialization of immutable value 'deletedTitle' was never used; consider replacing with assignment to '_' or removing it
+        let deletedTitle = projects[projectIndex].subDeadlines[subDeadlineIndex].title
+        ~~~~^~~~~~~~~~~~
+        _
+/Users/aidan/Dev/DeadlineCalendar-session-storage/DeadlineCalendar/ContentView.swift:791:18: warning: initialization of immutable value 'deletedName' was never used; consider replacing with assignment to '_' or removing it
+             let deletedName = templates[index].name
+             ~~~~^~~~~~~~~~~
+             _
+/Users/aidan/Dev/DeadlineCalendar-session-storage/DeadlineCalendar/ContentView.swift:1152:21: warning: initialization of immutable value 'triggerName' was never used; consider replacing with assignment to '_' or removing it
+                let triggerName = triggers[index].name
+                ~~~~^~~~~~~~~~~
+                _
+/Users/aidan/Dev/DeadlineCalendar-session-storage/DeadlineCalendar/ContentView.swift:1173:21: warning: initialization of immutable value 'triggerName' was never used; consider replacing with assignment to '_' or removing it
+                let triggerName = triggers[index].name
+                ~~~~^~~~~~~~~~~
+                _
+/Users/aidan/Dev/DeadlineCalendar-session-storage/DeadlineCalendar/ContentView.swift:1191:17: warning: initialization of immutable value 'deletedName' was never used; consider replacing with assignment to '_' or removing it
+            let deletedName = triggers[index].name
+            ~~~~^~~~~~~~~~~
+            _
+/Users/aidan/Dev/DeadlineCalendar-session-storage/DeadlineCalendar/ContentView.swift:1337:13: warning: initialization of immutable value 'today' was never used; consider replacing with assignment to '_' or removing it
+        let today = Date()
+        ~~~~^~~~~
+        _
+/Users/aidan/Dev/DeadlineCalendar-session-storage/DeadlineCalendar/ContentView.swift:1563:10: warning: 'onChange(of:perform:)' was deprecated in iOS 17.0: Use `onChange` with a two or zero parameter action closure instead.
+        .onChange(of: scenePhase) { newPhase in
+         ^
+/Users/aidan/Dev/DeadlineCalendar-session-storage/DeadlineCalendar/ContentView.swift:1640:34: warning: 'init(destination:tag:selection:label:)' was deprecated in iOS 16.0: use NavigationLink(value:label:), or navigationDestination(isPresented:destination:), inside a NavigationStack or NavigationSplitView
+                                 NavigationLink(destination: ProjectDetailView(project: project, viewModel: viewModel),
+                                 ^
+/Users/aidan/Dev/DeadlineCalendar-session-storage/DeadlineCalendar/BackupRestoreView.swift:126:14: warning: 'onChange(of:perform:)' was deprecated in iOS 17.0: Use `onChange` with a two or zero parameter action closure instead.
+            .onChange(of: notificationFrequency)      { _ in viewModel.updateNotifications() }
+             ^
+/Users/aidan/Dev/DeadlineCalendar-session-storage/DeadlineCalendar/BackupRestoreView.swift:127:14: warning: 'onChange(of:perform:)' was deprecated in iOS 17.0: Use `onChange` with a two or zero parameter action closure instead.
+            .onChange(of: notificationDeadlineCount) { _ in viewModel.updateNotifications() }
+             ^
+/Users/aidan/Dev/DeadlineCalendar-session-storage/DeadlineCalendar/BackupRestoreView.swift:128:14: warning: 'onChange(of:perform:)' was deprecated in iOS 17.0: Use `onChange` with a two or zero parameter action closure instead.
+            .onChange(of: notificationTime) { new in
+             ^
+/Users/aidan/Dev/DeadlineCalendar-session-storage/DeadlineCalendar/ProjectEditorView.swift:486:122: warning: assuming you mean 'Optional<RepetitionType>.none'; did you mean 'RepetitionType.none' instead?
+        let oldHadRepetition = originalProject?.repetitionPattern != nil && originalProject?.repetitionPattern?.type != .none
+                                                                                                                         ^
+/Users/aidan/Dev/DeadlineCalendar-session-storage/DeadlineCalendar/ProjectEditorView.swift:486:121: note: explicitly specify 'Optional' to silence this warning
+        let oldHadRepetition = originalProject?.repetitionPattern != nil && originalProject?.repetitionPattern?.type != .none
+                                                                                                                        ^
+                                                                                                                        Optional
+/Users/aidan/Dev/DeadlineCalendar-session-storage/DeadlineCalendar/ProjectEditorView.swift:486:121: note: use 'RepetitionType.none' instead
+        let oldHadRepetition = originalProject?.repetitionPattern != nil && originalProject?.repetitionPattern?.type != .none
+                                                                                                                        ^
+                                                                                                                        RepetitionType
+/Users/aidan/Dev/DeadlineCalendar-session-storage/DeadlineCalendar/ProjectEditorView.swift:486:121: note: explicitly specify 'Optional' to silence this warning
+        let oldHadRepetition = originalProject?.repetitionPattern != nil && originalProject?.repetitionPattern?.type != .none
+                                                                                                                        ^
+                                                                                                                        Optional
+/Users/aidan/Dev/DeadlineCalendar-session-storage/DeadlineCalendar/ProjectEditorView.swift:486:121: note: use 'RepetitionType.none' instead
+        let oldHadRepetition = originalProject?.repetitionPattern != nil && originalProject?.repetitionPattern?.type != .none
+                                                                                                                        ^
+                                                                                                                        RepetitionType
+/Users/aidan/Dev/DeadlineCalendar-session-storage/DeadlineCalendar/ProjectEditorView.swift:487:120: warning: assuming you mean 'Optional<RepetitionType>.none'; did you mean 'RepetitionType.none' instead?
+        let newHasRepetition = projectToUpdate.repetitionPattern != nil && projectToUpdate.repetitionPattern?.type != .none
+                                                                                                                       ^
+/Users/aidan/Dev/DeadlineCalendar-session-storage/DeadlineCalendar/ProjectEditorView.swift:487:119: note: explicitly specify 'Optional' to silence this warning
+        let newHasRepetition = projectToUpdate.repetitionPattern != nil && projectToUpdate.repetitionPattern?.type != .none
+                                                                                                                      ^
+                                                                                                                      Optional
+/Users/aidan/Dev/DeadlineCalendar-session-storage/DeadlineCalendar/ProjectEditorView.swift:487:119: note: use 'RepetitionType.none' instead
+        let newHasRepetition = projectToUpdate.repetitionPattern != nil && projectToUpdate.repetitionPattern?.type != .none
+                                                                                                                      ^
+                                                                                                                      RepetitionType
+/Users/aidan/Dev/DeadlineCalendar-session-storage/DeadlineCalendar/ProjectEditorView.swift:487:119: note: explicitly specify 'Optional' to silence this warning
+        let newHasRepetition = projectToUpdate.repetitionPattern != nil && projectToUpdate.repetitionPattern?.type != .none
+                                                                                                                      ^
+                                                                                                                      Optional
+/Users/aidan/Dev/DeadlineCalendar-session-storage/DeadlineCalendar/ProjectEditorView.swift:487:119: note: use 'RepetitionType.none' instead
+        let newHasRepetition = projectToUpdate.repetitionPattern != nil && projectToUpdate.repetitionPattern?.type != .none
+                                                                                                                      ^
+                                                                                                                      RepetitionType
+/Users/aidan/Dev/DeadlineCalendar-session-storage/DeadlineCalendar/ProjectEditorView.swift:555:18: warning: 'onChange(of:perform:)' was deprecated in iOS 17.0: Use `onChange` with a two or zero parameter action closure instead.
+                .onChange(of: subDeadline.triggerID) { selectedID in
+                 ^
+/Users/aidan/Dev/DeadlineCalendar-session-storage/DeadlineCalendar/ProjectsListViewRedesigned.swift:227:9: warning: 'init(destination:tag:selection:label:)' was deprecated in iOS 16.0: use NavigationLink(value:label:), or navigationDestination(isPresented:destination:), inside a NavigationStack or NavigationSplitView
+        NavigationLink(
+        ^
+/Users/aidan/Dev/DeadlineCalendar-session-storage/DeadlineCalendar/ProjectsListViewRedesigned.swift:322:21: warning: 'init(destination:tag:selection:label:)' was deprecated in iOS 16.0: use NavigationLink(value:label:), or navigationDestination(isPresented:destination:), inside a NavigationStack or NavigationSplitView
+                    NavigationLink(
+                    ^
+/Users/aidan/Dev/DeadlineCalendar-session-storage/DeadlineCalendar/BackupRestoreViewRedesigned.swift:386:10: warning: 'onChange(of:perform:)' was deprecated in iOS 17.0: Use `onChange` with a two or zero parameter action closure instead.
+        .onChange(of: notificationFrequency) { _ in
+         ^
+/Users/aidan/Dev/DeadlineCalendar-session-storage/DeadlineCalendar/BackupRestoreViewRedesigned.swift:389:10: warning: 'onChange(of:perform:)' was deprecated in iOS 17.0: Use `onChange` with a two or zero parameter action closure instead.
+        .onChange(of: notificationDeadlineCount) { _ in
+         ^
+/Users/aidan/Dev/DeadlineCalendar-session-storage/DeadlineCalendar/BackupRestoreViewRedesigned.swift:392:10: warning: 'onChange(of:perform:)' was deprecated in iOS 17.0: Use `onChange` with a two or zero parameter action closure instead.
+        .onChange(of: notificationTime) { newTime in
+         ^
+/Users/aidan/Dev/DeadlineCalendar-session-storage/DeadlineCalendar/TemplateSubDeadlineEditorRow.swift:70:18: warning: 'onChange(of:perform:)' was deprecated in iOS 17.0: Use `onChange` with a two or zero parameter action closure instead.
+                .onChange(of: subDeadline.templateTriggerID) { selectedID in
+                 ^
+/Users/aidan/Dev/DeadlineCalendar-session-storage/DeadlineCalendar/AddProjectView.swift:66:26: warning: 'onChange(of:perform:)' was deprecated in iOS 17.0: Use `onChange` with a two or zero parameter action closure instead.
+                        .onChange(of: finalDeadlineDate) { _ in
+                         ^
+/Users/aidan/Dev/DeadlineCalendar-session-storage/DeadlineCalendar/AddProjectView.swift:96:30: warning: 'onChange(of:perform:)' was deprecated in iOS 17.0: Use `onChange` with a two or zero parameter action closure instead.
+                            .onChange(of: selectedTemplateID) { newTemplateID in
+                             ^
+/Users/aidan/Dev/DeadlineCalendar-session-storage/DeadlineCalendar/AddProjectView.swift:262:14: warning: 'onChange(of:perform:)' was deprecated in iOS 17.0: Use `onChange` with a two or zero parameter action closure instead.
+            .onChange(of: useTemplate) { useTpl in
+             ^
+/Users/aidan/Dev/DeadlineCalendar-session-storage/DeadlineCalendar/AddProjectView.swift:358:13: warning: initialization of immutable value 'currentTemplateID' was never used; consider replacing with assignment to '_' or removing it
+        let currentTemplateID = useTemplate ? selectedTemplateID : nil
+        ~~~~^~~~~~~~~~~~~~~~~
+        _
+/Users/aidan/Dev/DeadlineCalendar-session-storage/DeadlineCalendar/AddProjectView.swift:359:13: warning: initialization of immutable value 'currentTemplateName' was never used; consider replacing with assignment to '_' or removing it
+        let currentTemplateName = useTemplate ? selectedTemplate?.name : nil
+        ~~~~^~~~~~~~~~~~~~~~~~~
+        _
+/Users/aidan/Dev/DeadlineCalendar-session-storage/DeadlineCalendar/AllDeadlinesView.swift:103:17: warning: 'init(destination:isActive:label:)' was deprecated in iOS 16.0: use NavigationLink(value:label:), or navigationDestination(isPresented:destination:), inside a NavigationStack or NavigationSplitView
+                NavigationLink(destination: projectDetailDestination(), isActive: $navigateToProject) {
+                ^
+/Users/aidan/Dev/DeadlineCalendar-session-storage/DeadlineCalendar/AllDeadlinesViewRedesigned.swift:241:17: warning: 'init(destination:isActive:label:)' was deprecated in iOS 16.0: use NavigationLink(value:label:), or navigationDestination(isPresented:destination:), inside a NavigationStack or NavigationSplitView
+                NavigationLink(destination: projectDetailDestination(), isActive: $navigateToProject) {
+                ^
+/Users/aidan/Dev/DeadlineCalendar-session-storage/DeadlineCalendar/TemplateEditorView.swift:132:30: warning: 'onChange(of:perform:)' was deprecated in iOS 17.0: Use `onChange` with a two or zero parameter action closure instead.
+                            .onChange(of: subDeadline.offset) { _ in
+                             ^
+warning: Skipping duplicate build file in Compile Sources build phase: /Users/aidan/Dev/DeadlineCalendar-session-storage/DeadlineCalendar/BackupRestoreViewRedesigned.swift (in target 'Deadline Calendar' from project 'DeadlineCalendar')
+Testing started

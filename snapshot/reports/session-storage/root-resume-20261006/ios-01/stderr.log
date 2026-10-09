@@ -1,0 +1,6 @@
+--- xcodebuild: WARNING: Using the first of multiple matching destinations:
+{ platform:iOS Simulator, arch:arm64, id:DDCF7C0E-E17C-47E3-9FB9-43DC69B7970F, OS:18.4, name:DeadlineStorageFixtures }
+{ platform:iOS Simulator, arch:x86_64, id:DDCF7C0E-E17C-47E3-9FB9-43DC69B7970F, OS:18.4, name:DeadlineStorageFixtures }
+2026-10-06 19:09:07.232 xcodebuild[19444:576797] [MT] IDETestOperationsObserverDebug: 22.979 elapsed -- Testing started completed.
+2026-10-06 19:09:07.232 xcodebuild[19444:576797] [MT] IDETestOperationsObserverDebug: 0.000 sec, +0.000 sec -- start
+2026-10-06 19:09:07.232 xcodebuild[19444:576797] [MT] IDETestOperationsObserverDebug: 22.979 sec, +22.979 sec -- end

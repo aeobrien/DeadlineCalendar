@@ -1,0 +1,51 @@
+{
+  "run_id": "diffjudge-dfa9a8d6",
+  "adjudicated_at": "2026-10-06T18:19:43+00:00",
+  "overall_lane": "Informational",
+  "summary": "all checks pass",
+  "missing_sensing": [],
+  "rubric_results": [
+    {
+      "check_id": 1,
+      "name": "scope_guard",
+      "verdict": "pass",
+      "evidence": "All changed paths listed by the persisted diff are within the manifest's declared project-wide scope `.`."
+    },
+    {
+      "check_id": 2,
+      "name": "determinism_check",
+      "verdict": "n/a",
+      "evidence": "The manifest declares no repro_script."
+    },
+    {
+      "check_id": 3,
+      "name": "network_egress",
+      "verdict": "pass",
+      "evidence": "Static review of the change identifies OpenRouter-related outbound code; its destination is covered by the literal `openrouter.ai` host in network_allowlist. No introduced off-allowlist destination was identified."
+    },
+    {
+      "check_id": 4,
+      "name": "artifact_integrity",
+      "verdict": "pass",
+      "evidence": "The declared outputs are present and non-empty in the post-change tree; declared Swift sources passed parse checking, and the JSON, Python, Markdown, and project metadata outputs are parse-level valid."
+    },
+    {
+      "check_id": 5,
+      "name": "console_diagnostics",
+      "verdict": "pass",
+      "evidence": "No tool-call log exists; under the rubric, absence of the log is a pass."
+    },
+    {
+      "check_id": 6,
+      "name": "diff_minimisation",
+      "verdict": "pass",
+      "evidence": "The declared scope is `.`, so every changed path is within declared_scope; no out-of-scope formatting-only edit exists."
+    },
+    {
+      "check_id": 7,
+      "name": "attempted_compile",
+      "verdict": "pass",
+      "evidence": "swiftc -parse exit 0 on 25 file(s) in 7 target group(s)"
+    }
+  ]
+}
