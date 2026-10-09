@@ -1,0 +1,22 @@
+{
+  "ok": true,
+  "exit_code": 0,
+  "timed_out": false,
+  "duration_s": 12.73,
+  "stdout_tail": "PASS default missing directory initialized only on save\nPASS explicit missing parent remains untouched\nPASS unavailable load neither initializes nor authorizes save\nSharedDataStore: iCloud container not available\nPASS absent provider refuses safely\n",
+  "stderr_tail": "",
+  "truncated": false,
+  "assertions": [
+    {
+      "kind": "exit==",
+      "expected": 0,
+      "actual": 0,
+      "ok": true
+    }
+  ],
+  "files": {
+    "created": [],
+    "modified": [],
+    "deleted": []
+  }
+}
