@@ -1,0 +1,28 @@
+{
+  "ok": true,
+  "exit_code": 0,
+  "timed_out": false,
+  "duration_s": 50.841,
+  "stdout_tail": "{\n  \"result\": \"Passed\",\n  \"totalTestCount\": 14,\n  \"passedTests\": 14,\n  \"failedTests\": 0,\n  \"skippedTests\": 0,\n  \"testFailures\": []\n}\n",
+  "stderr_tail": "",
+  "truncated": false,
+  "assertions": [
+    {
+      "kind": "exit==",
+      "expected": 0,
+      "actual": 0,
+      "ok": true
+    },
+    {
+      "kind": "stdout.contains",
+      "expected": "\"passedTests\": 14",
+      "actual": null,
+      "ok": true
+    }
+  ],
+  "files": {
+    "created": [],
+    "modified": [],
+    "deleted": []
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "recorded_at": "2026-10-06T12:32:53.389017+00:00",
+  "candidate_manifest": "reports/session-storage/candidate-hashes-03.json",
+  "app_source_version": "1.0 (1)",
+  "bundle_id": "AOTondra.Deadline-Calendar",
+  "platform": "iOS iPhone/iPad",
+  "real_store_metadata_only": {
+    "path": "/Users/aidan/Library/Mobile Documents/iCloud~AOTondra~Deadline-Calendar/Documents/DeadlineCalendar.json",
+    "size": 170953,
+    "flags": 1073741920,
+    "dataless": true,
+    "content_read": false
+  },
+  "checked_absent": [
+    "/Applications/Deadline Calendar.app",
+    "/Users/aidan/Applications/Deadline Calendar.app",
+    "/Users/aidan/.local/bin/deadline-cli",
+    "/opt/homebrew/bin/deadline-cli",
+    "/usr/local/bin/deadline-cli"
+  ],
+  "device_installed_version": "not inspected; source version is not physical-device evidence",
+  "candidate_binary_sha256": "2f8288f58fb2f183d5c7256b858883bd6007a6f3b6535edb53c27b25c12193ea",
+  "executed_build_or_app": false
+}
