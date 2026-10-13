@@ -1,0 +1,5 @@
+# Independent follow-up: unchanged dated records still conflict
+
+The initial empty-document no-op correction does not cover ordinary nonempty input with fractional-second dates. `SharedDataStore.saveSnapshot` compares decoded old content (ISO8601 drops subseconds) with the original supplied arrays, while `DeadlineViewModel.saveAll` initially retained its unnormalized editable arrays after success. An identical input can therefore rewrite only metadata and invalidate another window.
+
+Reproduction: `astra-probes/DateNoop.swift` compiles the maintained SharedDataStore+SnapshotFile+Models, writes a project with finalDeadlineDate=1900000000.125, loads a second store, waits1.1seconds, repeats exactly the first write, and attempts the second store's unchanged save. `astra-date-noop-01/cli-run-result.json`: FAIL,59.075seconds, no timeout/truncation; byte-preservation false and second writer conflict. The owner accepted this finding and will compare persisted-form content and install successful serialized readback. No iCloud/screens/real records used. This supplements rather than replaces astra-01.

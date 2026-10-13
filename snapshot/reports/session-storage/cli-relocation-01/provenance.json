@@ -1,0 +1,20 @@
+{
+  "binary_sha256": "2f8288f58fb2f183d5c7256b858883bd6007a6f3b6535edb53c27b25c12193ea",
+  "source_subset": {
+    "deadline-cli/Package.swift": "730ae8b32416abc6686e9ec48f818bef175bd294a591dea734827ed1529342a9",
+    "deadline-cli/Sources/DataStore.swift": "bcd9c90d2e6b56f2eab42f0f28f70c01545885db2f184042d74159bc64a6bcf1",
+    "deadline-cli/Sources/DeadlineCLI.swift": "9e4c40fb01e3b6062e828f0494b2a8126a995a48fb092c2544a86e12a47e1368",
+    "deadline-cli/Sources/SnapshotFile.swift": "5c2ec4c25f83dc73130515cbbcbe196984a823e2c0a8fe276aad9d238f9be146",
+    "deadline-cli/Tests/DataStoreTests.swift": "b672a5e5b8c51977569b900619d8fe7882a5642f5c4bdb8e5c1d0b6a9149e878",
+    "deadline-cli/Tests/SnapshotFileTests.swift": "5585dab1354c371c2080cdbf7d219045a95886745334ea42b709d8be848109f6"
+  },
+  "same_subset_as_candidate01": true,
+  "binary_matches_prior_metadata": true,
+  "source_files": {
+    "deadline-cli/Sources/SnapshotFile.swift": "5c2ec4c25f83dc73130515cbbcbe196984a823e2c0a8fe276aad9d238f9be146",
+    "deadline-cli/Sources/DataStore.swift": "bcd9c90d2e6b56f2eab42f0f28f70c01545885db2f184042d74159bc64a6bcf1",
+    "deadline-cli/Sources/Models.swift": "65362e3d01d5e6df5fadea0f4bf4ff85f6822647205cf9597946835324685249",
+    "deadline-cli/Sources/DeadlineCLI.swift": "9e4c40fb01e3b6062e828f0494b2a8126a995a48fb092c2544a86e12a47e1368"
+  },
+  "limitation": "Earlier successful compilation receipt has no binary digest. This run proves the recorded existing artifact and current unchanged CLI source subset separately; it does not cryptographically attest that this binary was compiled from that subset. No recompile, release install, final app acceptance or default-store access is claimed."
+}
