@@ -1,0 +1,12 @@
+{
+  "result": "no_advance",
+  "session_key": "01a0fcb2-7788-7d21-9627-c24c34f60149-deadline-storage",
+  "manifest_id": "build-BUILD-SESSION-STORAGE-4d4889c6",
+  "previous_frontier": 1,
+  "frontier": 1,
+  "full_reread_required": true,
+  "judged_pending": [],
+  "audit_pending": false,
+  "action": "Read the full plan at /Users/aidan/Dev/DeadlineCalendar-session-storage/docs/BUILD-SESSION-STORAGE.md before continuing.",
+  "error": null
+}
