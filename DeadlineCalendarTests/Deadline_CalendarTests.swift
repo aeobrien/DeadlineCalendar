@@ -199,4 +199,17 @@ import XCTest
         XCTAssertFalse(FileManager.default.fileExists(atPath: url.path))
         XCTAssertEqual(defaults.data(forKey: "templates_key"), bytes)
     }
+
+    func testCompletingRollingAdminPromotesExistingEditedNextMonth() throws {
+        let viewModel = model(); XCTAssertTrue(viewModel.reloadCurrentData())
+        let pattern = RepetitionPattern(type: .fixedInterval, intervalValue: 1, intervalUnit: .months, maxOccurrences: 2)
+        let current = Project(title: "Admin", finalDeadlineDate: Date(), subDeadlines: [SubDeadline(title: "Payments", date: Date())], repetitionPattern: pattern)
+        var next = Project(title: "Admin", finalDeadlineDate: Calendar.current.date(byAdding: .month, value: 1, to: Date())!, subDeadlines: [SubDeadline(title: "Payments", date: Date(), subtasks: [Subtask(title: "kept")])], repetitionPattern: pattern, repetitionSourceID: current.id, repetitionOccurrenceNumber: 2)
+        XCTAssertTrue(viewModel.addProject(current)); XCTAssertTrue(viewModel.addProject(next))
+        XCTAssertTrue(viewModel.toggleSubDeadlineCompletion(current.subDeadlines[0], in: current))
+        XCTAssertFalse(viewModel.projects.contains(where: { $0.id == current.id }))
+        XCTAssertTrue(viewModel.projects.contains(where: { $0.id == next.id && $0.subDeadlines[0].subtasks.map(\.title) == ["kept"] }))
+        XCTAssertTrue(viewModel.toggleSubDeadlineCompletion(current.subDeadlines[0], in: current))
+        XCTAssertTrue(viewModel.projects.contains(where: { $0.id == next.id && !$0.subDeadlines[0].isCompleted }))
+    }
 }

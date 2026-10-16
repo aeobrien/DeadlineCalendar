@@ -634,17 +634,14 @@ class DeadlineViewModel: ObservableObject {
               pattern.intervalValue == 1,
               pattern.maxOccurrences == 2 else { return }
 
-        projects.removeAll { $0.repetitionSourceID == current.id }
-        var promoted = current
-        promoted.finalDeadlineDate = Calendar.current.date(byAdding: .month, value: 1, to: current.finalDeadlineDate) ?? current.finalDeadlineDate
-        promoted.subDeadlines = current.subDeadlines.map { old in
-            var next = old
-            next.date = Calendar.current.date(byAdding: .month, value: 1, to: old.date) ?? old.date
-            next.isCompleted = false
-            next.subtasks = old.subtasks.map { Subtask(title: $0.title) }
-            return next
-        }
-        guard let promotedIndex = projects.firstIndex(where: { $0.id == current.id }) else { return }
+        // Promote the already-visible next occurrence instead of rebuilding it from the completed
+        // month: it may contain edits or completion state the user has already entered.
+        guard let nextIndex = projects.firstIndex(where: { $0.repetitionSourceID == current.id }) else { return }
+        var promoted = projects[nextIndex]
+        promoted.repetitionSourceID = nil
+        promoted.repetitionOccurrenceNumber = 1
+        projects.removeAll { $0.id == current.id || ($0.repetitionSourceID == current.id && $0.id != promoted.id) }
+        guard let promotedIndex = projects.firstIndex(where: { $0.id == promoted.id }) else { return }
         projects[promotedIndex] = promoted
         let following = Project(title: promoted.title,
                                 finalDeadlineDate: Calendar.current.date(byAdding: .month, value: 1, to: promoted.finalDeadlineDate) ?? promoted.finalDeadlineDate,
