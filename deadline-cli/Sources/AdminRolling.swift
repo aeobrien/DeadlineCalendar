@@ -38,10 +38,12 @@ enum AdminRollingConversion {
         let month = calendar.dateComponents([.year, .month], from: date)
         let start = calendar.date(from: month)!
         let lastDay = calendar.date(byAdding: DateComponents(month: 1, day: -1), to: start)!
-        let delta = calendar.dateComponents([.day], from: template.finalDeadlineDate, to: lastDay).day ?? 0
         let subDeadlines = template.subDeadlines.map { deadline in
-            SubDeadline(title: deadline.title,
-                        date: calendar.date(byAdding: .day, value: delta, to: deadline.date) ?? deadline.date,
+            var components = calendar.dateComponents([.hour, .minute, .second, .nanosecond], from: deadline.date)
+            components.year = month.year; components.month = month.month
+            components.day = min(calendar.component(.day, from: deadline.date), calendar.range(of: .day, in: .month, for: start)!.count)
+            return SubDeadline(title: deadline.title,
+                        date: calendar.date(from: components) ?? deadline.date,
                         isCompleted: false,
                         subtasks: deadline.subtasks.map { Subtask(title: $0.title) },
                         templateSubDeadlineID: deadline.templateSubDeadlineID)

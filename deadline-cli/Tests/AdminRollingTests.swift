@@ -27,6 +27,7 @@ final class AdminRollingTests: XCTestCase {
         XCTAssertEqual(preview.createdProjects[0].repetitionPattern?.maxOccurrences, 2)
         XCTAssertEqual(calendar.component(.month, from: preview.createdProjects[0].finalDeadlineDate), 10)
         XCTAssertEqual(calendar.component(.month, from: preview.createdProjects[1].finalDeadlineDate), 11)
+        XCTAssertEqual(preview.createdProjects[1].subDeadlines.map { calendar.component(.day, from: $0.date) }, [23, 27, 28])
     }
 
     func testApplyPreservesNonAdminProjectsAndRemovesAllAdminCopies() throws {
