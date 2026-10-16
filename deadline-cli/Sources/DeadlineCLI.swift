@@ -319,23 +319,26 @@ struct AdminRollCommand: ParsableCommand {
     @Flag(name: .long, help: "Show what will be removed and created; changes nothing.") var preview = false
     @Flag(name: .long, help: "Acknowledge the user approved this exact preview.") var approved = false
     @Option(name: .long, help: "Exact revision returned by --preview.") var revision: String?
+    @Option(name: .long, help: "Calendar date returned by --preview, in YYYY-MM-DD form.") var asOf: String?
 
-    struct Output: Codable { let revision: String; let removedProjectIDs: [UUID]; let createdProjects: [Project] }
+    struct Output: Codable { let revision: String; let asOf: String; let removedProjectIDs: [UUID]; let createdProjects: [Project] }
 
     func run() throws {
         let store = try storage.store()
         let (document, currentRevision) = try store.currentWithRevision()
-        let plan = try AdminRollingConversion.preview(document: document)
+        let now = try asOf.map(parseDate) ?? Date()
+        let displayedAsOf = ISO8601DateFormatter().string(from: now).prefix(10)
+        let plan = try AdminRollingConversion.preview(document: document, now: now)
         if preview {
-            try emit(Output(revision: currentRevision, removedProjectIDs: plan.removedProjectIDs, createdProjects: plan.createdProjects))
+            try emit(Output(revision: currentRevision, asOf: String(displayedAsOf), removedProjectIDs: plan.removedProjectIDs, createdProjects: plan.createdProjects))
             return
         }
-        guard approved, let revision else { throw ValidationError("Run admin-roll --preview, obtain user approval, then pass --approved and --revision.") }
+        guard approved, let revision, asOf != nil else { throw ValidationError("Run admin-roll --preview, obtain user approval, then pass --approved, --revision and --as-of from that preview.") }
         try store.mutate(expectedRevision: revision) { projects, templates, triggers, settings in
             let source = SharedData(projects: projects, templates: templates, triggers: triggers, appSettings: settings, lastModified: Date(), lastModifiedBy: "cli")
-            let converted = try AdminRollingConversion.apply(document: source)
+            let converted = try AdminRollingConversion.apply(document: source, now: now)
             projects = converted.projects; triggers = converted.triggers
         }
-        try emit(Output(revision: revision, removedProjectIDs: plan.removedProjectIDs, createdProjects: plan.createdProjects))
+        try emit(Output(revision: revision, asOf: String(displayedAsOf), removedProjectIDs: plan.removedProjectIDs, createdProjects: plan.createdProjects))
     }
 }
