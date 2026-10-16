@@ -3,7 +3,7 @@ import Foundation
 
 @main
 struct DeadlineCLI: ParsableCommand {
-    static let configuration = CommandConfiguration(commandName: "deadline-cli", abstract: "Read and manage DeadlineCalendar's shared data.", subcommands: [ListCommand.self, StatusCommand.self, ExportCommand.self, AddCommand.self, UpdateCommand.self, CompleteCommand.self, AdjustCommand.self, TriggerCommand.self, DeleteCommand.self])
+    static let configuration = CommandConfiguration(commandName: "deadline-cli", abstract: "Read and manage DeadlineCalendar's shared data.", subcommands: [ListCommand.self, StatusCommand.self, ExportCommand.self, AddCommand.self, UpdateCommand.self, CompleteCommand.self, AdjustCommand.self, TriggerCommand.self, DeleteCommand.self, AdminRollCommand.self])
 }
 
 struct StoreOptions: ParsableArguments {
@@ -308,5 +308,34 @@ struct DeleteCommand: ParsableCommand {
         guard approved,let revision else {throw ValidationError("Preview removal, obtain user approval, then pass --approved and --revision.")}
         try store.mutate(expectedRevision:revision) { projects,_,_,_ in let pi=try projectIndex(projects,id:projectId);let di=try deadlineIndex(projects[pi],id:deadlineId);projects[pi].subDeadlines.remove(at:di) }
         print("Deadline removed.")
+    }
+}
+
+/// Replaces historical projects titled "Admin" with the current and next monthly occurrence.
+/// It is intentionally a two-step operation: a preview first, then a revision-locked approval.
+struct AdminRollCommand: ParsableCommand {
+    static let configuration = CommandConfiguration(commandName: "admin-roll", abstract: "Preview or safely convert monthly Admin project copies into a rolling project.")
+    @OptionGroup var storage: StoreOptions
+    @Flag(name: .long, help: "Show what will be removed and created; changes nothing.") var preview = false
+    @Flag(name: .long, help: "Acknowledge the user approved this exact preview.") var approved = false
+    @Option(name: .long, help: "Exact revision returned by --preview.") var revision: String?
+
+    struct Output: Codable { let revision: String; let removedProjectIDs: [UUID]; let createdProjects: [Project] }
+
+    func run() throws {
+        let store = try storage.store()
+        let (document, currentRevision) = try store.currentWithRevision()
+        let plan = try AdminRollingConversion.preview(document: document)
+        if preview {
+            try emit(Output(revision: currentRevision, removedProjectIDs: plan.removedProjectIDs, createdProjects: plan.createdProjects))
+            return
+        }
+        guard approved, let revision else { throw ValidationError("Run admin-roll --preview, obtain user approval, then pass --approved and --revision.") }
+        try store.mutate(expectedRevision: revision) { projects, templates, triggers, settings in
+            let source = SharedData(projects: projects, templates: templates, triggers: triggers, appSettings: settings, lastModified: Date(), lastModifiedBy: "cli")
+            let converted = try AdminRollingConversion.apply(document: source)
+            projects = converted.projects; triggers = converted.triggers
+        }
+        try emit(Output(revision: revision, removedProjectIDs: plan.removedProjectIDs, createdProjects: plan.createdProjects))
     }
 }
