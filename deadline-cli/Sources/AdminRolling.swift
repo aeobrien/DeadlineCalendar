@@ -41,6 +41,35 @@ enum AdminRollingConversion {
         return converted
     }
 
+    /// Advances the two visible occurrences after the source Admin is completed. The next
+    /// occurrence is promoted unchanged; the replacement is rebuilt against its calendar month
+    /// so a 30-day month can never turn a month-end deadline into the 30th forever.
+    @discardableResult
+    static func rollForwardCompletedAdmin(projects: inout [Project], completedProjectID: UUID, calendar: Calendar = .current) -> Bool {
+        guard let currentIndex = projects.firstIndex(where: { $0.id == completedProjectID }) else { return false }
+        let current = projects[currentIndex]
+        guard current.title.caseInsensitiveCompare("Admin") == .orderedSame,
+              current.repetitionSourceID == nil,
+              current.isFullyCompleted,
+              let pattern = current.repetitionPattern,
+              pattern.type == .fixedInterval,
+              pattern.intervalUnit == .months,
+              pattern.intervalValue == 1,
+              pattern.maxOccurrences == 2,
+              let nextIndex = projects.firstIndex(where: { $0.repetitionSourceID == current.id }) else { return false }
+
+        var promoted = projects[nextIndex]
+        promoted.repetitionSourceID = nil
+        promoted.repetitionOccurrenceNumber = 1
+        projects.removeAll { $0.id == current.id || ($0.repetitionSourceID == current.id && $0.id != promoted.id) }
+        guard let promotedIndex = projects.firstIndex(where: { $0.id == promoted.id }) else { return false }
+        projects[promotedIndex] = promoted
+        let followingMonth = calendar.date(byAdding: .month, value: 1, to: promoted.finalDeadlineDate)!
+        let following = occurrence(from: promoted, monthContaining: followingMonth, calendar: calendar, isSource: false, sourceID: promoted.id)
+        projects.append(following)
+        return true
+    }
+
     private static func occurrence(from template: Project, monthContaining date: Date, calendar: Calendar, isSource: Bool, sourceID: UUID? = nil) -> Project {
         let month = calendar.dateComponents([.year, .month], from: date)
         let start = calendar.date(from: month)!

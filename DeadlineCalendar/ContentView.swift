@@ -643,15 +643,28 @@ class DeadlineViewModel: ObservableObject {
         projects.removeAll { $0.id == current.id || ($0.repetitionSourceID == current.id && $0.id != promoted.id) }
         guard let promotedIndex = projects.firstIndex(where: { $0.id == promoted.id }) else { return }
         projects[promotedIndex] = promoted
-        let following = Project(title: promoted.title,
-                                finalDeadlineDate: Calendar.current.date(byAdding: .month, value: 1, to: promoted.finalDeadlineDate) ?? promoted.finalDeadlineDate,
-                                subDeadlines: promoted.subDeadlines.map { old in
-                                    SubDeadline(title: old.title, date: Calendar.current.date(byAdding: .month, value: 1, to: old.date) ?? old.date,
-                                                subtasks: old.subtasks.map { Subtask(title: $0.title) })
-                                },
-                                templateID: promoted.templateID, templateName: promoted.templateName,
-                                repetitionPattern: pattern, repetitionSourceID: promoted.id, repetitionOccurrenceNumber: 2)
+        let following = rollingAdminOccurrence(from: promoted, pattern: pattern)
         projects.append(following)
+    }
+
+    private func rollingAdminOccurrence(from template: Project, pattern: RepetitionPattern) -> Project {
+        let calendar = Calendar.current
+        let followingMonth = calendar.date(byAdding: .month, value: 1, to: template.finalDeadlineDate) ?? template.finalDeadlineDate
+        let month = calendar.dateComponents([.year, .month], from: followingMonth)
+        let monthStart = calendar.date(from: month)!
+        let lastDay = calendar.date(byAdding: DateComponents(month: 1, day: -1), to: monthStart)!
+        let subDeadlines = template.subDeadlines.map { old -> SubDeadline in
+            var parts = calendar.dateComponents([.hour, .minute, .second, .nanosecond], from: old.date)
+            parts.year = month.year; parts.month = month.month
+            parts.day = min(calendar.component(.day, from: old.date), calendar.range(of: .day, in: .month, for: monthStart)!.count)
+            return SubDeadline(title: old.title, date: calendar.date(from: parts) ?? old.date,
+                               subtasks: old.subtasks.map { Subtask(title: $0.title) })
+        }
+        return Project(title: template.title,
+                                finalDeadlineDate: lastDay,
+                                subDeadlines: subDeadlines,
+                                templateID: template.templateID, templateName: template.templateName,
+                                repetitionPattern: pattern, repetitionSourceID: template.id, repetitionOccurrenceNumber: 2)
     }
 
     // Toggles the completion status of a sub-deadline.

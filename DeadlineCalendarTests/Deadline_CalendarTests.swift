@@ -212,4 +212,24 @@ import XCTest
         XCTAssertTrue(viewModel.toggleSubDeadlineCompletion(current.subDeadlines[0], in: current))
         XCTAssertTrue(viewModel.projects.contains(where: { $0.id == next.id && !$0.subDeadlines[0].isCompleted }))
     }
+
+    func testRollingAdminKeepsLastDayOfMonthWhenNextMonthIsShorter() throws {
+        let viewModel = model(); XCTAssertTrue(viewModel.reloadCurrentData())
+        let calendar = Calendar.current
+        let pattern = RepetitionPattern(type: .fixedInterval, intervalValue: 1, intervalUnit: .months, maxOccurrences: 2)
+        let october = calendar.date(from: DateComponents(year: 2026, month: 10, day: 31))!
+        let november = calendar.date(from: DateComponents(year: 2026, month: 11, day: 30))!
+        let current = Project(title: "Admin", finalDeadlineDate: october,
+                              subDeadlines: [SubDeadline(title: "Timesheets", date: october)], repetitionPattern: pattern)
+        let next = Project(title: "Admin", finalDeadlineDate: november,
+                           subDeadlines: [SubDeadline(title: "Timesheets", date: calendar.date(from: DateComponents(year: 2026, month: 11, day: 28))!)],
+                           repetitionPattern: pattern, repetitionSourceID: current.id, repetitionOccurrenceNumber: 2)
+        XCTAssertTrue(viewModel.addProject(current)); XCTAssertTrue(viewModel.addProject(next))
+
+        XCTAssertTrue(viewModel.toggleSubDeadlineCompletion(current.subDeadlines[0], in: current))
+
+        let following = try XCTUnwrap(viewModel.projects.first(where: { $0.repetitionSourceID == next.id }))
+        XCTAssertEqual(calendar.dateComponents([.year, .month, .day], from: following.finalDeadlineDate), DateComponents(year: 2026, month: 12, day: 31))
+        XCTAssertEqual(calendar.component(.day, from: following.subDeadlines[0].date), 28)
+    }
 }

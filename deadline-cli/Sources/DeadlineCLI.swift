@@ -257,7 +257,15 @@ struct CompleteCommand: ParsableCommand {
     @Argument var projectTitle: String
     @Argument var subDeadlineTitle: String
     func run() throws {
-        try storage.store().mutate { projects,_,_,_ in let pi=try projectIndex(projects,title:projectTitle);let di=try deadlineIndex(projects[pi],title:subDeadlineTitle);projects[pi].subDeadlines[di].isCompleted=true }
+        try storage.store().mutate { projects,_,_,_ in
+            let sourceAdmin = projects.indices.filter {
+                projects[$0].title.caseInsensitiveCompare(projectTitle) == .orderedSame && projects[$0].repetitionSourceID == nil
+            }
+            let pi = sourceAdmin.count == 1 ? sourceAdmin[0] : try projectIndex(projects, title: projectTitle)
+            let di = try deadlineIndex(projects[pi], title: subDeadlineTitle)
+            projects[pi].subDeadlines[di].isCompleted = true
+            _ = AdminRollingConversion.rollForwardCompletedAdmin(projects: &projects, completedProjectID: projects[pi].id)
+        }
         print("Deadline completed.")
     }
 }

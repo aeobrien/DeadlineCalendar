@@ -60,4 +60,46 @@ final class AdminRollingTests: XCTestCase {
         let decoder = JSONDecoder(); decoder.dateDecodingStrategy = .iso8601
         XCTAssertEqual(try decoder.decode(AdminRollCommand.Output.self, from: encoder.encode(output)).createdProjects, output.createdProjects)
     }
+
+    func testCompletingCurrentAdminRollsForward() throws {
+        let pattern = RepetitionPattern(type: .fixedInterval, intervalValue: 1, intervalUnit: .months, maxOccurrences: 2)
+        var current = admin(10, completed: true)
+        current.repetitionPattern = pattern
+        let next = Project(title: "Admin", finalDeadlineDate: date(2026, 11, 30), subDeadlines: [
+            SubDeadline(title: "Payments", date: date(2026, 11, 23)),
+            SubDeadline(title: "Expenses", date: date(2026, 11, 27)),
+            SubDeadline(title: "Timesheets", date: date(2026, 11, 28))
+        ], repetitionPattern: pattern, repetitionSourceID: current.id, repetitionOccurrenceNumber: 2)
+        var projects = [current, next]
+
+        XCTAssertTrue(AdminRollingConversion.rollForwardCompletedAdmin(projects: &projects, completedProjectID: current.id, calendar: calendar))
+        XCTAssertFalse(projects.contains(where: { $0.id == current.id }))
+        let following = try XCTUnwrap(projects.first(where: { $0.repetitionSourceID == next.id }))
+        XCTAssertEqual(calendar.component(.day, from: following.finalDeadlineDate), 31)
+    }
+
+    func testCompleteCommandRollsTheVisibleCurrentAdminForward() throws {
+        let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let file = directory.appendingPathComponent("calendar.json")
+        let pattern = RepetitionPattern(type: .fixedInterval, intervalValue: 1, intervalUnit: .months, maxOccurrences: 2)
+        var current = admin(10, completed: true)
+        current.repetitionPattern = pattern
+        current.subDeadlines[2].isCompleted = false
+        let next = Project(title: "Admin", finalDeadlineDate: date(2026, 11, 30), subDeadlines: [
+            SubDeadline(title: "Payments", date: date(2026, 11, 23)),
+            SubDeadline(title: "Expenses", date: date(2026, 11, 27)),
+            SubDeadline(title: "Timesheets", date: date(2026, 11, 28))
+        ], repetitionPattern: pattern, repetitionSourceID: current.id, repetitionOccurrenceNumber: 2)
+        let encoder = JSONEncoder(); encoder.dateEncodingStrategy = .iso8601
+        try encoder.encode(SharedData(projects: [current, next], templates: [], triggers: [], appSettings: AppSettings(), lastModified: Date(), lastModifiedBy: "fixture")).write(to: file)
+
+        let command = try CompleteCommand.parse(["--data-file", file.path, "Admin", "Timesheets"])
+        try command.run()
+
+        let saved = try DataStore(dataFileURL: file).loadCurrent()
+        XCTAssertFalse(saved.projects.contains(where: { $0.id == current.id }))
+        XCTAssertNotNil(saved.projects.first(where: { $0.repetitionSourceID == next.id }))
+    }
 }
