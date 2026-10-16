@@ -327,7 +327,8 @@ struct AdminRollCommand: ParsableCommand {
         let store = try storage.store()
         let (document, currentRevision) = try store.currentWithRevision()
         let now = try asOf.map(parseDate) ?? Date()
-        let displayedAsOf = ISO8601DateFormatter().string(from: now).prefix(10)
+        let dayFormatter: DateFormatter = { let f = DateFormatter(); f.locale = Locale(identifier: "en_US_POSIX"); f.calendar = Calendar(identifier: .gregorian); f.timeZone = .current; f.dateFormat = "yyyy-MM-dd"; return f }()
+        let displayedAsOf = asOf ?? dayFormatter.string(from: now)
         let plan = try AdminRollingConversion.preview(document: document, now: now)
         if preview {
             try emit(Output(revision: currentRevision, asOf: String(displayedAsOf), removedProjectIDs: plan.removedProjectIDs, createdProjects: plan.createdProjects))
