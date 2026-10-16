@@ -336,7 +336,8 @@ struct AdminRollCommand: ParsableCommand {
             return
         }
         guard approved, let revision, asOf != nil, let previewFile else { throw ValidationError("Run admin-roll --preview to a file, obtain user approval, then pass --approved, --revision, --as-of and --preview-file.") }
-        let approvedPreview = try JSONDecoder().decode(Output.self, from: Data(contentsOf: URL(fileURLWithPath: previewFile)))
+        let previewDecoder = JSONDecoder(); previewDecoder.dateDecodingStrategy = .iso8601
+        let approvedPreview = try previewDecoder.decode(Output.self, from: Data(contentsOf: URL(fileURLWithPath: previewFile)))
         guard approvedPreview.revision == revision, approvedPreview.asOf == asOf else { throw ValidationError("The saved preview does not match --revision and --as-of.") }
         let approvedPlan = AdminRollingConversion.Preview(removedProjectIDs: approvedPreview.removedProjectIDs, createdProjects: approvedPreview.createdProjects)
         try store.mutate(expectedRevision: revision) { projects, templates, triggers, settings in

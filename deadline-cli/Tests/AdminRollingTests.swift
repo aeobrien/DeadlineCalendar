@@ -51,4 +51,13 @@ final class AdminRollingTests: XCTestCase {
         var changed = document; changed.projects.removeLast()
         XCTAssertThrowsError(try AdminRollingConversion.apply(document: changed, preview: preview))
     }
+
+    func testPreviewRoundTripsWithTheCLIISODateFormat() throws {
+        let document = SharedData(projects: [admin(9)], templates: [], triggers: [], appSettings: AppSettings(), lastModified: Date(), lastModifiedBy: "fixture")
+        let preview = try AdminRollingConversion.preview(document: document, now: date(2026, 10, 16))
+        let output = AdminRollCommand.Output(revision: "fixture", asOf: "2026-10-16", removedProjectIDs: preview.removedProjectIDs, createdProjects: preview.createdProjects)
+        let encoder = JSONEncoder(); encoder.dateEncodingStrategy = .iso8601
+        let decoder = JSONDecoder(); decoder.dateDecodingStrategy = .iso8601
+        XCTAssertEqual(try decoder.decode(AdminRollCommand.Output.self, from: encoder.encode(output)).createdProjects, output.createdProjects)
+    }
 }
