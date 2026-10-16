@@ -44,4 +44,11 @@ final class AdminRollingTests: XCTestCase {
         let converted = try AdminRollingConversion.apply(document: document, preview: preview)
         XCTAssertEqual(Set(converted.projects.map(\.id)), Set(preview.createdProjects.map(\.id)))
     }
+
+    func testApplyingPreviewRejectsAChangedSetOfProjects() throws {
+        let document = SharedData(projects: [admin(9), admin(10)], templates: [], triggers: [], appSettings: AppSettings(), lastModified: Date(), lastModifiedBy: "fixture")
+        let preview = try AdminRollingConversion.preview(document: document, now: date(2026, 10, 16))
+        var changed = document; changed.projects.removeLast()
+        XCTAssertThrowsError(try AdminRollingConversion.apply(document: changed, preview: preview))
+    }
 }
