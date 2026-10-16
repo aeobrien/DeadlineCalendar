@@ -26,8 +26,15 @@ enum AdminRollingConversion {
 
     static func apply(document: SharedData, now: Date = Date(), calendar: Calendar = .current) throws -> SharedData {
         let plan = try preview(document: document, now: now, calendar: calendar)
+        return try apply(document: document, preview: plan)
+    }
+
+    /// Applies the exact objects previously shown to the user. This deliberately never regenerates
+    /// UUIDs or dates during approval.
+    static func apply(document: SharedData, preview plan: Preview) throws -> SharedData {
         var converted = document
         let removed = Set(plan.removedProjectIDs)
+        guard removed.allSatisfy({ candidateID in converted.projects.contains(where: { $0.id == candidateID }) }) else { throw ConversionError.noAdminProjects }
         converted.projects.removeAll { removed.contains($0.id) }
         converted.triggers.removeAll { removed.contains($0.projectID) }
         converted.projects.append(contentsOf: plan.createdProjects)
