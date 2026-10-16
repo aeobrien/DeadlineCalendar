@@ -615,9 +615,46 @@ class DeadlineViewModel: ObservableObject {
         projects[projectIndex].subDeadlines[subDeadlineIndex] = subDeadline
         // Ensure subdeadlines within the project remain sorted after update
         projects[projectIndex].subDeadlines.sort { $0.date < $1.date }
+        advanceRollingAdminIfComplete(at: projectIndex)
         saveProjects() // Save changes.
 
         }
+    }
+
+    /// The converted Admin project deliberately keeps only itself and one next-month copy.
+    /// Completing the current month promotes it in place, then recreates that one preview copy.
+    private func advanceRollingAdminIfComplete(at index: Int) {
+        let current = projects[index]
+        guard current.title.caseInsensitiveCompare("Admin") == .orderedSame,
+              current.repetitionSourceID == nil,
+              current.isFullyCompleted,
+              let pattern = current.repetitionPattern,
+              pattern.type == .fixedInterval,
+              pattern.intervalUnit == .months,
+              pattern.intervalValue == 1,
+              pattern.maxOccurrences == 2 else { return }
+
+        projects.removeAll { $0.repetitionSourceID == current.id }
+        var promoted = current
+        promoted.finalDeadlineDate = Calendar.current.date(byAdding: .month, value: 1, to: current.finalDeadlineDate) ?? current.finalDeadlineDate
+        promoted.subDeadlines = current.subDeadlines.map { old in
+            var next = old
+            next.date = Calendar.current.date(byAdding: .month, value: 1, to: old.date) ?? old.date
+            next.isCompleted = false
+            next.subtasks = old.subtasks.map { Subtask(title: $0.title) }
+            return next
+        }
+        guard let promotedIndex = projects.firstIndex(where: { $0.id == current.id }) else { return }
+        projects[promotedIndex] = promoted
+        let following = Project(title: promoted.title,
+                                finalDeadlineDate: Calendar.current.date(byAdding: .month, value: 1, to: promoted.finalDeadlineDate) ?? promoted.finalDeadlineDate,
+                                subDeadlines: promoted.subDeadlines.map { old in
+                                    SubDeadline(title: old.title, date: Calendar.current.date(byAdding: .month, value: 1, to: old.date) ?? old.date,
+                                                subtasks: old.subtasks.map { Subtask(title: $0.title) })
+                                },
+                                templateID: promoted.templateID, templateName: promoted.templateName,
+                                repetitionPattern: pattern, repetitionSourceID: promoted.id, repetitionOccurrenceNumber: 2)
+        projects.append(following)
     }
 
     // Toggles the completion status of a sub-deadline.
