@@ -1,0 +1,534 @@
+{
+  "appSettings" : {
+    "colorSettings" : {
+      "greenThreshold" : 10,
+      "orangeThreshold" : 2,
+      "redThreshold" : 0
+    },
+    "notificationFormatSettings" : {
+      "dateFormat" : "MMM d",
+      "itemFormat" : "{title} {timeRemaining}",
+      "maxItems" : 3,
+      "showDate" : false,
+      "showProjectName" : false,
+      "titleFormat" : "Upcoming Deadlines"
+    }
+  },
+  "lastModified" : "2026-10-17T00:11:43Z",
+  "lastModifiedBy" : "app",
+  "projects" : [
+    {
+      "finalDeadlineDate" : "4001-01-01T00:00:00Z",
+      "id" : "00000000-0000-0000-0000-000000000001",
+      "subDeadlines" : [
+        {
+          "date" : "2026-10-15T23:00:00Z",
+          "id" : "7D731B39-7AB8-487E-AF91-06F7504D2C6F",
+          "isCompleted" : true,
+          "subtasks" : [
+
+          ],
+          "title" : "Foresight music in a new style"
+        },
+        {
+          "date" : "2026-10-18T23:00:00Z",
+          "id" : "D7451913-D79F-4CC8-93F9-3177F37BC1B0",
+          "isCompleted" : false,
+          "subtasks" : [
+
+          ],
+          "title" : "Spark Challenge video tweaks"
+        },
+        {
+          "date" : "2026-10-18T23:00:00Z",
+          "id" : "18BD2384-8527-4CA6-917B-091CDDA170FB",
+          "isCompleted" : false,
+          "subtasks" : [
+
+          ],
+          "title" : "Repo packaging standard and skill (my side)"
+        },
+        {
+          "date" : "2026-10-18T23:00:00Z",
+          "id" : "B2945941-C481-4AF3-A633-29571996FF08",
+          "isCompleted" : false,
+          "subtasks" : [
+
+          ],
+          "title" : "Mike-side skill that installs or adapts a repo"
+        },
+        {
+          "date" : "2026-10-18T23:00:00Z",
+          "id" : "5D619DD5-C6FF-4B1A-9567-CA2C2845BAC8",
+          "isCompleted" : false,
+          "subtasks" : [
+
+          ],
+          "title" : "Support-tickets repo checked every 30-60 min"
+        },
+        {
+          "date" : "2026-10-18T23:00:00Z",
+          "id" : "5EAA033C-4C87-40EF-BA45-EF186A2888FA",
+          "isCompleted" : false,
+          "subtasks" : [
+
+          ],
+          "title" : "Menu page on zyx1.xyz"
+        },
+        {
+          "date" : "2026-10-18T23:00:00Z",
+          "id" : "8F6D102C-EE6F-4655-81BE-6E8CCC77085B",
+          "isCompleted" : false,
+          "subtasks" : [
+
+          ],
+          "title" : "Mirror as the first packaged repo"
+        },
+        {
+          "date" : "2026-10-20T23:00:00Z",
+          "id" : "3D3DE3A3-6030-4347-838C-67B98B2B84B8",
+          "isCompleted" : false,
+          "subtasks" : [
+
+          ],
+          "title" : "Seaborn Lite"
+        },
+        {
+          "date" : "2026-10-22T23:00:00Z",
+          "id" : "7FC06EAC-EBFD-4D1C-810B-CE418552501C",
+          "isCompleted" : false,
+          "subtasks" : [
+
+          ],
+          "title" : "Walkthrough for Mike"
+        },
+        {
+          "date" : "2026-10-22T23:00:00Z",
+          "id" : "F526786B-3132-4F72-B0A2-33FDD20A58F4",
+          "isCompleted" : false,
+          "subtasks" : [
+
+          ],
+          "title" : "Virgil for Mike"
+        },
+        {
+          "date" : "2026-10-22T23:00:00Z",
+          "id" : "34599303-9704-4A2A-87C0-55D35609CC34",
+          "isCompleted" : false,
+          "subtasks" : [
+
+          ],
+          "title" : "Deck and slide helper"
+        },
+        {
+          "date" : "2026-11-01T00:00:00Z",
+          "id" : "95EE8FC0-A355-472D-BB8D-B757B28E1CE2",
+          "isCompleted" : false,
+          "subtasks" : [
+
+          ],
+          "title" : "Taliesin audience profiles"
+        },
+        {
+          "date" : "2026-11-01T00:00:00Z",
+          "id" : "0D3940F7-1975-4C30-A760-45790386202E",
+          "isCompleted" : false,
+          "subtasks" : [
+
+          ],
+          "title" : "Books and references as context (concept database)"
+        },
+        {
+          "date" : "2026-11-02T00:00:00Z",
+          "id" : "A425A01F-9CA7-4DFB-8B8A-96DA5A4F860C",
+          "isCompleted" : false,
+          "subtasks" : [
+
+          ],
+          "title" : "Henry user-story video pitch for Sasha's meeting"
+        }
+      ],
+      "title" : "Standalone Deadlines",
+      "triggers" : [
+
+      ]
+    }
+  ],
+  "templates" : [
+    {
+      "id" : "534C87F8-50AA-4169-B05E-82B038653544",
+      "name" : "iluli Video",
+      "subDeadlines" : [
+        {
+          "id" : "1EE16505-C83B-4286-B3AE-1CFCED0251F8",
+          "offset" : {
+            "before" : true,
+            "unit" : "days",
+            "value" : 116
+          },
+          "title" : "Book VO Session"
+        },
+        {
+          "id" : "841D9886-C023-47D2-9419-53080E0F809E",
+          "offset" : {
+            "before" : true,
+            "unit" : "days",
+            "value" : 115
+          },
+          "title" : "Confirm Topic with Mike"
+        },
+        {
+          "id" : "A087F855-4BC5-41E0-953B-2606A6B35E7E",
+          "offset" : {
+            "before" : true,
+            "unit" : "days",
+            "value" : 115
+          },
+          "title" : "Lock In Topic"
+        },
+        {
+          "id" : "FCC2CFED-1C75-48C6-84B4-827E18653A03",
+          "offset" : {
+            "before" : true,
+            "unit" : "days",
+            "value" : 114
+          },
+          "title" : "Script Notes"
+        },
+        {
+          "id" : "327062DA-246E-4D45-BF43-9659082ED432",
+          "offset" : {
+            "before" : true,
+            "unit" : "days",
+            "value" : 112
+          },
+          "title" : "Recording for Mike"
+        },
+        {
+          "id" : "DB61F49D-1994-4E03-9CB5-0074F1A39ACD",
+          "offset" : {
+            "before" : true,
+            "unit" : "days",
+            "value" : 110
+          },
+          "title" : "Script"
+        },
+        {
+          "id" : "E39BBCB5-2AE8-42E9-9E3E-75BA1DF974CC",
+          "offset" : {
+            "before" : true,
+            "unit" : "days",
+            "value" : 108
+          },
+          "title" : "Performance Script"
+        },
+        {
+          "id" : "88A896ED-983C-474B-9D5B-827A8191030A",
+          "offset" : {
+            "before" : true,
+            "unit" : "days",
+            "value" : 63
+          },
+          "templateTriggerID" : "7FFAE9F1-978E-47D4-BC7D-8C6CA8C993C0",
+          "title" : "Storyboard Review"
+        },
+        {
+          "id" : "370FD96C-FA1E-438A-BA98-6235EF1A038B",
+          "offset" : {
+            "before" : true,
+            "unit" : "days",
+            "value" : 45
+          },
+          "title" : "Voiceover"
+        },
+        {
+          "id" : "43713274-AD01-402A-B5DD-6A1A34A3D687",
+          "offset" : {
+            "before" : true,
+            "unit" : "days",
+            "value" : 21
+          },
+          "title" : "Music First Pass"
+        },
+        {
+          "id" : "503C5A04-0256-4E08-9BF9-F3A6A6953EB5",
+          "offset" : {
+            "before" : true,
+            "unit" : "days",
+            "value" : 10
+          },
+          "templateTriggerID" : "D45E303A-6B09-4727-9FD6-CFB1CAE241BD",
+          "title" : "Animation Review"
+        },
+        {
+          "id" : "ED2D3BBB-6343-4F5A-BDCE-1D0E618F21AB",
+          "offset" : {
+            "before" : true,
+            "unit" : "days",
+            "value" : 10
+          },
+          "templateTriggerID" : "D45E303A-6B09-4727-9FD6-CFB1CAE241BD",
+          "title" : "Character Voices"
+        },
+        {
+          "id" : "1F7656EF-7632-439A-8062-FC5FDDA70804",
+          "offset" : {
+            "before" : true,
+            "unit" : "days",
+            "value" : 10
+          },
+          "templateTriggerID" : "D45E303A-6B09-4727-9FD6-CFB1CAE241BD",
+          "title" : "Music Final"
+        },
+        {
+          "id" : "91962853-A80F-496D-936A-11425D0B1E83",
+          "offset" : {
+            "before" : true,
+            "unit" : "days",
+            "value" : 5
+          },
+          "templateTriggerID" : "689053C3-CD27-4205-9FE6-6671E767753F",
+          "title" : "Mix Notes"
+        },
+        {
+          "id" : "0B9F2D4C-F75B-4BD9-BB3B-663BF0AFBE93",
+          "offset" : {
+            "before" : true,
+            "unit" : "days",
+            "value" : 3
+          },
+          "templateTriggerID" : "689053C3-CD27-4205-9FE6-6671E767753F",
+          "title" : "Final Delivery"
+        }
+      ],
+      "templateTriggers" : [
+        {
+          "id" : "7FFAE9F1-978E-47D4-BC7D-8C6CA8C993C0",
+          "name" : "Storyboard Delivery",
+          "offset" : {
+            "before" : true,
+            "unit" : "days",
+            "value" : 56
+          }
+        },
+        {
+          "id" : "D45E303A-6B09-4727-9FD6-CFB1CAE241BD",
+          "name" : "Render Delivery",
+          "offset" : {
+            "before" : true,
+            "unit" : "days",
+            "value" : 14
+          }
+        },
+        {
+          "id" : "689053C3-CD27-4205-9FE6-6671E767753F",
+          "name" : "Mix Delivery",
+          "offset" : {
+            "before" : true,
+            "unit" : "days",
+            "value" : 7
+          }
+        }
+      ]
+    }
+  ],
+  "triggers" : [
+    {
+      "date" : "2025-11-14T23:15:00Z",
+      "id" : "36EB2B09-B4A2-4401-A508-A5B63392C1DB",
+      "isActive" : false,
+      "name" : "Received Render",
+      "originatingTemplateTriggerID" : "94EA0B8F-37F8-4CFE-922D-BBF997D5136A",
+      "projectID" : "DC04D446-EC15-4A86-9580-38C01D9D79CA"
+    },
+    {
+      "date" : "2025-09-24T22:15:00Z",
+      "id" : "023F88B3-3492-455E-B60C-1B3D2BE1DE3E",
+      "isActive" : false,
+      "name" : "Received Storyboard",
+      "originatingTemplateTriggerID" : "4E0687F8-E912-498D-9A9A-DEE2163093D7",
+      "projectID" : "DC04D446-EC15-4A86-9580-38C01D9D79CA"
+    },
+    {
+      "date" : "2025-11-21T23:15:00Z",
+      "id" : "07BE0FF1-C14C-43D1-82C9-B92B8B22189E",
+      "isActive" : false,
+      "name" : "Received Mix",
+      "originatingTemplateTriggerID" : "C8648B7C-DAC5-42AB-B374-1E89BB5677B4",
+      "projectID" : "DC04D446-EC15-4A86-9580-38C01D9D79CA"
+    },
+    {
+      "date" : "2026-01-03T15:12:00Z",
+      "id" : "F59D8E97-CC4E-43BB-80E2-EC6A86BF6424",
+      "isActive" : false,
+      "name" : "Storyboard Delivery",
+      "originatingTemplateTriggerID" : "BBAB05A3-EF6C-4C33-9467-F0BD623F8452",
+      "projectID" : "CD9AFE70-7B6F-4C46-AC96-48643D1A8E18"
+    },
+    {
+      "date" : "2026-02-14T15:12:00Z",
+      "id" : "40ED6ACA-F4EB-4090-ABC2-5BFCEDB57E66",
+      "isActive" : false,
+      "name" : "Render Delivery",
+      "originatingTemplateTriggerID" : "61F0E3FB-ED32-4D8A-8F92-FF6C29FAC879",
+      "projectID" : "CD9AFE70-7B6F-4C46-AC96-48643D1A8E18"
+    },
+    {
+      "date" : "2026-02-21T15:12:00Z",
+      "id" : "1BC92CF5-5C7E-49E7-9E44-D4E1045AC75D",
+      "isActive" : false,
+      "name" : "Mix Delivery",
+      "originatingTemplateTriggerID" : "F9645A3C-5C87-45BF-9458-E30F60EBBD2C",
+      "projectID" : "CD9AFE70-7B6F-4C46-AC96-48643D1A8E18"
+    },
+    {
+      "date" : "2026-01-03T15:30:00Z",
+      "id" : "6111DB16-6A29-4F0A-8944-4B84D25FA610",
+      "isActive" : false,
+      "name" : "Storyboard Delivery",
+      "originatingTemplateTriggerID" : "BBAB05A3-EF6C-4C33-9467-F0BD623F8452",
+      "projectID" : "6558C419-316A-4E87-BFA8-6F52E02476BE"
+    },
+    {
+      "date" : "2026-02-14T15:30:00Z",
+      "id" : "D485B9EE-32C5-44EB-A0AF-0AF678B56D40",
+      "isActive" : false,
+      "name" : "Render Delivery",
+      "originatingTemplateTriggerID" : "61F0E3FB-ED32-4D8A-8F92-FF6C29FAC879",
+      "projectID" : "6558C419-316A-4E87-BFA8-6F52E02476BE"
+    },
+    {
+      "date" : "2026-02-21T15:30:00Z",
+      "id" : "098379BA-2A7E-4402-91F4-AA38258B650C",
+      "isActive" : false,
+      "name" : "Mix Delivery",
+      "originatingTemplateTriggerID" : "F9645A3C-5C87-45BF-9458-E30F60EBBD2C",
+      "projectID" : "6558C419-316A-4E87-BFA8-6F52E02476BE"
+    },
+    {
+      "date" : "2026-02-01T15:30:00Z",
+      "id" : "9A4FFE1A-5270-46EB-B5B5-07541D586D30",
+      "isActive" : false,
+      "name" : "Storyboard Delivery",
+      "originatingTemplateTriggerID" : "BBAB05A3-EF6C-4C33-9467-F0BD623F8452",
+      "projectID" : "EB4C0941-68B1-418C-8DE6-FF523BD2976D"
+    },
+    {
+      "date" : "2026-03-15T15:30:00Z",
+      "id" : "F845DD32-7590-4276-AFF6-9086939A331B",
+      "isActive" : false,
+      "name" : "Render Delivery",
+      "originatingTemplateTriggerID" : "61F0E3FB-ED32-4D8A-8F92-FF6C29FAC879",
+      "projectID" : "EB4C0941-68B1-418C-8DE6-FF523BD2976D"
+    },
+    {
+      "date" : "2026-03-22T15:30:00Z",
+      "id" : "844E3F5F-A89C-4536-BD74-DEA335B34A2C",
+      "isActive" : false,
+      "name" : "Mix Delivery",
+      "originatingTemplateTriggerID" : "F9645A3C-5C87-45BF-9458-E30F60EBBD2C",
+      "projectID" : "EB4C0941-68B1-418C-8DE6-FF523BD2976D"
+    },
+    {
+      "activationDate" : "2026-04-06T11:58:30Z",
+      "date" : "2026-04-06T16:47:00Z",
+      "id" : "CAB5A8EE-2580-41F9-A032-B471E4E1C9E6",
+      "isActive" : true,
+      "name" : "Storyboard Delivery",
+      "originatingTemplateTriggerID" : "BBAB05A3-EF6C-4C33-9467-F0BD623F8452",
+      "projectID" : "7E0562E7-BD86-46A3-ADA6-0DA5948C385D"
+    },
+    {
+      "activationDate" : "2026-05-27T10:57:20Z",
+      "date" : "2026-05-18T16:47:00Z",
+      "id" : "C5037180-626F-4164-B3DE-7AC8A9D45DF6",
+      "isActive" : true,
+      "name" : "Render Delivery",
+      "originatingTemplateTriggerID" : "61F0E3FB-ED32-4D8A-8F92-FF6C29FAC879",
+      "projectID" : "7E0562E7-BD86-46A3-ADA6-0DA5948C385D"
+    },
+    {
+      "date" : "2026-05-25T16:47:00Z",
+      "id" : "C416EC8C-EFEA-48B0-ADE0-15C3DDA31E53",
+      "isActive" : false,
+      "name" : "Mix Delivery",
+      "originatingTemplateTriggerID" : "F9645A3C-5C87-45BF-9458-E30F60EBBD2C",
+      "projectID" : "7E0562E7-BD86-46A3-ADA6-0DA5948C385D"
+    },
+    {
+      "activationDate" : "2026-04-11T15:51:01Z",
+      "date" : "2026-04-06T16:49:00Z",
+      "id" : "7B39CE14-B9AC-440B-820A-504461D7F0AB",
+      "isActive" : true,
+      "name" : "Storyboard Delivery",
+      "originatingTemplateTriggerID" : "BBAB05A3-EF6C-4C33-9467-F0BD623F8452",
+      "projectID" : "066CA3F4-02BC-4934-B84A-0FF6D0C710E3"
+    },
+    {
+      "activationDate" : "2026-06-16T12:43:53Z",
+      "date" : "2026-05-18T16:49:00Z",
+      "id" : "C7BE91F3-3BCB-41FD-B77D-E71998FC4013",
+      "isActive" : true,
+      "name" : "Render Delivery",
+      "originatingTemplateTriggerID" : "61F0E3FB-ED32-4D8A-8F92-FF6C29FAC879",
+      "projectID" : "066CA3F4-02BC-4934-B84A-0FF6D0C710E3"
+    },
+    {
+      "date" : "2026-05-25T16:49:00Z",
+      "id" : "03A72909-B996-4670-92BB-3B24B237B667",
+      "isActive" : false,
+      "name" : "Mix Delivery",
+      "originatingTemplateTriggerID" : "F9645A3C-5C87-45BF-9458-E30F60EBBD2C",
+      "projectID" : "066CA3F4-02BC-4934-B84A-0FF6D0C710E3"
+    },
+    {
+      "activationDate" : "2026-05-31T22:37:40Z",
+      "date" : "2026-06-06T16:49:00Z",
+      "id" : "0EEAE4B8-5D6F-43DC-84FA-AE53C3347380",
+      "isActive" : true,
+      "name" : "Storyboard Delivery",
+      "originatingTemplateTriggerID" : "BBAB05A3-EF6C-4C33-9467-F0BD623F8452",
+      "projectID" : "0D20B562-7C1A-4E74-ADF5-AB3141C794F8"
+    },
+    {
+      "date" : "2026-07-18T16:49:00Z",
+      "id" : "2E84DDD4-8010-48E5-98C6-88C6EC5EA344",
+      "isActive" : false,
+      "name" : "Render Delivery",
+      "originatingTemplateTriggerID" : "61F0E3FB-ED32-4D8A-8F92-FF6C29FAC879",
+      "projectID" : "0D20B562-7C1A-4E74-ADF5-AB3141C794F8"
+    },
+    {
+      "date" : "2026-07-25T16:49:00Z",
+      "id" : "D12B21AC-4A14-4409-93A7-D4EF9750BB0B",
+      "isActive" : false,
+      "name" : "Mix Delivery",
+      "originatingTemplateTriggerID" : "F9645A3C-5C87-45BF-9458-E30F60EBBD2C",
+      "projectID" : "0D20B562-7C1A-4E74-ADF5-AB3141C794F8"
+    },
+    {
+      "date" : "2026-07-07T16:49:00Z",
+      "id" : "8ABB09D7-46F8-46A4-81A9-DB815F7D766D",
+      "isActive" : false,
+      "name" : "Storyboard Delivery",
+      "originatingTemplateTriggerID" : "BBAB05A3-EF6C-4C33-9467-F0BD623F8452",
+      "projectID" : "360D218F-C8E4-4FC5-BFF1-034BD85D5F12"
+    },
+    {
+      "date" : "2026-08-18T16:49:00Z",
+      "id" : "441D6E86-C31D-40B5-9173-E612F19D3554",
+      "isActive" : false,
+      "name" : "Render Delivery",
+      "originatingTemplateTriggerID" : "61F0E3FB-ED32-4D8A-8F92-FF6C29FAC879",
+      "projectID" : "360D218F-C8E4-4FC5-BFF1-034BD85D5F12"
+    },
+    {
+      "date" : "2026-08-25T16:49:00Z",
+      "id" : "A58C63BC-D4C0-48C5-8A7A-829780CA74C5",
+      "isActive" : false,
+      "name" : "Mix Delivery",
+      "originatingTemplateTriggerID" : "F9645A3C-5C87-45BF-9458-E30F60EBBD2C",
+      "projectID" : "360D218F-C8E4-4FC5-BFF1-034BD85D5F12"
+    }
+  ]
+}
