@@ -8,10 +8,11 @@ enum SnapshotExpectation {
 }
 
 enum SnapshotError: Error, LocalizedError {
-    case unavailable, unsafePath, conflict, busy, missing, coordination
+    case unavailable, downloading, unsafePath, conflict, busy, missing, coordination
     var errorDescription: String? {
         switch self {
         case .unavailable: return "Deadline data is not available locally. No data was changed."
+        case .downloading: return "Deadline data is downloading from iCloud. No data was changed."
         case .unsafePath: return "The selected deadline path is not a regular file. No data was changed."
         case .conflict: return "Deadline data changed since it was loaded. Reload before applying this edit."
         case .busy: return "Deadline data is busy. Read its current state before trying again."
@@ -24,16 +25,19 @@ enum SnapshotError: Error, LocalizedError {
 struct SnapshotFile {
     let url: URL
     private let availabilityCheck: ((URL) throws -> Void)?
-    init(url: URL, availabilityCheck: ((URL) throws -> Void)? = nil) {
+    private let downloadRequest: (URL) throws -> Void
+    init(url: URL, availabilityCheck: ((URL) throws -> Void)? = nil, downloadRequest: @escaping (URL) throws -> Void = { try FileManager.default.startDownloadingUbiquitousItem(at: $0) }) {
         // Canonical parent gives aliases the same lock, while retaining the leaf
         // so a redirected data file is rejected instead of followed.
         self.url = url.deletingLastPathComponent().resolvingSymlinksInPath()
             .appendingPathComponent(url.lastPathComponent)
         self.availabilityCheck = availabilityCheck
+        self.downloadRequest = downloadRequest
     }
+    private func requestDownload(_ path: URL) throws { try downloadRequest(path) }
 
     private func checkAvailability(_ path: URL) throws {
-        try availabilityCheck?(path)
+        do { try availabilityCheck?(path) } catch SnapshotError.unavailable { try requestDownload(path); throw SnapshotError.downloading }
         var info = stat()
         guard lstat(path.path, &info) == 0 else {
             if errno == ENOENT { return }
@@ -41,10 +45,10 @@ struct SnapshotFile {
         }
         guard (info.st_mode & S_IFMT) == S_IFREG else { throw SnapshotError.unsafePath }
         // SF_DATALESS is metadata: refuse before any content read/download.
-        guard (info.st_flags & UInt32(SF_DATALESS)) == 0 else { throw SnapshotError.unavailable }
+        guard (info.st_flags & UInt32(SF_DATALESS)) == 0 else { try requestDownload(path); throw SnapshotError.downloading }
         let values = try path.resourceValues(forKeys: [.isUbiquitousItemKey, .ubiquitousItemDownloadingStatusKey])
         if values.isUbiquitousItem == true && values.ubiquitousItemDownloadingStatus == .notDownloaded {
-            throw SnapshotError.unavailable
+            try requestDownload(path); throw SnapshotError.downloading
         }
         if !(NSFileVersion.unresolvedConflictVersionsOfItem(at: path) ?? []).isEmpty {
             throw SnapshotError.conflict

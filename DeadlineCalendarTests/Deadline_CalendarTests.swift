@@ -77,6 +77,29 @@ import XCTest
         XCTAssertEqual(effects, 0)
         XCTAssertFalse(FileManager.default.fileExists(atPath: url.path))
     }
+    func testInitialLoadHydratesUnavailableICloudSnapshotWithoutShowingLoadError() async throws {
+        let project = Project(title: "Stored deadline", finalDeadlineDate: Date())
+        let document = SharedData(projects: [project], templates: [], triggers: [], appSettings: AppSettings(),
+                                  lastModified: Date(), lastModifiedBy: "fixture")
+        let encoder = JSONEncoder(); encoder.dateEncodingStrategy = .iso8601
+        let original = try encoder.encode(document)
+        try original.write(to: url)
+        var unavailable = true
+        var downloadRequests = 0
+        let store = SharedDataStore(fileURL: url,
+                                    availabilityCheck: { _ in if unavailable { throw SnapshotError.unavailable } },
+                                    downloadRequest: { _ in downloadRequests += 1; unavailable = false })
+        let viewModel = DeadlineViewModel(store: store, defaults: defaults, effectsEnabled: false)
+
+        await viewModel.loadInitialData()
+
+        XCTAssertEqual(downloadRequests, 1)
+        XCTAssertEqual(viewModel.projects.map { $0.id }, [project.id])
+        XCTAssertNil(viewModel.saveError)
+        XCTAssertFalse(viewModel.isLoading)
+        XCTAssertFalse(viewModel.isDownloadingSharedData)
+        XCTAssertEqual(try Data(contentsOf: url), original)
+    }
     func testGroupedChangesCommitOnceAndFailedGroupRetainsWholeAttempt() throws {
         var effects = 0
         let first = model { effects += 1 }; XCTAssertTrue(first.reloadCurrentData())

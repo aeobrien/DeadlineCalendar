@@ -62,12 +62,15 @@ class SharedDataStore: NSObject, ObservableObject {
     private let containerProvider: () -> URL?
     private var hasLoaded = false
     private let availabilityCheck: ((URL) throws -> Void)?
+    private let downloadRequest: (URL) throws -> Void
 
     init(fileURL: URL? = nil, availabilityCheck: ((URL) throws -> Void)? = nil,
+         downloadRequest: @escaping (URL) throws -> Void = { try FileManager.default.startDownloadingUbiquitousItem(at: $0) },
          containerProvider: @escaping () -> URL? = { FileManager.default.url(forUbiquityContainerIdentifier: nil) }) {
         self.explicitURL = fileURL
         self.containerProvider = containerProvider
         self.availabilityCheck = availabilityCheck
+        self.downloadRequest = downloadRequest
         super.init()
     }
 
@@ -146,7 +149,7 @@ class SharedDataStore: NSObject, ObservableObject {
     func loadSnapshot() throws -> SharedData? {
         hasLoaded = false
         guard let url = sharedFileURL else { throw SnapshotError.unavailable }
-        let bytes = try SnapshotFile(url: url, availabilityCheck: availabilityCheck).read()
+        let bytes = try SnapshotFile(url: url, availabilityCheck: availabilityCheck, downloadRequest: downloadRequest).read()
         let decoder = JSONDecoder()
         decoder.dateDecodingStrategy = .iso8601
         let document = try bytes.map { try decoder.decode(SharedData.self, from: $0) }
@@ -169,7 +172,7 @@ class SharedDataStore: NSObject, ObservableObject {
         let bytes = try encoder.encode(document)
         let decoder = JSONDecoder(); decoder.dateDecodingStrategy = .iso8601
         let canonical = try decoder.decode(SharedData.self, from: bytes)
-        let savedBytes = try SnapshotFile(url: url, availabilityCheck: availabilityCheck).update(expected: .bytes(baseline)) { current in
+        let savedBytes = try SnapshotFile(url: url, availabilityCheck: availabilityCheck, downloadRequest: downloadRequest).update(expected: .bytes(baseline)) { current in
             if let current {
                 let previous = try decoder.decode(SharedData.self, from: current)
                 if previous.projects == canonical.projects && previous.templates == canonical.templates &&

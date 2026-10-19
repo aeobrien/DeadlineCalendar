@@ -40,6 +40,7 @@ class DeadlineViewModel: ObservableObject {
     private var committedSnapshot: SharedData?
     private var batchDepth = 0
     @Published var saveError: String?
+    @Published private(set) var isDownloadingSharedData = false
     @Published var newerDataAvailable = false
     @Published var editorGeneration = UUID()
     @Published private(set) var pendingSnapshot: SharedData?
@@ -81,6 +82,7 @@ class DeadlineViewModel: ObservableObject {
     /// behind an open sheet would authorize stale form contents against new data.
     func handleExternalSharedDataChange() {
         currentLoadAvailable = false
+        isDownloadingSharedData = false
         newerDataAvailable = true
         saveError = "Deadlines changed elsewhere. Reload to see the current data before editing."
     }
@@ -161,6 +163,7 @@ class DeadlineViewModel: ObservableObject {
     @discardableResult
     func reloadCurrentData() -> Bool {
         currentLoadAvailable = false
+        isDownloadingSharedData = false
         do {
             if let loaded = try sharedStore.loadSnapshot() {
                 var document = migratingTriggerDates(loaded)
@@ -187,6 +190,7 @@ class DeadlineViewModel: ObservableObject {
             return true
         } catch {
             currentLoadAvailable = false
+            if let snapshotError = error as? SnapshotError, case .downloading = snapshotError { isDownloadingSharedData = true; saveError = nil; return false }
             saveError = "Could not load deadlines. Existing data was preserved. " + error.localizedDescription
             return false
         }
@@ -195,7 +199,8 @@ class DeadlineViewModel: ObservableObject {
     @MainActor
     func loadInitialData() async {
         isLoading = true
-        guard reloadCurrentData() else { isLoading = false; return }
+        for _ in 0..<40 { if reloadCurrentData() { break }; guard isDownloadingSharedData else { isLoading = false; return }; try? await Task.sleep(nanoseconds: 250_000_000) }
+        guard currentLoadAvailable else { if isDownloadingSharedData { saveError = "Deadline data is still downloading from iCloud. Existing data was preserved." }; isLoading = false; return }
         isLoading = false
         if effectsEnabled {
             requestNotificationPermissions()
