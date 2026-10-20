@@ -281,6 +281,7 @@ import XCTest
                                              SubDeadline(title: "C", date: day(2026, 10, 28))],
                               repetitionPattern: pattern)
         let copies = repeated(october, viewModel)
+        print("ADMIN-MONTH November final \(ymd(copies[0].finalDeadlineDate)) tasks \(copies[0].subDeadlines.map { ymd($0.date) })")
         XCTAssertEqual(copies.map { ymd($0.finalDeadlineDate) }, [[2026, 11, 30], [2026, 12, 31]])
         XCTAssertEqual(copies[0].subDeadlines.map { ymd($0.date) }, [[2026, 11, 23], [2026, 11, 27], [2026, 11, 28]])
         XCTAssertEqual(copies[1].subDeadlines.map { ymd($0.date) }, [[2026, 12, 23], [2026, 12, 27], [2026, 12, 28]])
