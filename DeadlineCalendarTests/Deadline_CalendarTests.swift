@@ -255,4 +255,69 @@ import XCTest
         XCTAssertEqual(calendar.dateComponents([.year, .month, .day], from: following.finalDeadlineDate), DateComponents(year: 2026, month: 12, day: 31))
         XCTAssertEqual(calendar.component(.day, from: following.subDeadlines[0].date), 28)
     }
+
+    // MARK: - Calendar-based repeats keep day-of-month
+
+    private func day(_ y: Int, _ m: Int, _ d: Int) -> Date {
+        Calendar.current.date(from: DateComponents(year: y, month: m, day: d))!
+    }
+    private func ymd(_ date: Date) -> [Int] {
+        let c = Calendar.current.dateComponents([.year, .month, .day], from: date)
+        return [c.year!, c.month!, c.day!]
+    }
+    private func repeated(_ project: Project, _ viewModel: DeadlineViewModel) -> [Project] {
+        XCTAssertTrue(viewModel.addProject(project))
+        viewModel.generateProjectRepetitionOccurrences(for: project)
+        return viewModel.projects.filter { $0.repetitionSourceID == project.id }
+            .sorted { $0.finalDeadlineDate < $1.finalDeadlineDate }
+    }
+
+    func testMonthlyRepeatKeepsSubDeadlineDaysInNovemberAndDecember() throws {
+        let viewModel = model(); XCTAssertTrue(viewModel.reloadCurrentData())
+        let pattern = RepetitionPattern(type: .fixedInterval, intervalValue: 1, intervalUnit: .months, maxOccurrences: 3)
+        let october = Project(title: "Admin", finalDeadlineDate: day(2026, 10, 31),
+                              subDeadlines: [SubDeadline(title: "A", date: day(2026, 10, 23)),
+                                             SubDeadline(title: "B", date: day(2026, 10, 27)),
+                                             SubDeadline(title: "C", date: day(2026, 10, 28))],
+                              repetitionPattern: pattern)
+        let copies = repeated(october, viewModel)
+        print("ADMIN-MONTH November final \(ymd(copies[0].finalDeadlineDate)) tasks \(copies[0].subDeadlines.map { ymd($0.date) })")
+        XCTAssertEqual(copies.map { ymd($0.finalDeadlineDate) }, [[2026, 11, 30], [2026, 12, 31]])
+        XCTAssertEqual(copies[0].subDeadlines.map { ymd($0.date) }, [[2026, 11, 23], [2026, 11, 27], [2026, 11, 28]])
+        XCTAssertEqual(copies[1].subDeadlines.map { ymd($0.date) }, [[2026, 12, 23], [2026, 12, 27], [2026, 12, 28]])
+    }
+
+    func testMonthlyRepeatClampsToMonthEndAndRecoversAfterShortMonth() throws {
+        let viewModel = model(); XCTAssertTrue(viewModel.reloadCurrentData())
+        let pattern = RepetitionPattern(type: .fixedInterval, intervalValue: 1, intervalUnit: .months, maxOccurrences: 3)
+        let january = Project(title: "Month end", finalDeadlineDate: day(2027, 1, 31),
+                              subDeadlines: [SubDeadline(title: "Late", date: day(2027, 1, 30))],
+                              repetitionPattern: pattern)
+        let copies = repeated(january, viewModel)
+        XCTAssertEqual(copies.map { ymd($0.finalDeadlineDate) }, [[2027, 2, 28], [2027, 3, 31]])
+        XCTAssertEqual(copies.map { ymd($0.subDeadlines[0].date) }, [[2027, 2, 28], [2027, 3, 30]])
+    }
+
+    func testDayOfMonth31ClampsInShortMonths() throws {
+        let viewModel = model(); XCTAssertTrue(viewModel.reloadCurrentData())
+        var pattern = RepetitionPattern(type: .dayOfMonth, maxOccurrences: 3)
+        pattern.dayOfMonthDay = 31
+        let january = Project(title: "Day 31", finalDeadlineDate: day(2027, 1, 31),
+                              subDeadlines: [SubDeadline(title: "Early", date: day(2027, 1, 20))],
+                              repetitionPattern: pattern)
+        let copies = repeated(january, viewModel)
+        XCTAssertEqual(copies.map { ymd($0.finalDeadlineDate) }, [[2027, 2, 28], [2027, 3, 31]])
+        XCTAssertEqual(copies.map { ymd($0.subDeadlines[0].date) }, [[2027, 2, 20], [2027, 3, 20]])
+    }
+
+    func testWeeklyRepeatStillShiftsByDays() throws {
+        let viewModel = model(); XCTAssertTrue(viewModel.reloadCurrentData())
+        let pattern = RepetitionPattern(type: .fixedInterval, intervalValue: 1, intervalUnit: .weeks, maxOccurrences: 3)
+        let project = Project(title: "Weekly", finalDeadlineDate: day(2026, 10, 31),
+                              subDeadlines: [SubDeadline(title: "Mid", date: day(2026, 10, 24))],
+                              repetitionPattern: pattern)
+        let copies = repeated(project, viewModel)
+        XCTAssertEqual(copies.map { ymd($0.finalDeadlineDate) }, [[2026, 11, 7], [2026, 11, 14]])
+        XCTAssertEqual(copies.map { ymd($0.subDeadlines[0].date) }, [[2026, 10, 31], [2026, 11, 7]])
+    }
 }

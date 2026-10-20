@@ -367,7 +367,7 @@ class DeadlineViewModel: ObservableObject {
         
         while occurrenceCount < maxOccurrences {
             // Calculate the next occurrence date
-            guard let nextDate = pattern.nextOccurrence(after: currentDate) else {
+            guard let nextDate = pattern.occurrence(occurrenceCount, from: deadline.date, after: currentDate) else {
                 break
             }
             
@@ -468,7 +468,7 @@ class DeadlineViewModel: ObservableObject {
         
         while occurrenceCount < maxOccurrences {
             // Calculate the next occurrence date
-            guard let nextDate = pattern.nextOccurrence(after: currentDate) else {
+            guard let nextDate = pattern.occurrence(occurrenceCount, from: project.finalDeadlineDate, after: currentDate) else {
                 break
             }
             
@@ -484,12 +484,9 @@ class DeadlineViewModel: ObservableObject {
             
             occurrenceCount += 1
             
-            // Calculate the time difference for sub-deadlines
-            let daysDifference = Calendar.current.dateComponents([.day], from: project.finalDeadlineDate, to: nextDate).day ?? 0
-            
             // Create new sub-deadlines with adjusted dates
             let newSubDeadlines = project.subDeadlines.map { original -> SubDeadline in
-                let newDate = Calendar.current.date(byAdding: .day, value: daysDifference, to: original.date) ?? original.date
+                let newDate = pattern.shifted(original.date, from: project.finalDeadlineDate, to: nextDate)
                 return SubDeadline(
                     title: original.title,
                     date: newDate,
@@ -507,7 +504,7 @@ class DeadlineViewModel: ObservableObject {
             if !originalTriggers.isEmpty {
                 for trigger in originalTriggers {
                     if let triggerDate = trigger.date {
-                        let newTriggerDate = Calendar.current.date(byAdding: .day, value: daysDifference, to: triggerDate) ?? triggerDate
+                        let newTriggerDate = pattern.shifted(triggerDate, from: project.finalDeadlineDate, to: nextDate)
                         let newTrigger = Trigger(
                             name: trigger.name,
                             projectID: UUID(), // Will be updated when project is created
