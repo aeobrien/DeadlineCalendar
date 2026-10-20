@@ -236,6 +236,40 @@ struct RepetitionPattern: Codable, Equatable, Hashable {
     var maxOccurrences: Int? = nil // nil means infinite
     var endDate: Date? = nil // Optional end date for repetition
     
+    /// Repeats by month (every N months, or day N of the month) are calendar-based: they keep the
+    /// day of the month. Everything else repeats by a fixed number of days.
+    var isCalendarBased: Bool {
+        type == .dayOfMonth || (type == .fixedInterval && intervalUnit == .months)
+    }
+    
+    /// The date of repeat number `count` (1 = first repeat after the original). Monthly repeats are
+    /// counted from the original date so a short month cannot pull later months off the day.
+    func occurrence(_ count: Int, from original: Date, after previous: Date) -> Date? {
+        if type == .fixedInterval && intervalUnit == .months {
+            return Calendar.current.date(byAdding: .month, value: intervalValue * count, to: original)
+        }
+        return nextOccurrence(after: previous)
+    }
+    
+    /// Moves `date` (belonging to an occurrence due on `base`) to the matching spot in the occurrence
+    /// due on `next`. Calendar-based repeats keep the day of the month (clamped at month end);
+    /// day-based repeats keep the same number of days from the deadline.
+    func shifted(_ date: Date, from base: Date, to next: Date) -> Date {
+        let calendar = Calendar.current
+        guard isCalendarBased else {
+            let days = calendar.dateComponents([.day], from: base, to: next).day ?? 0
+            return calendar.date(byAdding: .day, value: days, to: date) ?? date
+        }
+        func monthStart(_ d: Date) -> Date { calendar.date(from: calendar.dateComponents([.year, .month], from: d))! }
+        let months = calendar.dateComponents([.month], from: monthStart(base), to: monthStart(next)).month ?? 0
+        guard let target = calendar.date(byAdding: .month, value: months, to: monthStart(date)) else { return date }
+        var parts = calendar.dateComponents([.hour, .minute, .second, .nanosecond], from: date)
+        parts.year = calendar.component(.year, from: target)
+        parts.month = calendar.component(.month, from: target)
+        parts.day = min(calendar.component(.day, from: date), calendar.range(of: .day, in: .month, for: target)!.count)
+        return calendar.date(from: parts) ?? date
+    }
+    
     // Calculate next occurrence date based on pattern
     func nextOccurrence(after date: Date) -> Date? {
         let calendar = Calendar.current
@@ -259,18 +293,21 @@ struct RepetitionPattern: Codable, Equatable, Hashable {
         case .dayOfMonth:
             // If using a specific day number (1-31)
             if let dayNumber = dayOfMonthDay {
-                var components = calendar.dateComponents([.year, .month], from: date)
-                components.day = dayNumber
+                // Clamp to the month's last day so day 31 never spills into the next month.
+                func clamped(_ monthStart: Date) -> Date? {
+                    var parts = calendar.dateComponents([.year, .month], from: monthStart)
+                    parts.day = min(dayNumber, calendar.range(of: .day, in: .month, for: monthStart)?.count ?? dayNumber)
+                    return calendar.date(from: parts)
+                }
+                let thisMonth = calendar.date(from: calendar.dateComponents([.year, .month], from: date))!
                 
                 // Try current month first
-                if let candidate = calendar.date(from: components),
-                   candidate > date {
+                if let candidate = clamped(thisMonth), candidate > date {
                     return candidate
                 }
                 
                 // Move to next month
-                components.month = (components.month ?? 0) + 1
-                return calendar.date(from: components)
+                return calendar.date(byAdding: .month, value: 1, to: thisMonth).flatMap(clamped)
             }
             
             // Using weekday-based pattern (e.g., "Second Tuesday")
