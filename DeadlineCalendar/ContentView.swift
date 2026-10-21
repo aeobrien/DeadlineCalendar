@@ -494,7 +494,8 @@ class DeadlineViewModel: ObservableObject {
                     subtasks: original.subtasks.map { Subtask(title: $0.title, isCompleted: false) },
                     templateSubDeadlineID: original.templateSubDeadlineID,
                     triggerID: nil, // Don't copy trigger IDs as they're project-specific
-                    repetitionPattern: original.repetitionPattern // Keep sub-deadline repetition if any
+                repetitionPattern: original.repetitionPattern, // Keep sub-deadline repetition if any
+                repetitionDayOfMonth: original.repetitionDayOfMonth ?? Calendar.current.component(.day, from: original.date)
                 )
             }
             
@@ -626,6 +627,7 @@ class DeadlineViewModel: ObservableObject {
     /// The converted Admin project deliberately keeps only itself and one next-month copy.
     /// Completing the current month promotes it in place, then recreates that one preview copy.
     private func advanceRollingAdminIfComplete(at index: Int) {
+        let calendar = Calendar.current
         let current = projects[index]
         guard current.title.caseInsensitiveCompare("Admin") == .orderedSame,
               current.repetitionSourceID == nil,
@@ -642,6 +644,21 @@ class DeadlineViewModel: ObservableObject {
         var promoted = projects[nextIndex]
         promoted.repetitionSourceID = nil
         promoted.repetitionOccurrenceNumber = 1
+        for index in promoted.subDeadlines.indices {
+            guard promoted.subDeadlines[index].repetitionDayOfMonth == nil else { continue }
+            let task = promoted.subDeadlines[index]
+            let source = current.subDeadlines.first {
+                ($0.templateSubDeadlineID != nil && $0.templateSubDeadlineID == task.templateSubDeadlineID) ||
+                ($0.templateSubDeadlineID == nil && task.templateSubDeadlineID == nil && $0.title == task.title)
+            }
+            guard let source else { continue }
+            let currentDay = calendar.component(.day, from: source.date)
+            let promotedDay = calendar.component(.day, from: task.date)
+            let promotedLastDay = calendar.range(of: .day, in: .month, for: task.date)!.count
+            if currentDay > promotedDay && promotedDay == promotedLastDay {
+                promoted.subDeadlines[index].repetitionDayOfMonth = currentDay
+            }
+        }
         projects.removeAll { $0.id == current.id || ($0.repetitionSourceID == current.id && $0.id != promoted.id) }
         guard let promotedIndex = projects.firstIndex(where: { $0.id == promoted.id }) else { return }
         projects[promotedIndex] = promoted
@@ -658,9 +675,11 @@ class DeadlineViewModel: ObservableObject {
         let subDeadlines = template.subDeadlines.map { old -> SubDeadline in
             var parts = calendar.dateComponents([.hour, .minute, .second, .nanosecond], from: old.date)
             parts.year = month.year; parts.month = month.month
-            parts.day = min(calendar.component(.day, from: old.date), calendar.range(of: .day, in: .month, for: monthStart)!.count)
+            let anchorDay = old.repetitionDayOfMonth ?? calendar.component(.day, from: old.date)
+            parts.day = min(anchorDay, calendar.range(of: .day, in: .month, for: monthStart)!.count)
             return SubDeadline(title: old.title, date: calendar.date(from: parts) ?? old.date,
-                               subtasks: old.subtasks.map { Subtask(title: $0.title) })
+                               subtasks: old.subtasks.map { Subtask(title: $0.title) },
+                               repetitionDayOfMonth: anchorDay)
         }
         return Project(title: template.title,
                                 finalDeadlineDate: lastDay,

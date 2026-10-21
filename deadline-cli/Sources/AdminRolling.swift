@@ -61,6 +61,16 @@ enum AdminRollingConversion {
         var promoted = projects[nextIndex]
         promoted.repetitionSourceID = nil
         promoted.repetitionOccurrenceNumber = 1
+        for index in promoted.subDeadlines.indices {
+            guard promoted.subDeadlines[index].repetitionDayOfMonth == nil else { continue }
+            let task = promoted.subDeadlines[index]
+            guard let source = current.subDeadlines.first(where: { $0.templateSubDeadlineID == task.templateSubDeadlineID && $0.title == task.title }) else { continue }
+            let sourceDay = calendar.component(.day, from: source.date)
+            let promotedDay = calendar.component(.day, from: task.date)
+            if sourceDay > promotedDay && promotedDay == calendar.range(of: .day, in: .month, for: task.date)!.count {
+                promoted.subDeadlines[index].repetitionDayOfMonth = sourceDay
+            }
+        }
         projects.removeAll { $0.id == current.id || ($0.repetitionSourceID == current.id && $0.id != promoted.id) }
         guard let promotedIndex = projects.firstIndex(where: { $0.id == promoted.id }) else { return false }
         projects[promotedIndex] = promoted
@@ -77,12 +87,14 @@ enum AdminRollingConversion {
         let subDeadlines = template.subDeadlines.map { deadline in
             var components = calendar.dateComponents([.hour, .minute, .second, .nanosecond], from: deadline.date)
             components.year = month.year; components.month = month.month
-            components.day = min(calendar.component(.day, from: deadline.date), calendar.range(of: .day, in: .month, for: start)!.count)
+            let anchorDay = deadline.repetitionDayOfMonth ?? calendar.component(.day, from: deadline.date)
+            components.day = min(anchorDay, calendar.range(of: .day, in: .month, for: start)!.count)
             return SubDeadline(title: deadline.title,
                         date: calendar.date(from: components) ?? deadline.date,
                         isCompleted: false,
                         subtasks: deadline.subtasks.map { Subtask(title: $0.title) },
-                        templateSubDeadlineID: deadline.templateSubDeadlineID)
+                        templateSubDeadlineID: deadline.templateSubDeadlineID,
+                        repetitionDayOfMonth: anchorDay)
         }
         let pattern = RepetitionPattern(type: .fixedInterval, intervalValue: 1, intervalUnit: .months,
                                         maxOccurrences: 2)
