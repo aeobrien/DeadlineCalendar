@@ -614,8 +614,13 @@ class DeadlineViewModel: ObservableObject {
             return
         }
 
-        // Update the specific sub-deadline.
-        projects[projectIndex].subDeadlines[subDeadlineIndex] = subDeadline
+        // An explicit date edit changes the day that future rolling Admin copies should use.
+        // Completion-only updates leave the preserved short-month anchor untouched.
+        var updatedSubDeadline = subDeadline
+        if projects[projectIndex].subDeadlines[subDeadlineIndex].date != subDeadline.date {
+            updatedSubDeadline.repetitionDayOfMonth = Calendar.current.component(.day, from: subDeadline.date)
+        }
+        projects[projectIndex].subDeadlines[subDeadlineIndex] = updatedSubDeadline
         // Ensure subdeadlines within the project remain sorted after update
         projects[projectIndex].subDeadlines.sort { $0.date < $1.date }
         advanceRollingAdminIfComplete(at: projectIndex)
