@@ -384,9 +384,10 @@ struct SubDeadline: Identifiable, Codable, Equatable, Hashable {
     var repetitionPattern: RepetitionPattern? // Optional repetition pattern
     var repetitionSourceID: UUID? // ID of the original deadline this was repeated from
     var repetitionOccurrenceNumber: Int? // Which occurrence number this is (1st, 2nd, etc.)
+    var repetitionDayOfMonth: Int? // Original day retained when a short month clamps this occurrence
 
     // Initializer - Updated
-    init(id: UUID = UUID(), title: String, date: Date, isCompleted: Bool = false, subtasks: [Subtask] = [], templateSubDeadlineID: UUID? = nil, triggerID: UUID? = nil, repetitionPattern: RepetitionPattern? = nil, repetitionSourceID: UUID? = nil, repetitionOccurrenceNumber: Int? = nil) {
+    init(id: UUID = UUID(), title: String, date: Date, isCompleted: Bool = false, subtasks: [Subtask] = [], templateSubDeadlineID: UUID? = nil, triggerID: UUID? = nil, repetitionPattern: RepetitionPattern? = nil, repetitionSourceID: UUID? = nil, repetitionOccurrenceNumber: Int? = nil, repetitionDayOfMonth: Int? = nil) {
         self.id = id
         self.title = title
         self.date = date
@@ -397,6 +398,7 @@ struct SubDeadline: Identifiable, Codable, Equatable, Hashable {
         self.repetitionPattern = repetitionPattern
         self.repetitionSourceID = repetitionSourceID
         self.repetitionOccurrenceNumber = repetitionOccurrenceNumber
+        self.repetitionDayOfMonth = repetitionDayOfMonth
     }
 }
 

@@ -150,8 +150,9 @@ struct SubDeadline: Codable, Equatable, Hashable {
     var repetitionPattern: RepetitionPattern?
     var repetitionSourceID: UUID?
     var repetitionOccurrenceNumber: Int?
+    var repetitionDayOfMonth: Int?
 
-    init(id: UUID = UUID(), title: String, date: Date, isCompleted: Bool = false, subtasks: [Subtask] = [], templateSubDeadlineID: UUID? = nil, triggerID: UUID? = nil, repetitionPattern: RepetitionPattern? = nil, repetitionSourceID: UUID? = nil, repetitionOccurrenceNumber: Int? = nil) {
+    init(id: UUID = UUID(), title: String, date: Date, isCompleted: Bool = false, subtasks: [Subtask] = [], templateSubDeadlineID: UUID? = nil, triggerID: UUID? = nil, repetitionPattern: RepetitionPattern? = nil, repetitionSourceID: UUID? = nil, repetitionOccurrenceNumber: Int? = nil, repetitionDayOfMonth: Int? = nil) {
         self.id = id
         self.title = title
         self.date = date
@@ -162,6 +163,7 @@ struct SubDeadline: Codable, Equatable, Hashable {
         self.repetitionPattern = repetitionPattern
         self.repetitionSourceID = repetitionSourceID
         self.repetitionOccurrenceNumber = repetitionOccurrenceNumber
+        self.repetitionDayOfMonth = repetitionDayOfMonth
     }
 }
 
