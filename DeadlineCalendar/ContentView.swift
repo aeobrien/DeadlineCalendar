@@ -290,7 +290,17 @@ class DeadlineViewModel: ObservableObject {
 
         // Find the index of the project with the matching ID.
         if let index = projects.firstIndex(where: { $0.id == project.id }) {
-            projects[index] = project // Replace the old project with the updated one.
+            var updatedProject = project
+            if projects[index].title.caseInsensitiveCompare("Admin") == .orderedSame {
+                let priorDates = Dictionary(uniqueKeysWithValues: projects[index].subDeadlines.map { ($0.id, $0.date) })
+                for subDeadlineIndex in updatedProject.subDeadlines.indices {
+                    let subDeadline = updatedProject.subDeadlines[subDeadlineIndex]
+                    if let priorDate = priorDates[subDeadline.id], priorDate != subDeadline.date {
+                        updatedProject.subDeadlines[subDeadlineIndex].repetitionDayOfMonth = Calendar.current.component(.day, from: subDeadline.date)
+                    }
+                }
+            }
+            projects[index] = updatedProject // Replace the old project with the updated one.
             saveProjects() // Save changes.
         } else {
             // Log if the project to update wasn't found.
