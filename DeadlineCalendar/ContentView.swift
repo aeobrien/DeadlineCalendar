@@ -204,8 +204,10 @@ class DeadlineViewModel: ObservableObject {
             return true
         } catch {
             currentLoadAvailable = false
-            if let snapshotError = error as? SnapshotError, case .downloading = snapshotError { isDownloadingSharedData = true; saveError = nil; return false }
+            // A usable local snapshot is better than an error sheet while iCloud is
+            // downloading. It deliberately remains read-only until iCloud loads.
             if installCachedSnapshotIfPresent() { return false }
+            if let snapshotError = error as? SnapshotError, case .downloading = snapshotError { isDownloadingSharedData = true; saveError = nil; return false }
             saveError = "Could not load deadlines. Existing data was preserved. " + error.localizedDescription
             return false
         }

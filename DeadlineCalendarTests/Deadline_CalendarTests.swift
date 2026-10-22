@@ -112,6 +112,20 @@ import XCTest
         XCTAssertNil(viewModel.saveError)
         XCTAssertFalse(viewModel.isLoading)
     }
+    func testInitialLoadUsesCachedDataWhenICloudDownloadDoesNotFinish() async throws {
+        let cached = Project(title: "Cached deadline", finalDeadlineDate: Date())
+        defaults.set(try JSONEncoder().encode([cached]), forKey: "projects_v2_key")
+        let store = SharedDataStore(fileURL: url,
+                                    availabilityCheck: { _ in throw SnapshotError.unavailable },
+                                    downloadRequest: { _ in })
+        let viewModel = DeadlineViewModel(store: store, defaults: defaults, effectsEnabled: false)
+
+        await viewModel.loadInitialData()
+
+        XCTAssertEqual(viewModel.projects.map { $0.id }, [cached.id])
+        XCTAssertNil(viewModel.saveError)
+        XCTAssertFalse(viewModel.isLoading)
+    }
     func testAdminAnchorWalkthroughFixtureUsesOnlyItsOwnJanuaryAndFebruaryProjects() throws {
         let viewModel = DeadlineViewModel.adminAnchorFixture()
         XCTAssertTrue(viewModel.reloadCurrentData())

@@ -50,7 +50,7 @@ extension DeadlineViewModel {
         let url = FileManager.default.temporaryDirectory.appendingPathComponent("admin-anchor-fixture.json")
         let defaults = UserDefaults(suiteName: "deadline-admin-anchor-fixture")!
         let store = SharedDataStore(fileURL: url)
-        let model = DeadlineViewModel(store: store, defaults: defaults)
+        let model = DeadlineViewModel(store: store, defaults: defaults, effectsEnabled: false)
         if !FileManager.default.fileExists(atPath: url.path) {
             let encoder = JSONEncoder(); encoder.dateEncodingStrategy = .iso8601
             let data = try! encoder.encode(SharedData(projects: [current, next], templates: [], triggers: [], appSettings: AppSettings(), lastModified: Date(), lastModifiedBy: "walkthrough-fixture"))
