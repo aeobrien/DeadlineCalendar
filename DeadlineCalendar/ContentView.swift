@@ -142,6 +142,20 @@ class DeadlineViewModel: ObservableObject {
             lastModified: Date(), lastModifiedBy: "app")
     }
 
+    /// When iCloud is temporarily unavailable, retain a previously committed local
+    /// snapshot for viewing instead of presenting a launch-time error. It is not
+    /// marked writable: edits still require a successful current iCloud load.
+    private func installCachedSnapshotIfPresent() -> Bool {
+        let keys = [projectsKey, templatesKey, triggersKey, appSettingsKey,
+                    "projects_key", "projects", "SavedProjects", "templates", "triggers_key"]
+        let sources = effectsEnabled ? [userDefaults, UserDefaults.standard] : [userDefaults]
+        guard sources.contains(where: { source in keys.contains { source.object(forKey: $0) != nil } }) else { return false }
+        guard let cached = try? localSnapshot() else { return false }
+        install(migratingTriggerDates(cached))
+        saveError = nil
+        return true
+    }
+
     /// Preserve the existing trigger-date migration, but stage it before a single
     /// coordinated commit instead of publishing caches or deleting legacy keys.
     private func migratingTriggerDates(_ source: SharedData) -> SharedData {
@@ -191,6 +205,7 @@ class DeadlineViewModel: ObservableObject {
         } catch {
             currentLoadAvailable = false
             if let snapshotError = error as? SnapshotError, case .downloading = snapshotError { isDownloadingSharedData = true; saveError = nil; return false }
+            if installCachedSnapshotIfPresent() { return false }
             saveError = "Could not load deadlines. Existing data was preserved. " + error.localizedDescription
             return false
         }
@@ -1593,9 +1608,13 @@ struct ShakeEffect: GeometryEffect {
 // Contains the TabView for switching between All Deadlines and Projects.
 struct ContentView: View {
     // Inject the shared ViewModel instance.
-    @StateObject private var viewModel = DeadlineViewModel()
+    @StateObject private var viewModel: DeadlineViewModel
     @Environment(\.scenePhase) private var scenePhase
     @State private var lastActiveTime = Date()
+
+    init(viewModel: DeadlineViewModel = DeadlineViewModel()) {
+        _viewModel = StateObject(wrappedValue: viewModel)
+    }
 
     var body: some View {
         TabView {

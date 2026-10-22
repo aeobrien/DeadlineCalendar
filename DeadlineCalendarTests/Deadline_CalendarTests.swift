@@ -100,6 +100,26 @@ import XCTest
         XCTAssertFalse(viewModel.isDownloadingSharedData)
         XCTAssertEqual(try Data(contentsOf: url), original)
     }
+    func testInitialLoadUsesCachedDataWithoutShowingAnErrorWhenICloudIsUnavailable() async throws {
+        let cached = Project(title: "Cached deadline", finalDeadlineDate: Date())
+        defaults.set(try JSONEncoder().encode([cached]), forKey: "projects_v2_key")
+        let store = SharedDataStore(fileURL: url, availabilityCheck: { _ in throw SnapshotError.unavailable })
+        let viewModel = DeadlineViewModel(store: store, defaults: defaults, effectsEnabled: false)
+
+        await viewModel.loadInitialData()
+
+        XCTAssertEqual(viewModel.projects.map { $0.id }, [cached.id])
+        XCTAssertNil(viewModel.saveError)
+        XCTAssertFalse(viewModel.isLoading)
+    }
+    func testAdminAnchorWalkthroughFixtureUsesOnlyItsOwnJanuaryAndFebruaryProjects() throws {
+        let viewModel = DeadlineViewModel.adminAnchorFixture()
+        XCTAssertTrue(viewModel.reloadCurrentData())
+        XCTAssertEqual(viewModel.projects.map(\.title), ["Admin", "Admin"])
+        XCTAssertEqual(Calendar.current.component(.day, from: viewModel.projects[0].subDeadlines[0].date), 31)
+        XCTAssertEqual(Calendar.current.component(.day, from: viewModel.projects[1].subDeadlines[0].date), 28)
+        XCTAssertEqual(viewModel.projects[1].repetitionSourceID, viewModel.projects[0].id)
+    }
     func testGroupedChangesCommitOnceAndFailedGroupRetainsWholeAttempt() throws {
         var effects = 0
         let first = model { effects += 1 }; XCTAssertTrue(first.reloadCurrentData())
