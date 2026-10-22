@@ -77,6 +77,9 @@ import XCTest
         XCTAssertEqual(effects, 0)
         XCTAssertFalse(FileManager.default.fileExists(atPath: url.path))
     }
+    func testProductionStoreUsesTheDeclaredICloudContainerIdentifier() {
+        XCTAssertEqual(SharedDataStore.iCloudContainerIdentifier, "iCloud.AOTondra.Deadline-Calendar")
+    }
     func testInitialLoadHydratesUnavailableICloudSnapshotWithoutShowingLoadError() async throws {
         let project = Project(title: "Stored deadline", finalDeadlineDate: Date())
         let document = SharedData(projects: [project], templates: [], triggers: [], appSettings: AppSettings(),

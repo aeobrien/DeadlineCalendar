@@ -26,6 +26,9 @@ struct SharedData: Codable, Equatable {
 /// `NSMetadataQuery` to detect iCloud-driven changes.
 class SharedDataStore: NSObject, ObservableObject {
     static let shared = SharedDataStore()
+    /// Match the declared entitlement instead of asking Foundation to choose a
+    /// default container. The latter may be nil during an otherwise valid launch.
+    static let iCloudContainerIdentifier = "iCloud.AOTondra.Deadline-Calendar"
 
     /// Posted when external changes are detected in the shared file.
     static let didDetectExternalChange = Notification.Name("SharedDataStoreDidDetectExternalChange")
@@ -66,7 +69,7 @@ class SharedDataStore: NSObject, ObservableObject {
 
     init(fileURL: URL? = nil, availabilityCheck: ((URL) throws -> Void)? = nil,
          downloadRequest: @escaping (URL) throws -> Void = { try FileManager.default.startDownloadingUbiquitousItem(at: $0) },
-         containerProvider: @escaping () -> URL? = { FileManager.default.url(forUbiquityContainerIdentifier: nil) }) {
+         containerProvider: @escaping () -> URL? = { FileManager.default.url(forUbiquityContainerIdentifier: SharedDataStore.iCloudContainerIdentifier) }) {
         self.explicitURL = fileURL
         self.containerProvider = containerProvider
         self.availabilityCheck = availabilityCheck
