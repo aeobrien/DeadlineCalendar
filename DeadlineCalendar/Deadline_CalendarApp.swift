@@ -25,7 +25,7 @@ struct Deadline_CalendarApp: App {
     var body: some Scene {
         WindowGroup {
             if NSClassFromString("XCTestCase") == nil && ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] == nil {
-                ContentView(viewModel: ProcessInfo.processInfo.arguments.contains("--admin-anchor-fixture")
+                ContentView(viewModel: (ProcessInfo.processInfo.arguments.contains("--admin-anchor-fixture") || UserDefaults.standard.bool(forKey: "adminAnchorFixture"))
                     ? DeadlineViewModel.adminAnchorFixture()
                     : DeadlineViewModel())
             } else {

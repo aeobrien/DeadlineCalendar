@@ -301,6 +301,11 @@ struct AllDeadlinesViewRedesigned: View {
     
     private func deadlineRow(for item: DeadlineListItem) -> some View {
         deadlineCard(for: item)
+            .accessibilityElement(children: .combine)
+            .accessibilityAddTraits(.isButton)
+            .contentShape(Rectangle())
+            .onTapGesture { open(item) }
+            .accessibilityIdentifier("deadline-card-\(item.subDeadlineTitle)-\(Self.cardIDFormatter.string(from: item.subDeadlineDate))")
             .listRowBackground(Color.clear)
             .listRowSeparator(.hidden)
             .listRowInsets(EdgeInsets(top: DesignSystem.Spacing.xxSmall, leading: DesignSystem.Spacing.medium, bottom: DesignSystem.Spacing.xxSmall, trailing: DesignSystem.Spacing.medium))
@@ -351,6 +356,21 @@ struct AllDeadlinesViewRedesigned: View {
     }
     
     
+    /// Tapping a card opens its task ready to edit; a trigger has no date to edit, so it opens its project.
+    private func open(_ item: DeadlineListItem) {
+        print("[TAP] card '\(item.subDeadlineTitle)' project=\(item.projectID) trigger=\(item.isTrigger)")
+        if item.isTrigger {
+            selectedProjectID = item.projectID
+            navigateToProject = true
+        } else {
+            editSheetParameters = EditSheetParameters(projectID: item.projectID, subDeadlineID: item.subDeadlineID)
+        }
+    }
+
+    private static let cardIDFormatter: DateFormatter = {
+        let f = DateFormatter(); f.dateFormat = "yyyy-MM-dd"; return f
+    }()
+
     private func deadlineCard(for item: DeadlineListItem) -> some View {
         HStack(spacing: 0) {
             // Urgency indicator
