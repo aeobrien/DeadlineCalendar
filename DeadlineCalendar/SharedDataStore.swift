@@ -125,18 +125,20 @@ class SharedDataStore: NSObject, ObservableObject {
         metadataQuery?.enableUpdates()
     }
 
-    private func checkForExternalChanges() {
-        guard let fileURL = sharedFileURL else { return }
+    /// Returns true when it reported an external change.
+    @discardableResult
+    func checkForExternalChanges() -> Bool {
+        guard let fileURL = sharedFileURL else { return false }
 
         // Check the file's modification date.
         guard let attrs = try? FileManager.default.attributesOfItem(atPath: fileURL.path),
               let modDate = attrs[.modificationDate] as? Date else {
-            return
+            return false
         }
 
         // Skip if this is the same modification date we last wrote.
         if let lastKnown = lastKnownModificationDate, modDate <= lastKnown {
-            return
+            return false
         }
 
         lastKnownModificationDate = modDate
@@ -145,6 +147,7 @@ class SharedDataStore: NSObject, ObservableObject {
         DispatchQueue.main.async {
             NotificationCenter.default.post(name: SharedDataStore.didDetectExternalChange, object: nil)
         }
+        return true
     }
 
     // A failed load invalidates write permission. Only a successful read of absence
@@ -159,6 +162,9 @@ class SharedDataStore: NSObject, ObservableObject {
         baseline = bytes
         loadedURL = url
         hasLoaded = true
+        // Remember the date of what we just read, so iCloud's first file check at
+        // launch is not mistaken for someone else changing the data.
+        lastKnownModificationDate = (try? FileManager.default.attributesOfItem(atPath: url.path))?[.modificationDate] as? Date
         return document
     }
 
