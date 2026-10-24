@@ -421,3 +421,19 @@ import XCTest
         XCTAssertEqual(copies.map { ymd($0.subDeadlines[0].date) }, [[2026, 10, 31], [2026, 11, 7]])
     }
 }
+
+final class SettingsBuildInfoTests: XCTestCase {
+    func testWordsShowVersionAndBuild() {
+        XCTAssertEqual(SettingsBuildInfo.words(shortVersion: "1.0", build: "42"), "Version 1.0 (build 42)")
+    }
+    func testMissingValuesSayUnknown() {
+        XCTAssertEqual(SettingsBuildInfo.words(shortVersion: nil, build: nil), "Version unknown (build unknown)")
+    }
+    func testDefaultsComeFromTheAppsOwnInfoPlist() {
+        let info = Bundle.main.infoDictionary ?? [:]
+        let version = info["CFBundleShortVersionString"] as? String
+        let build = info["CFBundleVersion"] as? String
+        XCTAssertNotNil(build)
+        XCTAssertEqual(SettingsBuildInfo.words(), "Version \(version ?? "unknown") (build \(build ?? "unknown"))")
+    }
+}

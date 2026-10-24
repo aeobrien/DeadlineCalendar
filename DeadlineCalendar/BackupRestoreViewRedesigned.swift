@@ -372,6 +372,13 @@ struct BackupRestoreViewRedesigned: View {
                                 }
                             }
                         }
+
+                        // Build line: quiet caption (lowest emphasis) at the foot of Settings
+                        Text(SettingsBuildInfo.words())
+                            .font(DesignSystem.Typography.caption)
+                            .foregroundColor(DesignSystem.Colors.tertiaryText)
+                            .frame(maxWidth: .infinity)
+                            .accessibilityIdentifier("settingsBuildInfo")
                         }
                         .padding(.bottom, DesignSystem.Spacing.xLarge)
                     }
@@ -588,5 +595,12 @@ struct BackupRestoreViewRedesigned: View {
             alertMessage = error.localizedDescription
             showingAlert = true
         }
+    }
+}
+/// "Version 1.0 (build 2)" read from the app's own Info.plist, never typed by hand.
+enum SettingsBuildInfo {
+    static func words(shortVersion: String? = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String,
+                      build: String? = Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String) -> String {
+        "Version \(shortVersion ?? "unknown") (build \(build ?? "unknown"))"
     }
 }
