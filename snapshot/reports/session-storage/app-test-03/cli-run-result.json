@@ -1,0 +1,22 @@
+{
+  "ok": true,
+  "exit_code": 0,
+  "timed_out": false,
+  "duration_s": 159.817,
+  "stdout_tail": "/Users/aidan/Dev/DeadlineCalendar-session-storage/DeadlineCalendar/ContentView.swift:248:17: warning: initialization of immutable value 'deletedTitle' was never used; consider replacing with assignment to '_' or removing it\n            let deletedTitle = projects[index].title\n            ~~~~^~~~~~~~~~~~\n            _\n/Users/aidan/Dev/DeadlineCalendar-session-storage/DeadlineCalendar/ContentView.swift:596:13: warning: initialization of immutable value 'deletedTitle' was never used; consider replacing with assignment to '_' or removing it\n        let deletedTitle = projects[projectIndex].subDeadlines[subDeadlineIndex].title\n        ~~~~^~~~~~~~~~~~\n        _\n/Users/aidan/Dev/DeadlineCalendar-session-storage/DeadlineCalendar/ContentView.swift:735:18: warning: initialization of immutable value 'deletedName' was never used; consider replacing with assignment to '_' or removing it\n             let deletedName = templates[index].name\n             ~~~~^~~~~~~~~~~\n             _\n/Users/aidan/Dev/DeadlineCalendar-session-storage/DeadlineCalendar/ContentView.swift:1096:21: warning: initialization of immutable value 'triggerName' was never used; consider replacing with assignment to '_' or removing it\n                let triggerName = triggers[index].name\n                ~~~~^~~~~~~~~~~\n                _\n/Users/aidan/Dev/DeadlineCalendar-session-storage/DeadlineCalendar/ContentView.swift:1117:21: warning: initialization of immutable value 'triggerName' was never used; consider replacing with assignment to '_' or removing it\n                let triggerName = triggers[index].name\n                ~~~~^~~~~~~~~~~\n                _\n/Users/aidan/Dev/DeadlineCalendar-session-storage/DeadlineCalendar/ContentView.swift:1135:17: warning: initialization of immutable value 'deletedName' was never used; consider replacing with assignment to '_' or removing it\n            let deletedName = triggers[index].name\n            ~~~~^~~~~~~~~~~\n            _\n/Users/aidan/Dev/DeadlineCalendar-session-storage/DeadlineCalendar/ContentView.swift:1281:13: warning: initialization of immutable value 'today' was never used; consider replacing with assignment to '_' or removing it\n        let today = Date()\n        ~~~~^~~~~\n        _\n/Users/aidan/Dev/DeadlineCalendar-session-storage/DeadlineCalendar/ContentView.swift:1505:10: warning: 'onChange(of:perform:)' was deprecated in iOS 17.0: Use `onChange` with a two or zero parameter action closure instead.\n        .onChange(of: scenePhase) { newPhase in\n         ^\n/Users/aidan/Dev/DeadlineCalendar-session-storage/DeadlineCalendar/ContentView.swift:1582:34: warning: 'init(destination:tag:selection:label:)' was deprecated in iOS 16.0: use NavigationLink(value:label:), or navigationDestination(isPresented:destination:), inside a NavigationStack or NavigationSplitView\n                                 NavigationLink(destination: ProjectDetailView(project: project, viewModel: viewModel),\n                                 ^\nwarning: Skipping duplicate build file in Compile Sources build phase: /Users/aidan/Dev/DeadlineCalendar-session-storage/DeadlineCalendar/BackupRestoreViewRedesigned.swift (in target 'Deadline Calendar' from project 'DeadlineCalendar')\nTesting started\n",
+  "stderr_tail": "--- xcodebuild: WARNING: Using the first of multiple matching destinations:\n{ platform:iOS Simulator, arch:arm64, id:DDCF7C0E-E17C-47E3-9FB9-43DC69B7970F, OS:18.4, name:DeadlineStorageFixtures }\n{ platform:iOS Simulator, arch:x86_64, id:DDCF7C0E-E17C-47E3-9FB9-43DC69B7970F, OS:18.4, name:DeadlineStorageFixtures }\n2026-10-06 12:44:10.475 xcodebuild[34101:79165035] [MT] IDETestOperationsObserverDebug: 111.215 elapsed -- Testing started completed.\n2026-10-06 12:44:10.475 xcodebuild[34101:79165035] [MT] IDETestOperationsObserverDebug: 0.000 sec, +0.000 sec -- start\n2026-10-06 12:44:10.475 xcodebuild[34101:79165035] [MT] IDETestOperationsObserverDebug: 111.215 sec, +111.215 sec -- end\n",
+  "truncated": false,
+  "assertions": [
+    {
+      "kind": "exit==",
+      "expected": 0,
+      "actual": 0,
+      "ok": true
+    }
+  ],
+  "files": {
+    "created": [],
+    "modified": [],
+    "deleted": []
+  }
+}
