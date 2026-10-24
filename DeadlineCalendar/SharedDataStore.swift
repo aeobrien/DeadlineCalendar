@@ -155,6 +155,9 @@ class SharedDataStore: NSObject, ObservableObject {
     func loadSnapshot() throws -> SharedData? {
         hasLoaded = false
         guard let url = sharedFileURL else { throw SnapshotError.unavailable }
+        // Taken before the read: a file replaced mid-read then has a newer date than
+        // we record, so the change is still reported rather than missed.
+        let dateBeforeRead = (try? FileManager.default.attributesOfItem(atPath: url.path))?[.modificationDate] as? Date
         let bytes = try SnapshotFile(url: url, availabilityCheck: availabilityCheck, downloadRequest: downloadRequest).read()
         let decoder = JSONDecoder()
         decoder.dateDecodingStrategy = .iso8601
@@ -162,9 +165,9 @@ class SharedDataStore: NSObject, ObservableObject {
         baseline = bytes
         loadedURL = url
         hasLoaded = true
-        // Remember the date of what we just read, so iCloud's first file check at
-        // launch is not mistaken for someone else changing the data.
-        lastKnownModificationDate = (try? FileManager.default.attributesOfItem(atPath: url.path))?[.modificationDate] as? Date
+        // Remember the date of what we read, so iCloud's first file check at launch
+        // is not mistaken for someone else changing the data.
+        lastKnownModificationDate = dateBeforeRead
         return document
     }
 
