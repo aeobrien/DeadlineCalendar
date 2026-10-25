@@ -335,6 +335,33 @@ import XCTest
         XCTAssertEqual(calendar.dateComponents([.year, .month, .day], from: following.subDeadlines[0].date), DateComponents(year: 2027, month: 3, day: 20))
     }
 
+    func testEditingCurrentAdminTaskMovesItsNextMonthPreviewAndLaterRoll() throws {
+        let viewModel = model(); XCTAssertTrue(viewModel.reloadCurrentData())
+        let calendar = Calendar.current
+        let pattern = RepetitionPattern(type: .fixedInterval, intervalValue: 1, intervalUnit: .months, maxOccurrences: 2)
+        let january = calendar.date(from: DateComponents(year: 2027, month: 1, day: 31))!
+        let february = calendar.date(from: DateComponents(year: 2027, month: 2, day: 28))!
+        let current = Project(title: "Admin", finalDeadlineDate: january,
+                              subDeadlines: [SubDeadline(title: "Month end", date: january)], repetitionPattern: pattern)
+        let next = Project(title: "Admin", finalDeadlineDate: february,
+                           subDeadlines: [SubDeadline(title: "Month end", date: february, repetitionDayOfMonth: 31)],
+                           repetitionPattern: pattern, repetitionSourceID: current.id, repetitionOccurrenceNumber: 2)
+        XCTAssertTrue(viewModel.addProject(current)); XCTAssertTrue(viewModel.addProject(next))
+
+        var edited = current.subDeadlines[0]
+        edited.date = calendar.date(from: DateComponents(year: 2027, month: 1, day: 20))!
+        XCTAssertTrue(viewModel.updateSubDeadline(edited, in: current))
+
+        let preview = try XCTUnwrap(viewModel.projects.first(where: { $0.repetitionSourceID == current.id }))
+        XCTAssertEqual(calendar.dateComponents([.month, .day], from: preview.subDeadlines[0].date), DateComponents(month: 2, day: 20))
+
+        edited.isCompleted = true
+        XCTAssertTrue(viewModel.updateSubDeadline(edited, in: current))
+        let promoted = try XCTUnwrap(viewModel.projects.first(where: { $0.id == next.id }))
+        let following = try XCTUnwrap(viewModel.projects.first(where: { $0.repetitionSourceID == promoted.id }))
+        XCTAssertEqual(calendar.dateComponents([.year, .month, .day], from: following.subDeadlines[0].date), DateComponents(year: 2027, month: 3, day: 20))
+    }
+
     func testProjectEditorStyleEditUpdatesClampedRollingAdminTaskFutureDay() throws {
         let viewModel = model(); XCTAssertTrue(viewModel.reloadCurrentData())
         let calendar = Calendar.current
