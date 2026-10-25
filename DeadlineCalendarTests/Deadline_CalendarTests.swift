@@ -479,3 +479,63 @@ final class ImportReplacementGuardTests: XCTestCase {
         ))
     }
 }
+
+@MainActor final class BackupImportPreservationTests: XCTestCase {
+    func testModernBackupRoundTripKeepsRecurringProjectAndTriggerState() throws {
+        let projectID = UUID()
+        let templateID = UUID()
+        let templateTriggerID = UUID()
+        let triggerID = UUID()
+        let deadlineID = UUID()
+        let sourceID = UUID()
+        let finalDate = Date(timeIntervalSince1970: 1_792_627_200)
+        let activationDate = Date(timeIntervalSince1970: 1_792_022_400)
+        let dueDate = Date(timeIntervalSince1970: 1_792_195_200)
+        let pattern = RepetitionPattern(type: .fixedInterval, intervalValue: 1, intervalUnit: .months, maxOccurrences: 12, endDate: Date(timeIntervalSince1970: 1_893_456_000))
+        let trigger = Trigger(id: triggerID, name: "Admin approval", projectID: projectID, date: dueDate, isActive: true, activationDate: activationDate, originatingTemplateTriggerID: templateTriggerID)
+        let project = Project(id: projectID, title: "Admin", finalDeadlineDate: finalDate,
+                              subDeadlines: [SubDeadline(id: deadlineID, title: "Approve", date: dueDate, templateSubDeadlineID: UUID(), triggerID: triggerID, repetitionPattern: pattern, repetitionSourceID: sourceID, repetitionOccurrenceNumber: 2, repetitionDayOfMonth: 31)],
+                              triggers: [trigger], templateID: templateID, templateName: "Admin template",
+                              repetitionPattern: pattern, repetitionSourceID: sourceID, repetitionOccurrenceNumber: 2)
+        let template = Template(id: templateID, name: "Admin template", templateTriggers: [TemplateTrigger(id: templateTriggerID, name: "Admin approval")])
+        let backup = BackupManager.BackupData(projects: [project], templates: [template], triggers: [trigger], appSettings: AppSettings())
+        let encoder = JSONEncoder(); encoder.dateEncodingStrategy = .iso8601
+
+        let imported = try BackupManager.importData(from: encoder.encode(backup))
+
+        XCTAssertEqual(imported.projects, [project])
+        XCTAssertEqual(imported.triggers, [trigger])
+        XCTAssertEqual(imported.templates, [template])
+    }
+
+    func testConfirmedReplaceSavesImportedProjectWhileCancelKeepsCurrentData() throws {
+        let folder = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: folder) }
+        let defaultsName = "deadline-replace-" + UUID().uuidString
+        let defaults = UserDefaults(suiteName: defaultsName)!
+        defer { defaults.removePersistentDomain(forName: defaultsName) }
+        let url = folder.appendingPathComponent("data.json")
+        let store = SharedDataStore(fileURL: url)
+        let viewModel = DeadlineViewModel(store: store, defaults: defaults, effectsEnabled: false)
+        XCTAssertTrue(viewModel.reloadCurrentData())
+        let currentDate = Date(timeIntervalSince1970: 1_792_627_200)
+        let current = Project(title: "Current", finalDeadlineDate: currentDate)
+        XCTAssertTrue(viewModel.addProject(current))
+        let importedID = UUID()
+        let importedDate = Date(timeIntervalSince1970: 1_793_318_400)
+        let trigger = Trigger(name: "Active", projectID: importedID, date: importedDate, isActive: true, activationDate: importedDate)
+        let imported = Project(id: importedID, title: "Admin", finalDeadlineDate: importedDate, triggers: [trigger], repetitionPattern: RepetitionPattern(type: .fixedInterval, intervalValue: 1, intervalUnit: .months, maxOccurrences: 12), repetitionSourceID: UUID(), repetitionOccurrenceNumber: 2)
+
+        XCTAssertTrue(ImportReplacementGuard.requiresConfirmation(currentProjectIDs: viewModel.projects.map(\.id), importedProjectIDs: [importedID]))
+        XCTAssertEqual(viewModel.projects, [current]) // Cancel leaves saved data alone.
+
+        viewModel.projects = [imported]
+        viewModel.triggers = [trigger]
+        XCTAssertTrue(viewModel.saveAll()) // Confirmed Replace saves the decoded values.
+        let reloaded = DeadlineViewModel(store: store, defaults: defaults, effectsEnabled: false)
+        XCTAssertTrue(reloaded.reloadCurrentData())
+        XCTAssertEqual(reloaded.projects, [imported])
+        XCTAssertEqual(reloaded.triggers, [trigger])
+    }
+}
