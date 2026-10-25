@@ -9,6 +9,8 @@ struct BackupRestoreViewRedesigned: View {
     @State private var showingAlert = false
     @State private var alertTitle = ""
     @State private var alertMessage = ""
+    @State private var pendingImportedData: BackupData?
+    @State private var showingImportReplacementConfirmation = false
     
     // Notification settings
     @AppStorage("notificationFrequency") private var notificationFrequency = 1
@@ -405,6 +407,18 @@ struct BackupRestoreViewRedesigned: View {
         } message: {
             Text(alertMessage)
         }
+        .alert("Replace Existing Projects?", isPresented: $showingImportReplacementConfirmation) {
+            Button("Cancel", role: .cancel) {
+                pendingImportedData = nil
+            }
+            Button("Replace", role: .destructive) {
+                guard let importedData = pendingImportedData else { return }
+                pendingImportedData = nil
+                applyImportedData(importedData)
+            }
+        } message: {
+            Text("Clipboard import replaces all current data. Replace \(viewModel.projects.count) current projects with \(pendingImportedData?.projects.count ?? 0) imported projects?")
+        }
         .sheet(isPresented: $showingICloudBackupView) {
             iCloudBackupRestoreView(viewModel: viewModel)
         }
@@ -572,29 +586,46 @@ struct BackupRestoreViewRedesigned: View {
     private func importAction() {
         do {
             let importedData = try BackupManager.importData()
-            
-            // Replace ViewModel data
-            viewModel.projects = importedData.projects
-            viewModel.templates = importedData.templates
-            viewModel.triggers = importedData.triggers
-            viewModel.appSettings = importedData.appSettings
-            
-            // Save the new data
-            guard viewModel.saveAll() else {
-                alertTitle = "Import Not Saved"
-                alertMessage = viewModel.saveError ?? "Could not save restored data."
-                showingAlert = true
-                return
+            let replacement = BackupData(projects: importedData.projects,
+                                         templates: importedData.templates,
+                                         triggers: importedData.triggers,
+                                         appSettings: importedData.appSettings)
+            if ImportReplacementGuard.requiresConfirmation(currentProjectIDs: viewModel.projects.map(\.id),
+                                                           importedProjectIDs: replacement.projects.map(\.id)) {
+                pendingImportedData = replacement
+                showingImportReplacementConfirmation = true
+            } else {
+                applyImportedData(replacement)
             }
-            
-            alertTitle = "Import Successful"
-            alertMessage = "Successfully restored \(importedData.projects.count) projects, \(importedData.templates.count) templates, \(importedData.triggers.count) triggers, and settings from the clipboard."
-            showingAlert = true
         } catch {
             alertTitle = "Import Failed"
             alertMessage = error.localizedDescription
             showingAlert = true
         }
+    }
+
+    private func applyImportedData(_ importedData: BackupData) {
+        viewModel.projects = importedData.projects
+        viewModel.templates = importedData.templates
+        viewModel.triggers = importedData.triggers
+        viewModel.appSettings = importedData.appSettings
+
+        guard viewModel.saveAll() else {
+            alertTitle = "Import Not Saved"
+            alertMessage = viewModel.saveError ?? "Could not save restored data."
+            showingAlert = true
+            return
+        }
+
+        alertTitle = "Import Successful"
+        alertMessage = "Successfully restored \(importedData.projects.count) projects, \(importedData.templates.count) templates, \(importedData.triggers.count) triggers, and settings from the clipboard."
+        showingAlert = true
+    }
+}
+
+enum ImportReplacementGuard {
+    static func requiresConfirmation(currentProjectIDs: [UUID], importedProjectIDs: [UUID]) -> Bool {
+        !currentProjectIDs.isEmpty
     }
 }
 /// "Version 1.0 (build 2)" read from the app's own Info.plist, never typed by hand.

@@ -462,3 +462,20 @@ final class SettingsBuildInfoTests: XCTestCase {
         XCTAssertEqual(SettingsBuildInfo.words(), "Version \(version ?? "unknown") (build \(build ?? "unknown"))")
     }
 }
+
+final class ImportReplacementGuardTests: XCTestCase {
+    func testDifferentImportNeedsAnExplicitReplacementConfirmation() {
+        XCTAssertTrue(ImportReplacementGuard.requiresConfirmation(
+            currentProjectIDs: [UUID()],
+            importedProjectIDs: [UUID()]
+        ))
+    }
+
+    func testAnyImportOverExistingProjectsNeedsAReplacementConfirmation() {
+        let id = UUID()
+        XCTAssertTrue(ImportReplacementGuard.requiresConfirmation(
+            currentProjectIDs: [id],
+            importedProjectIDs: [id]
+        ))
+    }
+}
