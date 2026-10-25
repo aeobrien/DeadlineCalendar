@@ -137,6 +137,31 @@ import XCTest
         XCTAssertEqual(Calendar.current.component(.day, from: viewModel.projects[1].subDeadlines[0].date), 28)
         XCTAssertEqual(viewModel.projects[1].repetitionSourceID, viewModel.projects[0].id)
     }
+    func testFileJustLoadedIsNotReportedAsChangedElsewhere() throws {
+        // His data shape: one standalone project of sub-deadlines, written by the CLI.
+        let subs = (1...16).map { SubDeadline(title: "Task \($0)", date: Date(timeIntervalSince1970: 1_790_000_000 + Double($0) * 86_400)) }
+        let project = Project(title: "Standalone Deadlines", finalDeadlineDate: Date(timeIntervalSince1970: 64_000_000_000), subDeadlines: subs)
+        let document = SharedData(projects: [project], templates: [], triggers: [], appSettings: AppSettings(),
+                                  lastModified: Date(), lastModifiedBy: "cli")
+        let encoder = JSONEncoder(); encoder.dateEncodingStrategy = .iso8601
+        try encoder.encode(document).write(to: url)
+        let store = SharedDataStore(fileURL: url)
+        XCTAssertNotNil(try store.loadSnapshot())
+
+        // iCloud's first metadata pass at launch reports the file we just read.
+        XCTAssertFalse(store.checkForExternalChanges())
+    }
+    func testFileRewrittenAfterLoadIsStillReportedAsChangedElsewhere() throws {
+        let document = SharedData(projects: [], templates: [], triggers: [], appSettings: AppSettings(),
+                                  lastModified: Date(), lastModifiedBy: "cli")
+        let encoder = JSONEncoder(); encoder.dateEncodingStrategy = .iso8601
+        try encoder.encode(document).write(to: url)
+        let store = SharedDataStore(fileURL: url)
+        XCTAssertNotNil(try store.loadSnapshot())
+        try FileManager.default.setAttributes([.modificationDate: Date().addingTimeInterval(60)], ofItemAtPath: url.path)
+
+        XCTAssertTrue(store.checkForExternalChanges())
+    }
     func testGroupedChangesCommitOnceAndFailedGroupRetainsWholeAttempt() throws {
         var effects = 0
         let first = model { effects += 1 }; XCTAssertTrue(first.reloadCurrentData())
@@ -419,5 +444,21 @@ import XCTest
         let copies = repeated(project, viewModel)
         XCTAssertEqual(copies.map { ymd($0.finalDeadlineDate) }, [[2026, 11, 7], [2026, 11, 14]])
         XCTAssertEqual(copies.map { ymd($0.subDeadlines[0].date) }, [[2026, 10, 31], [2026, 11, 7]])
+    }
+}
+
+final class SettingsBuildInfoTests: XCTestCase {
+    func testWordsShowVersionAndBuild() {
+        XCTAssertEqual(SettingsBuildInfo.words(shortVersion: "1.0", build: "42"), "Version 1.0 (build 42)")
+    }
+    func testMissingValuesSayUnknown() {
+        XCTAssertEqual(SettingsBuildInfo.words(shortVersion: nil, build: nil), "Version unknown (build unknown)")
+    }
+    func testDefaultsComeFromTheAppsOwnInfoPlist() {
+        let info = Bundle.main.infoDictionary ?? [:]
+        let version = info["CFBundleShortVersionString"] as? String
+        let build = info["CFBundleVersion"] as? String
+        XCTAssertNotNil(build)
+        XCTAssertEqual(SettingsBuildInfo.words(), "Version \(version ?? "unknown") (build \(build ?? "unknown"))")
     }
 }
