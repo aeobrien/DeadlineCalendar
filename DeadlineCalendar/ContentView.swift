@@ -670,8 +670,9 @@ class DeadlineViewModel: ObservableObject {
               current.repetitionSourceID == nil,
               let previewIndex = projects.firstIndex(where: { $0.repetitionSourceID == id }),
               let taskIndex = projects[previewIndex].subDeadlines.firstIndex(where: {
-                  ($0.templateSubDeadlineID != nil && $0.templateSubDeadlineID == old.templateSubDeadlineID) ||
-                  ($0.templateSubDeadlineID == nil && old.templateSubDeadlineID == nil && $0.title == old.title)
+                  // Generated copies carry no template ID, so fall back to the title when either side lacks one.
+                  if let a = $0.templateSubDeadlineID, let b = old.templateSubDeadlineID { return a == b }
+                  return $0.title == old.title
               }) else { return }
         let task = projects[previewIndex].subDeadlines[taskIndex]
         let monthLength = calendar.range(of: .day, in: .month, for: task.date)!.count
