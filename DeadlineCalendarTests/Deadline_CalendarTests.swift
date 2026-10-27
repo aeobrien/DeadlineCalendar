@@ -137,6 +137,31 @@ import XCTest
         XCTAssertEqual(Calendar.current.component(.day, from: viewModel.projects[1].subDeadlines[0].date), 28)
         XCTAssertEqual(viewModel.projects[1].repetitionSourceID, viewModel.projects[0].id)
     }
+    func testFileJustLoadedIsNotReportedAsChangedElsewhere() throws {
+        // His data shape: one standalone project of sub-deadlines, written by the CLI.
+        let subs = (1...16).map { SubDeadline(title: "Task \($0)", date: Date(timeIntervalSince1970: 1_790_000_000 + Double($0) * 86_400)) }
+        let project = Project(title: "Standalone Deadlines", finalDeadlineDate: Date(timeIntervalSince1970: 64_000_000_000), subDeadlines: subs)
+        let document = SharedData(projects: [project], templates: [], triggers: [], appSettings: AppSettings(),
+                                  lastModified: Date(), lastModifiedBy: "cli")
+        let encoder = JSONEncoder(); encoder.dateEncodingStrategy = .iso8601
+        try encoder.encode(document).write(to: url)
+        let store = SharedDataStore(fileURL: url)
+        XCTAssertNotNil(try store.loadSnapshot())
+
+        // iCloud's first metadata pass at launch reports the file we just read.
+        XCTAssertFalse(store.checkForExternalChanges())
+    }
+    func testFileRewrittenAfterLoadIsStillReportedAsChangedElsewhere() throws {
+        let document = SharedData(projects: [], templates: [], triggers: [], appSettings: AppSettings(),
+                                  lastModified: Date(), lastModifiedBy: "cli")
+        let encoder = JSONEncoder(); encoder.dateEncodingStrategy = .iso8601
+        try encoder.encode(document).write(to: url)
+        let store = SharedDataStore(fileURL: url)
+        XCTAssertNotNil(try store.loadSnapshot())
+        try FileManager.default.setAttributes([.modificationDate: Date().addingTimeInterval(60)], ofItemAtPath: url.path)
+
+        XCTAssertTrue(store.checkForExternalChanges())
+    }
     func testGroupedChangesCommitOnceAndFailedGroupRetainsWholeAttempt() throws {
         var effects = 0
         let first = model { effects += 1 }; XCTAssertTrue(first.reloadCurrentData())
@@ -419,5 +444,98 @@ import XCTest
         let copies = repeated(project, viewModel)
         XCTAssertEqual(copies.map { ymd($0.finalDeadlineDate) }, [[2026, 11, 7], [2026, 11, 14]])
         XCTAssertEqual(copies.map { ymd($0.subDeadlines[0].date) }, [[2026, 10, 31], [2026, 11, 7]])
+    }
+}
+
+final class SettingsBuildInfoTests: XCTestCase {
+    func testWordsShowVersionAndBuild() {
+        XCTAssertEqual(SettingsBuildInfo.words(shortVersion: "1.0", build: "42"), "Version 1.0 (build 42)")
+    }
+    func testMissingValuesSayUnknown() {
+        XCTAssertEqual(SettingsBuildInfo.words(shortVersion: nil, build: nil), "Version unknown (build unknown)")
+    }
+    func testDefaultsComeFromTheAppsOwnInfoPlist() {
+        let info = Bundle.main.infoDictionary ?? [:]
+        let version = info["CFBundleShortVersionString"] as? String
+        let build = info["CFBundleVersion"] as? String
+        XCTAssertNotNil(build)
+        XCTAssertEqual(SettingsBuildInfo.words(), "Version \(version ?? "unknown") (build \(build ?? "unknown"))")
+    }
+}
+
+final class ImportReplacementGuardTests: XCTestCase {
+    func testDifferentImportNeedsAnExplicitReplacementConfirmation() {
+        XCTAssertTrue(ImportReplacementGuard.requiresConfirmation(
+            currentProjectIDs: [UUID()],
+            importedProjectIDs: [UUID()]
+        ))
+    }
+
+    func testAnyImportOverExistingProjectsNeedsAReplacementConfirmation() {
+        let id = UUID()
+        XCTAssertTrue(ImportReplacementGuard.requiresConfirmation(
+            currentProjectIDs: [id],
+            importedProjectIDs: [id]
+        ))
+    }
+}
+
+@MainActor final class BackupImportPreservationTests: XCTestCase {
+    func testModernBackupRoundTripKeepsRecurringProjectAndTriggerState() throws {
+        let projectID = UUID()
+        let templateID = UUID()
+        let templateTriggerID = UUID()
+        let triggerID = UUID()
+        let deadlineID = UUID()
+        let sourceID = UUID()
+        let finalDate = Date(timeIntervalSince1970: 1_792_627_200)
+        let activationDate = Date(timeIntervalSince1970: 1_792_022_400)
+        let dueDate = Date(timeIntervalSince1970: 1_792_195_200)
+        let pattern = RepetitionPattern(type: .fixedInterval, intervalValue: 1, intervalUnit: .months, maxOccurrences: 12, endDate: Date(timeIntervalSince1970: 1_893_456_000))
+        let trigger = Trigger(id: triggerID, name: "Admin approval", projectID: projectID, date: dueDate, isActive: true, activationDate: activationDate, originatingTemplateTriggerID: templateTriggerID)
+        let project = Project(id: projectID, title: "Admin", finalDeadlineDate: finalDate,
+                              subDeadlines: [SubDeadline(id: deadlineID, title: "Approve", date: dueDate, templateSubDeadlineID: UUID(), triggerID: triggerID, repetitionPattern: pattern, repetitionSourceID: sourceID, repetitionOccurrenceNumber: 2, repetitionDayOfMonth: 31)],
+                              triggers: [trigger], templateID: templateID, templateName: "Admin template",
+                              repetitionPattern: pattern, repetitionSourceID: sourceID, repetitionOccurrenceNumber: 2)
+        let template = Template(id: templateID, name: "Admin template", templateTriggers: [TemplateTrigger(id: templateTriggerID, name: "Admin approval")])
+        let backup = BackupManager.BackupData(projects: [project], templates: [template], triggers: [trigger], appSettings: AppSettings())
+        let encoder = JSONEncoder(); encoder.dateEncodingStrategy = .iso8601
+
+        let imported = try BackupManager.importData(from: encoder.encode(backup))
+
+        XCTAssertEqual(imported.projects, [project])
+        XCTAssertEqual(imported.triggers, [trigger])
+        XCTAssertEqual(imported.templates, [template])
+    }
+
+    func testConfirmedReplaceSavesImportedProjectWhileCancelKeepsCurrentData() throws {
+        let folder = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: folder) }
+        let defaultsName = "deadline-replace-" + UUID().uuidString
+        let defaults = UserDefaults(suiteName: defaultsName)!
+        defer { defaults.removePersistentDomain(forName: defaultsName) }
+        let url = folder.appendingPathComponent("data.json")
+        let store = SharedDataStore(fileURL: url)
+        let viewModel = DeadlineViewModel(store: store, defaults: defaults, effectsEnabled: false)
+        XCTAssertTrue(viewModel.reloadCurrentData())
+        let currentDate = Date(timeIntervalSince1970: 1_792_627_200)
+        let current = Project(title: "Current", finalDeadlineDate: currentDate)
+        XCTAssertTrue(viewModel.addProject(current))
+        let importedID = UUID()
+        let importedDate = Date(timeIntervalSince1970: 1_793_318_400)
+        let trigger = Trigger(name: "Active", projectID: importedID, date: importedDate, isActive: true, activationDate: importedDate)
+        let imported = Project(id: importedID, title: "Admin", finalDeadlineDate: importedDate, triggers: [trigger], repetitionPattern: RepetitionPattern(type: .fixedInterval, intervalValue: 1, intervalUnit: .months, maxOccurrences: 12), repetitionSourceID: UUID(), repetitionOccurrenceNumber: 2)
+
+        XCTAssertTrue(ImportReplacementGuard.requiresConfirmation(currentProjectIDs: viewModel.projects.map(\.id), importedProjectIDs: [importedID]))
+        XCTAssertEqual(viewModel.projects, [current]) // Cancel leaves saved data alone.
+
+        viewModel.projects = [imported]
+        viewModel.triggers = [trigger]
+        XCTAssertTrue(viewModel.saveAll()) // Confirmed Replace saves the decoded values.
+        let reloaded = DeadlineViewModel(store: store, defaults: defaults, effectsEnabled: false)
+        XCTAssertTrue(reloaded.reloadCurrentData())
+        XCTAssertEqual(reloaded.projects, [imported])
+        XCTAssertEqual(reloaded.triggers, [trigger])
     }
 }
