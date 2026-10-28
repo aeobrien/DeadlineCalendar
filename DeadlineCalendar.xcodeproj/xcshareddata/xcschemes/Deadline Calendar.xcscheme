@@ -37,6 +37,13 @@
                BlueprintName = "Deadline CalendarTests"
                ReferencedContainer = "container:DeadlineCalendar.xcodeproj" />
          </TestableReference>
+         <TestableReference skipped = "NO" parallelizable = "NO">
+            <BuildableReference BuildableIdentifier = "primary"
+               BlueprintIdentifier = "DDF73B112CC0378100833720"
+               BuildableName = "Deadline CalendarUITests.xctest"
+               BlueprintName = "Deadline CalendarUITests"
+               ReferencedContainer = "container:DeadlineCalendar.xcodeproj" />
+         </TestableReference>
       </Testables>
    </TestAction>
    <LaunchAction

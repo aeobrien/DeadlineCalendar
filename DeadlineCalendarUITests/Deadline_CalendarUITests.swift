@@ -30,6 +30,18 @@ final class Deadline_CalendarUITests: XCTestCase {
         // Use XCTAssert and related functions to verify your tests produce the correct results.
     }
 
+    func testAdminFixtureShowsProjectAndOpensItsTask() throws {
+        let app = XCUIApplication()
+        app.launchArguments = ["--admin-anchor-fixture"]
+        app.launch()
+
+        app.tabBars.buttons["Projects"].tap()
+        XCTAssertTrue(app.staticTexts["Admin"].firstMatch.waitForExistence(timeout: 5))
+
+        app.staticTexts["Admin"].firstMatch.tap()
+        XCTAssertTrue(app.staticTexts["Month end"].firstMatch.waitForExistence(timeout: 5))
+    }
+
     func testLaunchPerformance() throws {
         if #available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 7.0, *) {
             // This measures how long it takes to launch your application.
