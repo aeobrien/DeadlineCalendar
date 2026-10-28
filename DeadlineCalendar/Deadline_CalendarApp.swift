@@ -25,11 +25,38 @@ struct Deadline_CalendarApp: App {
     var body: some Scene {
         WindowGroup {
             if NSClassFromString("XCTestCase") == nil && ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] == nil {
-                ContentView()
+                ContentView(viewModel: (ProcessInfo.processInfo.arguments.contains("--admin-anchor-fixture") || UserDefaults.standard.bool(forKey: "adminAnchorFixture"))
+                    ? DeadlineViewModel.adminAnchorFixture()
+                    : DeadlineViewModel())
             } else {
                 Color.clear
             }
         }
+    }
+}
+
+extension DeadlineViewModel {
+    /// Dedicated walkthrough data: a local file inside the test app sandbox, never iCloud.
+    static func adminAnchorFixture() -> DeadlineViewModel {
+        let calendar = Calendar.current
+        let january = calendar.date(from: DateComponents(year: 2027, month: 1, day: 31))!
+        let february = calendar.date(from: DateComponents(year: 2027, month: 2, day: 28))!
+        let pattern = RepetitionPattern(type: .fixedInterval, intervalValue: 1, intervalUnit: .months, maxOccurrences: 2)
+        let current = Project(title: "Admin", finalDeadlineDate: january,
+                              subDeadlines: [SubDeadline(title: "Month end", date: january)], repetitionPattern: pattern)
+        let next = Project(title: "Admin", finalDeadlineDate: february,
+                           subDeadlines: [SubDeadline(title: "Month end", date: february, repetitionDayOfMonth: 31)],
+                           repetitionPattern: pattern, repetitionSourceID: current.id, repetitionOccurrenceNumber: 2)
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent("admin-anchor-fixture.json")
+        let defaults = UserDefaults(suiteName: "deadline-admin-anchor-fixture")!
+        let store = SharedDataStore(fileURL: url)
+        let model = DeadlineViewModel(store: store, defaults: defaults, effectsEnabled: false)
+        if !FileManager.default.fileExists(atPath: url.path) {
+            let encoder = JSONEncoder(); encoder.dateEncodingStrategy = .iso8601
+            let data = try! encoder.encode(SharedData(projects: [current, next], templates: [], triggers: [], appSettings: AppSettings(), lastModified: Date(), lastModifiedBy: "walkthrough-fixture"))
+            try! data.write(to: url)
+        }
+        return model
     }
 }
 

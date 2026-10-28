@@ -245,7 +245,12 @@ struct UpdateCommand: ParsableCommand {
         let name = try title.map(nonempty); let due = try date.map(parseDate); var saved: SubDeadline?
         try storage.store().mutate { projects,_,_,_ in
             let pi = try projectIndex(projects,id:projectId); let di = try deadlineIndex(projects[pi],id:deadlineId)
-            if let name { projects[pi].subDeadlines[di].title = name }; if let due { projects[pi].subDeadlines[di].date = due }; if let completed { projects[pi].subDeadlines[di].isCompleted = completed }
+            if let name { projects[pi].subDeadlines[di].title = name }
+            if let due {
+                projects[pi].subDeadlines[di].date = due
+                projects[pi].subDeadlines[di].repetitionDayOfMonth = Calendar.current.component(.day, from: due)
+            }
+            if let completed { projects[pi].subDeadlines[di].isCompleted = completed }
             saved=projects[pi].subDeadlines[di]
         }
         try emit(saved)
@@ -277,7 +282,12 @@ struct AdjustCommand: ParsableCommand {
     @Option(name:.long) var date: String
     func run() throws {
         let due=try parseDate(date)
-        try storage.store().mutate { projects,_,_,_ in let pi=try projectIndex(projects,title:projectTitle);let di=try deadlineIndex(projects[pi],title:subDeadlineTitle);projects[pi].subDeadlines[di].date=due }
+        try storage.store().mutate { projects,_,_,_ in
+            let pi=try projectIndex(projects,title:projectTitle)
+            let di=try deadlineIndex(projects[pi],title:subDeadlineTitle)
+            projects[pi].subDeadlines[di].date = due
+            projects[pi].subDeadlines[di].repetitionDayOfMonth = Calendar.current.component(.day, from: due)
+        }
         print("Deadline date updated.")
     }
 }

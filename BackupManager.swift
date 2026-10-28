@@ -104,26 +104,6 @@ struct BackupManager {
     static func importData() throws -> (projects: [Project], templates: [Template], triggers: [Trigger], appSettings: AppSettings) {
         print("Starting import process...")
         
-        // --- Define Temporary Structs for Decoding --- 
-        // Struct matching the OLD project format in the backup JSON (no 'triggers' field)
-        struct Project_OldFormat: Codable {
-            let id: UUID
-            var title: String
-            var finalDeadlineDate: Date
-            var subDeadlines: [SubDeadline] // SubDeadline struct itself might be compatible, or need an old version too?
-                                            // Assuming current SubDeadline is okay for now, but might need adjustment
-                                            // if its structure also changed significantly in backup.
-            var templateID: UUID?
-            var templateName: String?
-            // NOTE: Missing 'triggers: [Trigger]' field compared to current Project model
-        }
-
-        // Struct matching the overall OLD backup format (no top-level 'triggers')
-        struct BackupData_OldFormat: Codable {
-            var projects: [Project_OldFormat]
-            var templates: [Template] // Assuming Template structure is compatible
-        }
-        
         // --- Read and Decode --- 
         // 1. Read from Clipboard (Same as before)
         let pasteboardString: String?
@@ -148,10 +128,32 @@ struct BackupManager {
         }
         print("Converted clipboard string to Data. Size: \(jsonData.count) bytes.")
 
-        // 3. Decode JSON Data using the OLD format struct
+        return try importData(from: jsonData)
+    }
+
+    /// Decodes a backup without touching the clipboard. Current backups retain their complete
+    /// Codable model; the legacy reconstruction below is only for backups made before triggers.
+    static func importData(from jsonData: Data) throws -> (projects: [Project], templates: [Template], triggers: [Trigger], appSettings: AppSettings) {
+        struct Project_OldFormat: Codable {
+            let id: UUID
+            var title: String
+            var finalDeadlineDate: Date
+            var subDeadlines: [SubDeadline]
+            var templateID: UUID?
+            var templateName: String?
+        }
+        struct BackupData_OldFormat: Codable {
+            var projects: [Project_OldFormat]
+            var templates: [Template]
+        }
         let decoder = JSONDecoder()
         decoder.dateDecodingStrategy = .iso8601
 
+        if let backup = try? decoder.decode(BackupData.self, from: jsonData) {
+            return (backup.projects, backup.templates, backup.triggers, backup.appSettings)
+        }
+
+        // 3. Decode JSON Data using the OLD format struct
         let decodedOldData: BackupData_OldFormat
         do {
             decodedOldData = try decoder.decode(BackupData_OldFormat.self, from: jsonData)
@@ -257,4 +259,4 @@ struct BackupManager {
 }
 
 // Make sure the main Project, Template, SubDeadline, Trigger structs are defined elsewhere
-// and are Codable as expected by the NEW format (used in export and internal ViewModel state). 
+// and are Codable as expected by the NEW format (used in export and internal ViewModel state).

@@ -26,6 +26,9 @@ struct SharedData: Codable, Equatable {
 /// `NSMetadataQuery` to detect iCloud-driven changes.
 class SharedDataStore: NSObject, ObservableObject {
     static let shared = SharedDataStore()
+    /// Match the declared entitlement instead of asking Foundation to choose a
+    /// default container. The latter may be nil during an otherwise valid launch.
+    static let iCloudContainerIdentifier = "iCloud.AOTondra.Deadline-Calendar"
 
     /// Posted when external changes are detected in the shared file.
     static let didDetectExternalChange = Notification.Name("SharedDataStoreDidDetectExternalChange")
@@ -66,7 +69,7 @@ class SharedDataStore: NSObject, ObservableObject {
 
     init(fileURL: URL? = nil, availabilityCheck: ((URL) throws -> Void)? = nil,
          downloadRequest: @escaping (URL) throws -> Void = { try FileManager.default.startDownloadingUbiquitousItem(at: $0) },
-         containerProvider: @escaping () -> URL? = { FileManager.default.url(forUbiquityContainerIdentifier: nil) }) {
+         containerProvider: @escaping () -> URL? = { FileManager.default.url(forUbiquityContainerIdentifier: SharedDataStore.iCloudContainerIdentifier) }) {
         self.explicitURL = fileURL
         self.containerProvider = containerProvider
         self.availabilityCheck = availabilityCheck
@@ -122,18 +125,20 @@ class SharedDataStore: NSObject, ObservableObject {
         metadataQuery?.enableUpdates()
     }
 
-    private func checkForExternalChanges() {
-        guard let fileURL = sharedFileURL else { return }
+    /// Returns true when it reported an external change.
+    @discardableResult
+    func checkForExternalChanges() -> Bool {
+        guard let fileURL = sharedFileURL else { return false }
 
         // Check the file's modification date.
         guard let attrs = try? FileManager.default.attributesOfItem(atPath: fileURL.path),
               let modDate = attrs[.modificationDate] as? Date else {
-            return
+            return false
         }
 
         // Skip if this is the same modification date we last wrote.
         if let lastKnown = lastKnownModificationDate, modDate <= lastKnown {
-            return
+            return false
         }
 
         lastKnownModificationDate = modDate
@@ -142,6 +147,7 @@ class SharedDataStore: NSObject, ObservableObject {
         DispatchQueue.main.async {
             NotificationCenter.default.post(name: SharedDataStore.didDetectExternalChange, object: nil)
         }
+        return true
     }
 
     // A failed load invalidates write permission. Only a successful read of absence
@@ -149,6 +155,9 @@ class SharedDataStore: NSObject, ObservableObject {
     func loadSnapshot() throws -> SharedData? {
         hasLoaded = false
         guard let url = sharedFileURL else { throw SnapshotError.unavailable }
+        // Taken before the read: a file replaced mid-read then has a newer date than
+        // we record, so the change is still reported rather than missed.
+        let dateBeforeRead = (try? FileManager.default.attributesOfItem(atPath: url.path))?[.modificationDate] as? Date
         let bytes = try SnapshotFile(url: url, availabilityCheck: availabilityCheck, downloadRequest: downloadRequest).read()
         let decoder = JSONDecoder()
         decoder.dateDecodingStrategy = .iso8601
@@ -156,6 +165,9 @@ class SharedDataStore: NSObject, ObservableObject {
         baseline = bytes
         loadedURL = url
         hasLoaded = true
+        // Remember the date of what we read, so iCloud's first file check at launch
+        // is not mistaken for someone else changing the data.
+        lastKnownModificationDate = dateBeforeRead
         return document
     }
 

@@ -142,6 +142,20 @@ class DeadlineViewModel: ObservableObject {
             lastModified: Date(), lastModifiedBy: "app")
     }
 
+    /// When iCloud is temporarily unavailable, retain a previously committed local
+    /// snapshot for viewing instead of presenting a launch-time error. It is not
+    /// marked writable: edits still require a successful current iCloud load.
+    private func installCachedSnapshotIfPresent() -> Bool {
+        let keys = [projectsKey, templatesKey, triggersKey, appSettingsKey,
+                    "projects_key", "projects", "SavedProjects", "templates", "triggers_key"]
+        let sources = effectsEnabled ? [userDefaults, UserDefaults.standard] : [userDefaults]
+        guard sources.contains(where: { source in keys.contains { source.object(forKey: $0) != nil } }) else { return false }
+        guard let cached = try? localSnapshot() else { return false }
+        install(migratingTriggerDates(cached))
+        saveError = nil
+        return true
+    }
+
     /// Preserve the existing trigger-date migration, but stage it before a single
     /// coordinated commit instead of publishing caches or deleting legacy keys.
     private func migratingTriggerDates(_ source: SharedData) -> SharedData {
@@ -190,6 +204,9 @@ class DeadlineViewModel: ObservableObject {
             return true
         } catch {
             currentLoadAvailable = false
+            // A usable local snapshot is better than an error sheet while iCloud is
+            // downloading. It deliberately remains read-only until iCloud loads.
+            if installCachedSnapshotIfPresent() { return false }
             if let snapshotError = error as? SnapshotError, case .downloading = snapshotError { isDownloadingSharedData = true; saveError = nil; return false }
             saveError = "Could not load deadlines. Existing data was preserved. " + error.localizedDescription
             return false
@@ -290,7 +307,20 @@ class DeadlineViewModel: ObservableObject {
 
         // Find the index of the project with the matching ID.
         if let index = projects.firstIndex(where: { $0.id == project.id }) {
-            projects[index] = project // Replace the old project with the updated one.
+            var updatedProject = project
+            if projects[index].title.caseInsensitiveCompare("Admin") == .orderedSame {
+                let priorDates = Dictionary(uniqueKeysWithValues: projects[index].subDeadlines.map { ($0.id, $0.date) })
+                for subDeadlineIndex in updatedProject.subDeadlines.indices {
+                    let subDeadline = updatedProject.subDeadlines[subDeadlineIndex]
+                    if let priorDate = priorDates[subDeadline.id], priorDate != subDeadline.date {
+                        updatedProject.subDeadlines[subDeadlineIndex].repetitionDayOfMonth = Calendar.current.component(.day, from: subDeadline.date)
+                        if let old = projects[index].subDeadlines.first(where: { $0.id == subDeadline.id }) {
+                            moveAdminPreviewDay(ofProjectID: project.id, from: old, to: updatedProject.subDeadlines[subDeadlineIndex])
+                        }
+                    }
+                }
+            }
+            projects[index] = updatedProject // Replace the old project with the updated one.
             saveProjects() // Save changes.
         } else {
             // Log if the project to update wasn't found.
@@ -614,14 +644,46 @@ class DeadlineViewModel: ObservableObject {
             return
         }
 
-        // Update the specific sub-deadline.
-        projects[projectIndex].subDeadlines[subDeadlineIndex] = subDeadline
+        // An explicit date edit changes the day that future rolling Admin copies should use.
+        // Completion-only updates leave the preserved short-month anchor untouched.
+        var updatedSubDeadline = subDeadline
+        let previousSubDeadline = projects[projectIndex].subDeadlines[subDeadlineIndex]
+        if previousSubDeadline.date != subDeadline.date {
+            updatedSubDeadline.repetitionDayOfMonth = Calendar.current.component(.day, from: subDeadline.date)
+            moveAdminPreviewDay(ofProjectID: projects[projectIndex].id, from: previousSubDeadline, to: updatedSubDeadline)
+        }
+        projects[projectIndex].subDeadlines[subDeadlineIndex] = updatedSubDeadline
         // Ensure subdeadlines within the project remain sorted after update
         projects[projectIndex].subDeadlines.sort { $0.date < $1.date }
         advanceRollingAdminIfComplete(at: projectIndex)
         saveProjects() // Save changes.
 
         }
+    }
+
+    /// Editing a current-month Admin task's day also moves the same task in the visible next-month copy,
+    /// unless that copy was already moved by hand. Only the Admin rolling pair is touched.
+    private func moveAdminPreviewDay(ofProjectID id: UUID, from old: SubDeadline, to new: SubDeadline) {
+        let calendar = Calendar.current
+        guard let current = projects.first(where: { $0.id == id }),
+              current.title.caseInsensitiveCompare("Admin") == .orderedSame,
+              current.repetitionSourceID == nil,
+              let previewIndex = projects.firstIndex(where: { $0.repetitionSourceID == id }),
+              let taskIndex = projects[previewIndex].subDeadlines.firstIndex(where: {
+                  // Generated copies carry no template ID, so fall back to the title when either side lacks one.
+                  if let a = $0.templateSubDeadlineID, let b = old.templateSubDeadlineID { return a == b }
+                  return $0.title == old.title
+              }) else { return }
+        let task = projects[previewIndex].subDeadlines[taskIndex]
+        let monthLength = calendar.range(of: .day, in: .month, for: task.date)!.count
+        let oldAnchor = old.repetitionDayOfMonth ?? calendar.component(.day, from: old.date)
+        guard !task.isCompleted, calendar.component(.day, from: task.date) == min(oldAnchor, monthLength) else { return }
+        let newDay = calendar.component(.day, from: new.date)
+        var parts = calendar.dateComponents([.year, .month, .hour, .minute, .second, .nanosecond], from: task.date)
+        parts.day = min(newDay, monthLength)
+        projects[previewIndex].subDeadlines[taskIndex].date = calendar.date(from: parts) ?? task.date
+        projects[previewIndex].subDeadlines[taskIndex].repetitionDayOfMonth = newDay
+        projects[previewIndex].subDeadlines.sort { $0.date < $1.date }
     }
 
     /// The converted Admin project deliberately keeps only itself and one next-month copy.
@@ -1578,9 +1640,13 @@ struct ShakeEffect: GeometryEffect {
 // Contains the TabView for switching between All Deadlines and Projects.
 struct ContentView: View {
     // Inject the shared ViewModel instance.
-    @StateObject private var viewModel = DeadlineViewModel()
+    @StateObject private var viewModel: DeadlineViewModel
     @Environment(\.scenePhase) private var scenePhase
     @State private var lastActiveTime = Date()
+
+    init(viewModel: DeadlineViewModel = DeadlineViewModel()) {
+        _viewModel = StateObject(wrappedValue: viewModel)
+    }
 
     var body: some View {
         TabView {
