@@ -314,6 +314,9 @@ class DeadlineViewModel: ObservableObject {
                     let subDeadline = updatedProject.subDeadlines[subDeadlineIndex]
                     if let priorDate = priorDates[subDeadline.id], priorDate != subDeadline.date {
                         updatedProject.subDeadlines[subDeadlineIndex].repetitionDayOfMonth = Calendar.current.component(.day, from: subDeadline.date)
+                        if let old = projects[index].subDeadlines.first(where: { $0.id == subDeadline.id }) {
+                            moveAdminPreviewDay(ofProjectID: project.id, from: old, to: updatedProject.subDeadlines[subDeadlineIndex])
+                        }
                     }
                 }
             }
@@ -644,8 +647,10 @@ class DeadlineViewModel: ObservableObject {
         // An explicit date edit changes the day that future rolling Admin copies should use.
         // Completion-only updates leave the preserved short-month anchor untouched.
         var updatedSubDeadline = subDeadline
-        if projects[projectIndex].subDeadlines[subDeadlineIndex].date != subDeadline.date {
+        let previousSubDeadline = projects[projectIndex].subDeadlines[subDeadlineIndex]
+        if previousSubDeadline.date != subDeadline.date {
             updatedSubDeadline.repetitionDayOfMonth = Calendar.current.component(.day, from: subDeadline.date)
+            moveAdminPreviewDay(ofProjectID: projects[projectIndex].id, from: previousSubDeadline, to: updatedSubDeadline)
         }
         projects[projectIndex].subDeadlines[subDeadlineIndex] = updatedSubDeadline
         // Ensure subdeadlines within the project remain sorted after update
@@ -654,6 +659,31 @@ class DeadlineViewModel: ObservableObject {
         saveProjects() // Save changes.
 
         }
+    }
+
+    /// Editing a current-month Admin task's day also moves the same task in the visible next-month copy,
+    /// unless that copy was already moved by hand. Only the Admin rolling pair is touched.
+    private func moveAdminPreviewDay(ofProjectID id: UUID, from old: SubDeadline, to new: SubDeadline) {
+        let calendar = Calendar.current
+        guard let current = projects.first(where: { $0.id == id }),
+              current.title.caseInsensitiveCompare("Admin") == .orderedSame,
+              current.repetitionSourceID == nil,
+              let previewIndex = projects.firstIndex(where: { $0.repetitionSourceID == id }),
+              let taskIndex = projects[previewIndex].subDeadlines.firstIndex(where: {
+                  // Generated copies carry no template ID, so fall back to the title when either side lacks one.
+                  if let a = $0.templateSubDeadlineID, let b = old.templateSubDeadlineID { return a == b }
+                  return $0.title == old.title
+              }) else { return }
+        let task = projects[previewIndex].subDeadlines[taskIndex]
+        let monthLength = calendar.range(of: .day, in: .month, for: task.date)!.count
+        let oldAnchor = old.repetitionDayOfMonth ?? calendar.component(.day, from: old.date)
+        guard !task.isCompleted, calendar.component(.day, from: task.date) == min(oldAnchor, monthLength) else { return }
+        let newDay = calendar.component(.day, from: new.date)
+        var parts = calendar.dateComponents([.year, .month, .hour, .minute, .second, .nanosecond], from: task.date)
+        parts.day = min(newDay, monthLength)
+        projects[previewIndex].subDeadlines[taskIndex].date = calendar.date(from: parts) ?? task.date
+        projects[previewIndex].subDeadlines[taskIndex].repetitionDayOfMonth = newDay
+        projects[previewIndex].subDeadlines.sort { $0.date < $1.date }
     }
 
     /// The converted Admin project deliberately keeps only itself and one next-month copy.
