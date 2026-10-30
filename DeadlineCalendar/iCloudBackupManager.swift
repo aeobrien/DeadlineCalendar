@@ -15,6 +15,10 @@ struct BackupProject: Codable {
     var triggers: [BackupTrigger]
     var templateID: UUID?
     var templateName: String?
+    // Added later: absent in older backups, so optional.
+    var repetitionPattern: RepetitionPattern?
+    var repetitionSourceID: UUID?
+    var repetitionOccurrenceNumber: Int?
 }
 
 /// Represents a backed up sub-deadline
@@ -26,6 +30,11 @@ struct BackupSubDeadline: Codable {
     var subtasks: [BackupSubtask]
     let templateSubDeadlineID: UUID?
     var triggerID: UUID?
+    // Added later: absent in older backups, so optional.
+    var repetitionPattern: RepetitionPattern?
+    var repetitionSourceID: UUID?
+    var repetitionOccurrenceNumber: Int?
+    var repetitionDayOfMonth: Int?
 }
 
 /// Represents a backed up subtask
@@ -289,9 +298,7 @@ class iCloudBackupManager: ObservableObject {
         }
         
         // Convert backup data to app models
-        let restoredProjects = backupData.projects.map { convertBackupProject($0) }
-        let restoredTemplates = backupData.templates.map { convertBackupTemplate($0) }
-        let restoredTriggers = backupData.triggers.map { convertBackupTrigger($0) }
+        let (restoredProjects, restoredTemplates, restoredTriggers) = restoredModels(from: backupData)
         
         // Update view model
         viewModel.projects = restoredProjects
@@ -308,6 +315,13 @@ class iCloudBackupManager: ObservableObject {
         print("  - Triggers: \(restoredTriggers.count)")
     }
     
+    /// Turn decoded backup data back into app models (no UI, no saving).
+    func restoredModels(from backupData: DeadlineCalendarBackupData) -> (projects: [Project], templates: [Template], triggers: [Trigger]) {
+        (backupData.projects.map { convertBackupProject($0) },
+         backupData.templates.map { convertBackupTemplate($0) },
+         backupData.triggers.map { convertBackupTrigger($0) })
+    }
+
     /// Delete a backup
     func deleteBackup(_ document: DeadlineCalendarBackupDocument) async throws {
         let fileManager = FileManager.default
@@ -368,7 +382,7 @@ class iCloudBackupManager: ObservableObject {
         return backupsURL
     }
     
-    private func createBackupData(projects: [Project], templates: [Template], triggers: [Trigger], appSettings: AppSettings) -> DeadlineCalendarBackupData {
+    func createBackupData(projects: [Project], templates: [Template], triggers: [Trigger], appSettings: AppSettings) -> DeadlineCalendarBackupData {
         // Convert app models to backup models
         let backupProjects = projects.map { project in
             BackupProject(
@@ -389,12 +403,19 @@ class iCloudBackupManager: ObservableObject {
                             )
                         },
                         templateSubDeadlineID: subDeadline.templateSubDeadlineID,
-                        triggerID: subDeadline.triggerID
+                        triggerID: subDeadline.triggerID,
+                        repetitionPattern: subDeadline.repetitionPattern,
+                        repetitionSourceID: subDeadline.repetitionSourceID,
+                        repetitionOccurrenceNumber: subDeadline.repetitionOccurrenceNumber,
+                        repetitionDayOfMonth: subDeadline.repetitionDayOfMonth
                     )
                 },
-                triggers: [], // Triggers are stored separately at the top level
+                triggers: triggers.filter { $0.projectID == project.id }.map(backupTrigger),
                 templateID: project.templateID,
-                templateName: project.templateName
+                templateName: project.templateName,
+                repetitionPattern: project.repetitionPattern,
+                repetitionSourceID: project.repetitionSourceID,
+                repetitionOccurrenceNumber: project.repetitionOccurrenceNumber
             )
         }
         
@@ -420,17 +441,7 @@ class iCloudBackupManager: ObservableObject {
             )
         }
         
-        let backupTriggers = triggers.map { trigger in
-            BackupTrigger(
-                id: trigger.id,
-                name: trigger.name,
-                isActive: trigger.isActive,
-                projectID: trigger.projectID,
-                activationDate: trigger.activationDate,
-                originatingTemplateTriggerID: trigger.originatingTemplateTriggerID,
-                date: trigger.date
-            )
-        }
+        let backupTriggers = triggers.map(backupTrigger)
         
         return DeadlineCalendarBackupData(
             version: "1.0",
@@ -443,6 +454,18 @@ class iCloudBackupManager: ObservableObject {
         )
     }
     
+    private func backupTrigger(_ trigger: Trigger) -> BackupTrigger {
+        BackupTrigger(
+            id: trigger.id,
+            name: trigger.name,
+            isActive: trigger.isActive,
+            projectID: trigger.projectID,
+            activationDate: trigger.activationDate,
+            originatingTemplateTriggerID: trigger.originatingTemplateTriggerID,
+            date: trigger.date
+        )
+    }
+
     // Convert backup models back to app models
     private func convertBackupProject(_ backup: BackupProject) -> Project {
         Project(
@@ -450,9 +473,12 @@ class iCloudBackupManager: ObservableObject {
             title: backup.title,
             finalDeadlineDate: backup.finalDeadlineDate,
             subDeadlines: backup.subDeadlines.map { convertBackupSubDeadline($0) },
-            triggers: [], // Triggers are restored separately
+            triggers: backup.triggers.map { convertBackupTrigger($0) },
             templateID: backup.templateID,
-            templateName: backup.templateName
+            templateName: backup.templateName,
+            repetitionPattern: backup.repetitionPattern,
+            repetitionSourceID: backup.repetitionSourceID,
+            repetitionOccurrenceNumber: backup.repetitionOccurrenceNumber
         )
     }
     
@@ -464,7 +490,11 @@ class iCloudBackupManager: ObservableObject {
             isCompleted: backup.isCompleted,
             subtasks: backup.subtasks.map { convertBackupSubtask($0) },
             templateSubDeadlineID: backup.templateSubDeadlineID,
-            triggerID: backup.triggerID
+            triggerID: backup.triggerID,
+            repetitionPattern: backup.repetitionPattern,
+            repetitionSourceID: backup.repetitionSourceID,
+            repetitionOccurrenceNumber: backup.repetitionOccurrenceNumber,
+            repetitionDayOfMonth: backup.repetitionDayOfMonth
         )
     }
     
