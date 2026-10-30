@@ -136,6 +136,9 @@ class iCloudBackupManager: ObservableObject {
     private let fileExtension = "deadlinebackup"
     private let lastBackupDateKey = "lastDeadlineCalendarBackupDate"
     
+    /// Walkthrough/test only: a local folder standing in for the iCloud backups folder.
+    static var fixtureBackupsFolder: URL?
+
     init() {
         checkiCloudAvailability()
         loadLastBackupDate()
@@ -145,7 +148,9 @@ class iCloudBackupManager: ObservableObject {
     
     /// Check if iCloud is available
     func checkiCloudAvailability() {
-        if FileManager.default.ubiquityIdentityToken != nil {
+        if Self.fixtureBackupsFolder != nil {
+            iCloudAvailable = true
+        } else if FileManager.default.ubiquityIdentityToken != nil {
             iCloudAvailable = true
             print("iCloudBackupManager: iCloud is available")
         } else {
@@ -354,6 +359,10 @@ class iCloudBackupManager: ObservableObject {
     // MARK: - Private Methods
     
     private func getOrCreateBackupsFolder() async throws -> URL {
+        if let fixture = Self.fixtureBackupsFolder {
+            try FileManager.default.createDirectory(at: fixture, withIntermediateDirectories: true)
+            return fixture
+        }
         // Use nil to get the default container, or specify the exact container ID if needed
         guard let iCloudContainer = FileManager.default.url(forUbiquityContainerIdentifier: nil) else {
             print("iCloudBackupManager: Failed to get iCloud container URL")
