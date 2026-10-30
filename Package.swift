@@ -15,25 +15,25 @@ let package = Package(
             name: "DeadlineCalendar",
             path: ".",
             exclude: [
-                "Deadline CalendarTests",
-                "Deadline CalendarUITests",
-                "Deadline Calendar.xcodeproj",
+                "DeadlineCalendarTests",
+                "DeadlineCalendarUITests",
+                "DeadlineCalendar.xcodeproj",
                 "build",
                 "DeadlineCalendarWidget",
                 "DeadlineCalendarWidget/Info.plist",
                 "DeadlineCalendarWidgetExtension.entitlements",
-                "Deadline Calendar/Preview Content",
-                "Deadline Calendar/Deadline Calendar.entitlements",
-                "Deadline Calendar/Assets.xcassets",
+                "DeadlineCalendar/Preview Content",
+                "DeadlineCalendar/DeadlineCalendar.entitlements",
+                "DeadlineCalendar/Assets.xcassets",
             ],
             sources: [
                 "BackupManager.swift",
                 "DeadlineRow.swift",
                 "Models.swift",
-                "Deadline Calendar"
+                "DeadlineCalendar"
             ],
             resources: [
-                .process("Deadline Calendar/Assets.xcassets")
+                .process("DeadlineCalendar/Assets.xcassets")
             ]
         ),
         .target(
@@ -48,7 +48,7 @@ let package = Package(
         .testTarget(
             name: "DeadlineCalendarTests",
             dependencies: ["DeadlineCalendar"],
-            path: "Deadline CalendarTests"
+            path: "DeadlineCalendarTests"
         )
     ]
 )
