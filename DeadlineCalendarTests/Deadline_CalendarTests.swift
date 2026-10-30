@@ -606,3 +606,78 @@ final class ImportReplacementGuardTests: XCTestCase {
         XCTAssertEqual(reloaded.triggers, [trigger])
     }
 }
+
+@MainActor final class ICloudBackupRestoreTests: XCTestCase {
+    let monthly = RepetitionPattern(type: .fixedInterval, intervalValue: 1, intervalUnit: .months, maxOccurrences: 12)
+
+    func sampleProject() -> (Project, Trigger) {
+        let projectID = UUID()
+        let trigger = Trigger(name: "Admin approval", projectID: projectID, date: Date(timeIntervalSince1970: 1_792_195_200), isActive: true, activationDate: Date(timeIntervalSince1970: 1_792_022_400))
+        let sub = SubDeadline(title: "Pay invoices", date: Date(timeIntervalSince1970: 1_792_195_200), triggerID: trigger.id, repetitionPattern: monthly, repetitionSourceID: UUID(), repetitionOccurrenceNumber: 2, repetitionDayOfMonth: 31)
+        let project = Project(id: projectID, title: "Admin", finalDeadlineDate: Date(timeIntervalSince1970: 1_792_627_200), subDeadlines: [sub], triggers: [trigger], repetitionPattern: monthly, repetitionSourceID: UUID(), repetitionOccurrenceNumber: 2)
+        return (project, trigger)
+    }
+
+    func roundTrip(_ project: Project, _ trigger: Trigger) throws -> (projects: [Project], templates: [Template], triggers: [Trigger]) {
+        let manager = iCloudBackupManager()
+        let data = manager.createBackupData(projects: [project], templates: [], triggers: [trigger], appSettings: AppSettings())
+        let decoded = try JSONDecoder().decode(DeadlineCalendarBackupData.self, from: JSONEncoder().encode(data))
+        return manager.restoredModels(from: decoded)
+    }
+
+    func testRestoreKeepsRepeatSettingsOnProjectAndItems() throws {
+        let (project, trigger) = sampleProject()
+        let restored = try roundTrip(project, trigger)
+        XCTAssertEqual(restored.projects.first?.repetitionPattern, monthly)
+        XCTAssertEqual(restored.projects.first?.repetitionSourceID, project.repetitionSourceID)
+        XCTAssertEqual(restored.projects.first?.repetitionOccurrenceNumber, 2)
+        XCTAssertEqual(restored.projects.first?.subDeadlines.first, project.subDeadlines.first)
+    }
+
+    func testRestoreKeepsProjectTriggers() throws {
+        let (project, trigger) = sampleProject()
+        let restored = try roundTrip(project, trigger)
+        XCTAssertEqual(restored.projects.first?.triggers, [trigger])
+        XCTAssertEqual(restored.triggers, [trigger])
+    }
+
+    func testOldBackupWithoutNewFieldsStillRestores() throws {
+        let (project, trigger) = sampleProject()
+        let manager = iCloudBackupManager()
+        let data = manager.createBackupData(projects: [project], templates: [], triggers: [trigger], appSettings: AppSettings())
+        var json = try JSONSerialization.jsonObject(with: JSONEncoder().encode(data)) as! [String: Any]
+        var projects = json["projects"] as! [[String: Any]]
+        for i in projects.indices {
+            for key in ["repetitionPattern", "repetitionSourceID", "repetitionOccurrenceNumber"] { projects[i].removeValue(forKey: key) }
+            projects[i]["triggers"] = []
+            var subs = projects[i]["subDeadlines"] as! [[String: Any]]
+            for j in subs.indices {
+                for key in ["repetitionPattern", "repetitionSourceID", "repetitionOccurrenceNumber", "repetitionDayOfMonth"] { subs[j].removeValue(forKey: key) }
+            }
+            projects[i]["subDeadlines"] = subs
+        }
+        json["projects"] = projects
+        let old = try JSONDecoder().decode(DeadlineCalendarBackupData.self, from: JSONSerialization.data(withJSONObject: json))
+        let restored = manager.restoredModels(from: old)
+        XCTAssertEqual(restored.projects.first?.title, "Admin")
+        XCTAssertNil(restored.projects.first?.repetitionPattern)
+        XCTAssertEqual(restored.triggers, [trigger])
+    }
+
+    func testFailedCacheWriteAfterGoodSaveIsNotReportedAsFailedSave() throws {
+        let folder = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: folder) }
+        let name = "deadline-cachefail-" + UUID().uuidString
+        let defaults = UserDefaults(suiteName: name)!
+        defer { defaults.removePersistentDomain(forName: name) }
+        let viewModel = DeadlineViewModel(store: SharedDataStore(fileURL: folder.appendingPathComponent("d.json")), defaults: defaults, effectsEnabled: false)
+        XCTAssertTrue(viewModel.reloadCurrentData())
+        struct CacheBroke: Error {}
+        viewModel.cacheWriterOverride = { _ in throw CacheBroke() }
+        XCTAssertTrue(viewModel.addProject(Project(title: "First", finalDeadlineDate: Date())))
+        XCTAssertNil(viewModel.saveError)
+        XCTAssertTrue(viewModel.addProject(Project(title: "Second", finalDeadlineDate: Date())))
+        XCTAssertEqual(viewModel.projects.count, 2)
+    }
+}

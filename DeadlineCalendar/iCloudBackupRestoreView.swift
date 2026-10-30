@@ -10,6 +10,8 @@ struct iCloudBackupRestoreView: View {
     @State private var showingCreateBackupAlert = false
     @State private var showingDeleteConfirmation = false
     @State private var documentToDelete: DeadlineCalendarBackupDocument?
+    @State private var documentToRestore: DeadlineCalendarBackupDocument?
+    @State private var showingRestoreConfirmation = false
     @State private var showingError = false
     @State private var errorMessage = ""
     @State private var selectedBackup: DeadlineCalendarBackupDocument?
@@ -55,6 +57,17 @@ struct iCloudBackupRestoreView: View {
                 }
             } message: {
                 Text("This will create a backup of all your projects, templates, and settings in iCloud.")
+            }
+            .alert("Restore Backup?", isPresented: $showingRestoreConfirmation) {
+                Button("Cancel", role: .cancel) { documentToRestore = nil }
+                Button("Restore", role: .destructive) {
+                    if let document = documentToRestore {
+                        restoreBackup(document)
+                    }
+                    documentToRestore = nil
+                }
+            } message: {
+                Text("This will replace all current projects, templates, and settings with the data from this backup. This action cannot be undone.")
             }
             .alert("Delete Backup", isPresented: $showingDeleteConfirmation) {
                 Button("Cancel", role: .cancel) {}
@@ -172,7 +185,8 @@ struct iCloudBackupRestoreView: View {
                         BackupRow(document: document) {
                             selectedBackup = document
                         } onRestore: {
-                            restoreBackup(document)
+                            documentToRestore = document
+                            showingRestoreConfirmation = true
                         } onDelete: {
                             documentToDelete = document
                             showingDeleteConfirmation = true

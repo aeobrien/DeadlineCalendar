@@ -227,6 +227,7 @@ class DeadlineViewModel: ObservableObject {
     }
 
     // Shared persistence succeeds before caches, notifications or success signals.
+    var cacheWriterOverride: ((SharedData) throws -> Void)?
     private func cacheCommitted(_ document: SharedData) throws {
         let encoder = JSONEncoder()
         let encoded = try [encoder.encode(document.projects), encoder.encode(document.templates),
@@ -250,7 +251,11 @@ class DeadlineViewModel: ObservableObject {
             install(saved)
             committedSnapshot = saved
             currentLoadAvailable = true
-            if changed { try cacheCommitted(saved) }
+            if changed {
+                // The shared file is already saved; a failed local cache write must not look like a failed save.
+                do { try (cacheWriterOverride ?? cacheCommitted)(saved) }
+                catch { print("[SAVE] Local cache write failed after a good save: \(error)") }
+            }
             pendingSnapshot = nil; saveError = nil
             return true
         } catch {
