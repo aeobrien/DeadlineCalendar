@@ -37,6 +37,11 @@
 | # | Task | Status | Effort | Deadline | Notes |
 |---|------|--------|--------|----------|-------|
 | 2.1.1 | Address issues as they arise | In Progress | Quick Win | | Maintenance mode |
+| 2.1.2 | October 2026 session-storage hardening (builds 6–7): reliable iCloud hydration, declared container, stale-write protection, save-before-effects ordering, Admin month-end rolling, restore recurrence preservation and replacement confirmation | Done | Deep Focus | 2026-10-30 | Builds 6–7; see `docs/BUILD-SESSION-STORAGE.md` and `reports/session-storage/` |
+| 2.1.3 | Persist an attempted edit after a failed save so it survives quitting | Todo | Normal | | Gap 4: the in-memory pending snapshot is lost on quit |
+| 2.1.4 | Make multi-select deletion all-or-nothing | Todo | High | | Gap 7: individual deletes can leave a partial selection removed |
+| 2.1.5 | Clarify or remove the CLI delete preview recurrence-siblings field | Todo | Low | | Gap 8: exact-ID delete always reports `removesRecurrenceSiblings: false` |
+| 2.1.6 | Verify real iCloud/device sync and current installed-app behaviour | Todo | High | | Gap 9: cross-device sync, remote-version handling, synced lock visibility and current device interaction remain unverified |
 
 ---
 
@@ -56,6 +61,7 @@
 | 3.1.3 | Add SharedDataStore.swift to Xcode project | Done | Quick Win | | pbxproj manual edit |
 | 3.1.4 | Add `add` command to CLI for standalone deadlines | Done | Quick Win | | |
 | 3.1.5 | Add .gitignore to CLI | Done | Quick Win | | |
+| 3.1.6 | Harden CLI shared-file session commands (`--data-file`, idempotent add, revision-locked delete) | Done | Deep Focus | 2026-10-30 | Landed in build 7 |
 
 ---
 

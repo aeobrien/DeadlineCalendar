@@ -44,6 +44,28 @@ import XCTest
         XCTAssertTrue(first.addProject(Project(title: "Fresh edit", finalDeadlineDate: Date())))
         XCTAssertEqual(first.projects.count, 2)
     }
+
+    func testReloadInvalidatesAnOpenEditorGeneration() throws {
+        let viewModel = model()
+        XCTAssertTrue(viewModel.reloadCurrentData())
+        let generationOpenedByTheEditor = viewModel.editorGeneration
+
+        XCTAssertTrue(viewModel.reloadCurrentData())
+
+        XCTAssertNotEqual(viewModel.editorGeneration, generationOpenedByTheEditor,
+                          "A successful reload must invalidate any editor opened against the old snapshot.")
+    }
+
+    func testPreReloadFormCannotCommitBecauseContentViewIsRecreatedForTheNewEditorGeneration() throws {
+        let contentView = URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+            .appendingPathComponent("DeadlineCalendar/ContentView.swift")
+        let source = try String(contentsOf: contentView)
+
+        XCTAssertTrue(source.contains(".id(viewModel.editorGeneration)"),
+                      "The editing hierarchy must be recreated after reload, so a form from the prior generation is dismissed before it can submit.")
+    }
     func testExternalNoticeDoesNotAdvanceBaselineOrReplaceDraft() throws {
         let first = model(); XCTAssertTrue(first.reloadCurrentData())
         let second = model(); XCTAssertTrue(second.reloadCurrentData())
