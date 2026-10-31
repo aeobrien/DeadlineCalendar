@@ -508,6 +508,37 @@ final class ImportReplacementGuardTests: XCTestCase {
         XCTAssertEqual(imported.templates, [template])
     }
 
+    func testRepeatingTestProjectsSurviveExportAndConfirmedReplace() throws {
+        let folder = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: folder) }
+        let defaultsName = "deadline-replace-repeat-" + UUID().uuidString
+        let defaults = UserDefaults(suiteName: defaultsName)!
+        defer { defaults.removePersistentDomain(forName: defaultsName) }
+        let store = SharedDataStore(fileURL: folder.appendingPathComponent("data.json"))
+        let viewModel = DeadlineViewModel(store: store, defaults: defaults, effectsEnabled: false)
+        XCTAssertTrue(viewModel.reloadCurrentData())
+        let data = DeadlineViewModel.repeatingTestProjects()
+        XCTAssertEqual(data.projects.count, 4)
+        XCTAssertTrue(data.projects.allSatisfy { $0.repetitionPattern != nil && $0.triggers.first?.isActive == true })
+        viewModel.projects = data.projects; viewModel.triggers = data.triggers
+        XCTAssertTrue(viewModel.saveAll())
+
+        // Export, then Replace with the exported copy, exactly as the Settings buttons do.
+        let backup = BackupManager.BackupData(projects: viewModel.projects, templates: viewModel.templates, triggers: viewModel.triggers, appSettings: viewModel.appSettings)
+        let encoder = JSONEncoder(); encoder.dateEncodingStrategy = .iso8601
+        let imported = try BackupManager.importData(from: encoder.encode(backup))
+        viewModel.projects = imported.projects; viewModel.templates = imported.templates
+        viewModel.triggers = imported.triggers; viewModel.appSettings = imported.appSettings
+        XCTAssertTrue(viewModel.saveAll())
+
+        let reloaded = DeadlineViewModel(store: store, defaults: defaults, effectsEnabled: false)
+        XCTAssertTrue(reloaded.reloadCurrentData())
+        XCTAssertEqual(reloaded.projects, data.projects)
+        XCTAssertEqual(reloaded.triggers, data.triggers)
+        XCTAssertEqual(reloaded.projects.map(\.repetitionPattern), data.projects.map(\.repetitionPattern))
+    }
+
     func testConfirmedReplaceSavesImportedProjectWhileCancelKeepsCurrentData() throws {
         let folder = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
