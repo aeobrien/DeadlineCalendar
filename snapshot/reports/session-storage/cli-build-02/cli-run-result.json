@@ -1,0 +1,22 @@
+{
+  "ok": true,
+  "exit_code": 0,
+  "timed_out": false,
+  "duration_s": 15.09,
+  "stdout_tail": "Test Suite 'All tests' started at 2026-10-06 12:35:06.516.\nTest Suite 'deadline-cliPackageTests.xctest' started at 2026-10-06 12:35:06.518.\nTest Suite 'DataStoreTests' started at 2026-10-06 12:35:06.518.\nTest Case '-[DeadlineStorageTests.DataStoreTests testExplicitMissingNeverFallsBackOrCreates]' started.\nTest Case '-[DeadlineStorageTests.DataStoreTests testExplicitMissingNeverFallsBackOrCreates]' passed (0.020 seconds).\nTest Case '-[DeadlineStorageTests.DataStoreTests testThrowingTargetFailureDoesNotRewrite]' started.\nTest Case '-[DeadlineStorageTests.DataStoreTests testThrowingTargetFailureDoesNotRewrite]' passed (0.032 seconds).\nTest Suite 'DataStoreTests' passed at 2026-10-06 12:35:06.571.\n\t Executed 2 tests, with 0 failures (0 unexpected) in 0.052 (0.052) seconds\nTest Suite 'SnapshotFileTests' started at 2026-10-06 12:35:06.571.\nTest Case '-[DeadlineStorageTests.SnapshotFileTests testExpectedBytesRejectStaleSave]' started.\nTest Case '-[DeadlineStorageTests.SnapshotFileTests testExpectedBytesRejectStaleSave]' passed (0.013 seconds).\nTest Case '-[DeadlineStorageTests.SnapshotFileTests testMissingReadDoesNotCreateAnything]' started.\nTest Case '-[DeadlineStorageTests.SnapshotFileTests testMissingReadDoesNotCreateAnything]' passed (0.004 seconds).\nTest Case '-[DeadlineStorageTests.SnapshotFileTests testNoopPreservesModificationTime]' started.\nTest Case '-[DeadlineStorageTests.SnapshotFileTests testNoopPreservesModificationTime]' passed (0.007 seconds).\nTest Case '-[DeadlineStorageTests.SnapshotFileTests testSymlinkCannotRedirectReadOrWrite]' started.\nTest Case '-[DeadlineStorageTests.SnapshotFileTests testSymlinkCannotRedirectReadOrWrite]' passed (0.003 seconds).\nTest Case '-[DeadlineStorageTests.SnapshotFileTests testThrowingMutationPreservesBytesAndReleasesLock]' started.\nTest Case '-[DeadlineStorageTests.SnapshotFileTests testThrowingMutationPreservesBytesAndReleasesLock]' passed (0.012 seconds).\nTest Suite 'SnapshotFileTests' passed at 2026-10-06 12:35:06.611.\n\t Executed 5 tests, with 0 failures (0 unexpected) in 0.039 (0.040) seconds\nTest Suite 'deadline-cliPackageTests.xctest' passed at 2026-10-06 12:35:06.611.\n\t Executed 7 tests, with 0 failures (0 unexpected) in 0.091 (0.093) seconds\nTest Suite 'All tests' passed at 2026-10-06 12:35:06.611.\n\t Executed 7 tests, with 0 failures (0 unexpected) in 0.091 (0.095) seconds\n\u25c7 Test run started.\n\u21b3 Testing Library Version: 124\n\u21b3 Target Platform: arm64e-apple-macos14.0\n\u2714 Test run with 0 tests passed after 0.001 seconds.\n",
+  "stderr_tail": "[1/1] Compiling plugin GenerateManual\n[2/2] Compiling plugin GenerateDoccReference\nBuilding for debugging...\n[2/7] Write sources\n[3/7] Write swift-version--58304C5D6DBC2206.txt\n[5/9] Emitting module deadline_cli\n[6/9] Compiling deadline_cli DeadlineCLI.swift\n[6/10] Write Objects.LinkFileList\n[7/10] Linking deadline-cli\n[8/10] Applying deadline-cli\n[9/11] Write Objects.LinkFileList\n[10/11] Linking deadline-cliPackageTests\nBuild complete! (7.64s)\n",
+  "truncated": false,
+  "assertions": [
+    {
+      "kind": "exit==",
+      "expected": 0,
+      "actual": 0,
+      "ok": true
+    }
+  ],
+  "files": {
+    "created": [],
+    "modified": [],
+    "deleted": []
+  }
+}

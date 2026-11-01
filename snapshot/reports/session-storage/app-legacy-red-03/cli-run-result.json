@@ -1,0 +1,28 @@
+{
+  "ok": false,
+  "exit_code": null,
+  "timed_out": true,
+  "duration_s": 180.405,
+  "stdout_tail": "Writing result bundle at path:\n\t/private/tmp/deadline-legacy-red-03.xcresult\n\n/Users/aidan/Dev/DeadlineCalendar-session-storage/DeadlineCalendar/ContentView.swift:250:17: warning: initialization of immutable value 'deletedTitle' was never used; consider replacing with assignment to '_' or removing it\n            let deletedTitle = projects[index].title\n            ~~~~^~~~~~~~~~~~\n            _\n/Users/aidan/Dev/DeadlineCalendar-session-storage/DeadlineCalendar/ContentView.swift:598:13: warning: initialization of immutable value 'deletedTitle' was never used; consider replacing with assignment to '_' or removing it\n        let deletedTitle = projects[projectIndex].subDeadlines[subDeadlineIndex].title\n        ~~~~^~~~~~~~~~~~\n        _\n/Users/aidan/Dev/DeadlineCalendar-session-storage/DeadlineCalendar/ContentView.swift:737:18: warning: initialization of immutable value 'deletedName' was never used; consider replacing with assignment to '_' or removing it\n             let deletedName = templates[index].name\n             ~~~~^~~~~~~~~~~\n             _\n/Users/aidan/Dev/DeadlineCalendar-session-storage/DeadlineCalendar/ContentView.swift:1098:21: warning: initialization of immutable value 'triggerName' was never used; consider replacing with assignment to '_' or removing it\n                let triggerName = triggers[index].name\n                ~~~~^~~~~~~~~~~\n                _\n/Users/aidan/Dev/DeadlineCalendar-session-storage/DeadlineCalendar/ContentView.swift:1119:21: warning: initialization of immutable value 'triggerName' was never used; consider replacing with assignment to '_' or removing it\n                let triggerName = triggers[index].name\n                ~~~~^~~~~~~~~~~\n                _\n/Users/aidan/Dev/DeadlineCalendar-session-storage/DeadlineCalendar/ContentView.swift:1137:17: warning: initialization of immutable value 'deletedName' was never used; consider replacing with assignment to '_' or removing it\n            let deletedName = triggers[index].name\n            ~~~~^~~~~~~~~~~\n            _\n/Users/aidan/Dev/DeadlineCalendar-session-storage/DeadlineCalendar/ContentView.swift:1283:13: warning: initialization of immutable value 'today' was never used; consider replacing with assignment to '_' or removing it\n        let today = Date()\n        ~~~~^~~~~\n        _\n/Users/aidan/Dev/DeadlineCalendar-session-storage/DeadlineCalendar/ContentView.swift:1507:10: warning: 'onChange(of:perform:)' was deprecated in iOS 17.0: Use `onChange` with a two or zero parameter action closure instead.\n        .onChange(of: scenePhase) { newPhase in\n         ^\n/Users/aidan/Dev/DeadlineCalendar-session-storage/DeadlineCalendar/ContentView.swift:1584:34: warning: 'init(destination:tag:selection:label:)' was deprecated in iOS 16.0: use NavigationLink(value:label:), or navigationDestination(isPresented:destination:), inside a NavigationStack or NavigationSplitView\n                                 NavigationLink(destination: ProjectDetailView(project: project, viewModel: viewModel),\n                                 ^\nwarning: Skipping duplicate build file in Compile Sources build phase: /Users/aidan/Dev/DeadlineCalendar-session-storage/DeadlineCalendar/BackupRestoreViewRedesigned.swift (in target 'Deadline Calendar' from project 'DeadlineCalendar')\n",
+  "stderr_tail": "--- xcodebuild: WARNING: Using the first of multiple matching destinations:\n{ platform:iOS Simulator, arch:arm64, id:DDCF7C0E-E17C-47E3-9FB9-43DC69B7970F, OS:18.4, name:DeadlineStorageFixtures }\n{ platform:iOS Simulator, arch:x86_64, id:DDCF7C0E-E17C-47E3-9FB9-43DC69B7970F, OS:18.4, name:DeadlineStorageFixtures }\n** BUILD INTERRUPTED **\n",
+  "truncated": false,
+  "assertions": [
+    {
+      "kind": "no-timeout",
+      "expected": false,
+      "actual": true,
+      "ok": false
+    },
+    {
+      "kind": "exit==",
+      "expected": 0,
+      "actual": null,
+      "ok": false
+    }
+  ],
+  "files": {
+    "created": [],
+    "modified": [],
+    "deleted": []
+  }
+}

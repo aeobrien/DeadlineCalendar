@@ -1,0 +1,22 @@
+{
+  "ok": false,
+  "exit_code": 1,
+  "timed_out": false,
+  "duration_s": 14.402,
+  "stdout_tail": "{\"fixture_only\": true, \"path_only_source_instrumentation\": true, \"both_writers_exit\": 0, \"expected_updates\": 2, \"actual_updates\": 1, \"titles\": [\"Synthetic one\", \"Synthetic two UPDATED\"]}\n",
+  "stderr_tail": "Traceback (most recent call last):\n  File \"/Users/aidan/Dev/DeadlineCalendar-session-storage/reports/session-storage/baseline_probe.py\", line 45, in <module>\n    assert updated==2,'LOST UPDATE: both writes reported success, one independent change disappeared'\nAssertionError: LOST UPDATE: both writes reported success, one independent change disappeared\n",
+  "truncated": false,
+  "assertions": [
+    {
+      "kind": "exit==",
+      "expected": 0,
+      "actual": 1,
+      "ok": false
+    }
+  ],
+  "files": {
+    "created": [],
+    "modified": [],
+    "deleted": []
+  }
+}
