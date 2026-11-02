@@ -1,0 +1,10 @@
+{
+  "tests_run": 6,
+  "success": true,
+  "failures": 0,
+  "errors": 0,
+  "actual_cli_calls": 24,
+  "all_explicit_synthetic_store": true,
+  "copied_binary_sha256": "2f8288f58fb2f183d5c7256b858883bd6007a6f3b6535edb53c27b25c12193ea",
+  "source_checkout_is_not_cwd": true
+}

@@ -1,0 +1,329 @@
+{
+  "ok": true,
+  "verdict": "pass",
+  "surface": "ios-simulator",
+  "flow": {
+    "ok": true,
+    "udid": "F1F04D0F-2BBE-465A-B3FC-03A4D8EB268C",
+    "bundle_id": "AOTondra.Deadline-Calendar",
+    "screenshots": [
+      "/private/tmp/claude-501/drf-flow/run11/03-after-cancel.png",
+      "/private/tmp/claude-501/drf-flow/run11/04-restored.png",
+      "/private/tmp/claude-501/drf-flow/run11/05-next-month-made.png"
+    ],
+    "detail": "test passed",
+    "result_bundle": "/private/tmp/claude-501/drf-flow/run11/ios-run.xcresult",
+    "events": [
+      {
+        "action": "waitfor",
+        "end_offset_ms": 3539,
+        "observation_id": "obs-0-waitfor",
+        "ordinal": 0,
+        "start_offset_ms": 2395,
+        "status": "ok",
+        "target": {
+          "by": "id",
+          "value": "Settings"
+        }
+      },
+      {
+        "action": "press",
+        "end_offset_ms": 5080,
+        "observation_id": "obs-1-press",
+        "ordinal": 1,
+        "start_offset_ms": 3539,
+        "status": "ok",
+        "target": {
+          "by": "id",
+          "value": "Deadlines"
+        }
+      },
+      {
+        "action": "assert",
+        "end_offset_ms": 6222,
+        "observation_id": "obs-2-assert",
+        "ordinal": 2,
+        "start_offset_ms": 5080,
+        "status": "ok",
+        "target": {
+          "by": "id",
+          "value": "deadline-card-Placeholder item-2027-01-15"
+        }
+      },
+      {
+        "action": "assert",
+        "end_offset_ms": 6265,
+        "observation_id": "obs-3-assert",
+        "ordinal": 3,
+        "start_offset_ms": 6222,
+        "status": "ok",
+        "target": {
+          "by": "id",
+          "value": "deadline-card-Month end-2027-01-31"
+        }
+      },
+      {
+        "action": "press",
+        "end_offset_ms": 8314,
+        "observation_id": "obs-4-press",
+        "ordinal": 4,
+        "start_offset_ms": 6265,
+        "status": "ok",
+        "target": {
+          "by": "id",
+          "value": "Settings"
+        }
+      },
+      {
+        "action": "press",
+        "end_offset_ms": 9937,
+        "observation_id": "obs-5-press",
+        "ordinal": 5,
+        "start_offset_ms": 8314,
+        "status": "ok",
+        "target": {
+          "by": "id",
+          "value": "Data Management"
+        }
+      },
+      {
+        "action": "press",
+        "end_offset_ms": 11608,
+        "observation_id": "obs-6-press",
+        "ordinal": 6,
+        "start_offset_ms": 9937,
+        "status": "ok",
+        "target": {
+          "by": "id",
+          "value": "iCloud Backup & Restore"
+        }
+      },
+      {
+        "action": "waitfor",
+        "end_offset_ms": 12750,
+        "observation_id": "obs-7-waitfor",
+        "ordinal": 7,
+        "start_offset_ms": 11608,
+        "status": "ok",
+        "target": {
+          "by": "id",
+          "value": "Restore"
+        }
+      },
+      {
+        "action": "press",
+        "end_offset_ms": 14791,
+        "observation_id": "obs-8-press",
+        "ordinal": 8,
+        "start_offset_ms": 12750,
+        "status": "ok",
+        "target": {
+          "by": "id",
+          "value": "Restore"
+        }
+      },
+      {
+        "action": "waitfor",
+        "end_offset_ms": 15890,
+        "observation_id": "obs-9-waitfor",
+        "ordinal": 9,
+        "start_offset_ms": 14791,
+        "status": "ok",
+        "target": {
+          "by": "id",
+          "value": "Restore Backup?"
+        }
+      },
+      {
+        "action": "press",
+        "end_offset_ms": 17982,
+        "observation_id": "obs-10-press",
+        "ordinal": 10,
+        "start_offset_ms": 15890,
+        "status": "ok",
+        "target": {
+          "by": "id",
+          "value": "Cancel"
+        }
+      },
+      {
+        "action": "assert",
+        "end_offset_ms": 18112,
+        "observation_id": "obs-11-assert",
+        "ordinal": 11,
+        "start_offset_ms": 17982,
+        "status": "ok",
+        "target": {
+          "by": "id",
+          "value": "Restore Backup?"
+        }
+      },
+      {
+        "action": "screenshot",
+        "end_offset_ms": 18207,
+        "observation_id": "obs-12-screenshot",
+        "ordinal": 12,
+        "screenshot": "03-after-cancel",
+        "start_offset_ms": 18112,
+        "status": "ok"
+      },
+      {
+        "action": "press",
+        "end_offset_ms": 20185,
+        "observation_id": "obs-13-press",
+        "ordinal": 13,
+        "start_offset_ms": 18207,
+        "status": "ok",
+        "target": {
+          "by": "id",
+          "value": "Restore"
+        }
+      },
+      {
+        "action": "waitfor",
+        "end_offset_ms": 21266,
+        "observation_id": "obs-14-waitfor",
+        "ordinal": 14,
+        "start_offset_ms": 20185,
+        "status": "ok",
+        "target": {
+          "by": "id",
+          "value": "Restore Backup?"
+        }
+      },
+      {
+        "action": "press",
+        "end_offset_ms": 23358,
+        "observation_id": "obs-15-press",
+        "ordinal": 15,
+        "start_offset_ms": 21266,
+        "status": "ok",
+        "target": {
+          "by": "id",
+          "value": "Restore"
+        }
+      },
+      {
+        "action": "sleep",
+        "end_offset_ms": 25369,
+        "observation_id": "obs-16-sleep",
+        "ordinal": 16,
+        "start_offset_ms": 23358,
+        "status": "ok"
+      },
+      {
+        "action": "press",
+        "end_offset_ms": 27457,
+        "observation_id": "obs-17-press",
+        "ordinal": 17,
+        "start_offset_ms": 25369,
+        "status": "ok",
+        "target": {
+          "by": "id",
+          "value": "Deadlines"
+        }
+      },
+      {
+        "action": "waitfor",
+        "end_offset_ms": 28597,
+        "observation_id": "obs-18-waitfor",
+        "ordinal": 18,
+        "start_offset_ms": 27457,
+        "status": "ok",
+        "target": {
+          "by": "id",
+          "value": "deadline-card-Month end-2027-01-31"
+        }
+      },
+      {
+        "action": "assert",
+        "end_offset_ms": 28653,
+        "observation_id": "obs-19-assert",
+        "ordinal": 19,
+        "start_offset_ms": 28597,
+        "status": "ok",
+        "target": {
+          "by": "id",
+          "value": "deadline-card-Placeholder item-2027-01-15"
+        }
+      },
+      {
+        "action": "screenshot",
+        "end_offset_ms": 28742,
+        "observation_id": "obs-20-screenshot",
+        "ordinal": 20,
+        "screenshot": "04-restored",
+        "start_offset_ms": 28653,
+        "status": "ok"
+      },
+      {
+        "action": "swipe",
+        "end_offset_ms": 31126,
+        "observation_id": "obs-21-swipe",
+        "ordinal": 21,
+        "start_offset_ms": 28742,
+        "status": "ok",
+        "target": {
+          "by": "id",
+          "value": "deadline-card-Month end-2027-01-31"
+        }
+      },
+      {
+        "action": "press",
+        "end_offset_ms": 33538,
+        "observation_id": "obs-22-press",
+        "ordinal": 22,
+        "start_offset_ms": 31126,
+        "status": "ok",
+        "target": {
+          "by": "id",
+          "value": "Complete"
+        }
+      },
+      {
+        "action": "sleep",
+        "end_offset_ms": 34542,
+        "observation_id": "obs-23-sleep",
+        "ordinal": 23,
+        "start_offset_ms": 33538,
+        "status": "ok"
+      },
+      {
+        "action": "waitfor",
+        "end_offset_ms": 35667,
+        "observation_id": "obs-24-waitfor",
+        "ordinal": 24,
+        "start_offset_ms": 34542,
+        "status": "ok",
+        "target": {
+          "by": "id",
+          "value": "deadline-card-Month end-2027-03-31"
+        }
+      },
+      {
+        "action": "assert",
+        "end_offset_ms": 35720,
+        "observation_id": "obs-25-assert",
+        "ordinal": 25,
+        "start_offset_ms": 35667,
+        "status": "ok",
+        "target": {
+          "by": "id",
+          "value": "deadline-card-Month end-2027-01-31"
+        }
+      },
+      {
+        "action": "screenshot",
+        "end_offset_ms": 35797,
+        "observation_id": "obs-26-screenshot",
+        "ordinal": 26,
+        "screenshot": "05-next-month-made",
+        "start_offset_ms": 35720,
+        "status": "ok"
+      }
+    ],
+    "events_path": "/private/tmp/claude-501/drf-flow/run11/events.json",
+    "driver_version": "ios-flow-runner/2.3"
+  },
+  "note": ""
+}

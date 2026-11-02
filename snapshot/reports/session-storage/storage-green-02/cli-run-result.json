@@ -1,0 +1,22 @@
+{
+  "ok": true,
+  "exit_code": 0,
+  "timed_out": false,
+  "duration_s": 5.71,
+  "stdout_tail": "Test Suite 'All tests' started at 2026-10-06 12:12:13.341.\nTest Suite 'deadline-cliPackageTests.xctest' started at 2026-10-06 12:12:13.342.\nTest Suite 'SnapshotFileTests' started at 2026-10-06 12:12:13.342.\nTest Case '-[DeadlineStorageTests.SnapshotFileTests testExpectedBytesRejectStaleSave]' started.\nTest Case '-[DeadlineStorageTests.SnapshotFileTests testExpectedBytesRejectStaleSave]' passed (0.024 seconds).\nTest Case '-[DeadlineStorageTests.SnapshotFileTests testMissingReadDoesNotCreateAnything]' started.\nTest Case '-[DeadlineStorageTests.SnapshotFileTests testMissingReadDoesNotCreateAnything]' passed (0.001 seconds).\nTest Case '-[DeadlineStorageTests.SnapshotFileTests testNoopPreservesModificationTime]' started.\nTest Case '-[DeadlineStorageTests.SnapshotFileTests testNoopPreservesModificationTime]' passed (0.002 seconds).\nTest Case '-[DeadlineStorageTests.SnapshotFileTests testSymlinkCannotRedirectReadOrWrite]' started.\nTest Case '-[DeadlineStorageTests.SnapshotFileTests testSymlinkCannotRedirectReadOrWrite]' passed (0.001 seconds).\nTest Case '-[DeadlineStorageTests.SnapshotFileTests testThrowingMutationPreservesBytesAndReleasesLock]' started.\nTest Case '-[DeadlineStorageTests.SnapshotFileTests testThrowingMutationPreservesBytesAndReleasesLock]' passed (0.004 seconds).\nTest Suite 'SnapshotFileTests' passed at 2026-10-06 12:12:13.375.\n\t Executed 5 tests, with 0 failures (0 unexpected) in 0.032 (0.032) seconds\nTest Suite 'deadline-cliPackageTests.xctest' passed at 2026-10-06 12:12:13.375.\n\t Executed 5 tests, with 0 failures (0 unexpected) in 0.032 (0.032) seconds\nTest Suite 'All tests' passed at 2026-10-06 12:12:13.375.\n\t Executed 5 tests, with 0 failures (0 unexpected) in 0.032 (0.033) seconds\n\u25c7 Test run started.\n\u21b3 Testing Library Version: 124\n\u21b3 Target Platform: arm64e-apple-macos14.0\n\u2714 Test run with 0 tests passed after 0.001 seconds.\n",
+  "stderr_tail": "[1/1] Compiling plugin GenerateManual\n[2/2] Compiling plugin GenerateDoccReference\nBuilding for debugging...\n[2/9] Write sources\n[3/9] Write swift-version--58304C5D6DBC2206.txt\n[5/11] Emitting module deadline_cli\n[6/11] Compiling deadline_cli SnapshotFile.swift\n[6/11] Write Objects.LinkFileList\n[7/11] Linking deadline-cli\n[8/11] Applying deadline-cli\n[10/13] Compiling DeadlineStorageTests SnapshotFileTests.swift\n[11/13] Emitting module DeadlineStorageTests\n[12/15] Compiling deadline_cliPackageTests runner.swift\n[13/15] Emitting module deadline_cliPackageTests\n[13/15] Write Objects.LinkFileList\n[14/15] Linking deadline-cliPackageTests\nBuild complete! (4.02s)\n",
+  "truncated": false,
+  "assertions": [
+    {
+      "kind": "exit==",
+      "expected": 0,
+      "actual": 0,
+      "ok": true
+    }
+  ],
+  "files": {
+    "created": [],
+    "modified": [],
+    "deleted": []
+  }
+}
