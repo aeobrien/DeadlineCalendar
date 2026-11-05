@@ -9,7 +9,7 @@ Active / maintenance
 ## Status
 **Lane:** work
 **Current state:** Actively used. Shared iCloud data layer live with two-way CLI sync.
-**Last updated:** 2026-11-02
+**Last updated:** 2026-11-05
 
 ## Tech Stack
 - **Language:** Swift
@@ -18,7 +18,8 @@ Active / maintenance
 - **Platform:** iOS
 
 ## Key Features
-- Single delivery date entry with automatic sub-deadline calculation
+- Delivery-date projects with automatic sub-deadline calculation
+- Standalone deadlines with optional repetition (`DeadlineCalendar/AddStandaloneDeadlineView.swift`)
 - Recurring monthly delivery support
 - Home screen widget (DeadlineCalendarWidget)
 - Backup management
