@@ -1,0 +1,29 @@
+{
+  "package_sha256": "f3bd9ea71ebdafdb2612e4f9921010aefbf5890a51ed8f15f48f5f91314b122f",
+  "model": "anthropic/claude-fable-5.1",
+  "source_hashes": {
+    "DeadlineCalendar.xcodeproj/project.pbxproj": "2e326390ce8525f0478b61c7b050a41656697b713ef5c95c1623d5fcda47f0c3",
+    "DeadlineCalendar.xcodeproj/xcshareddata/xcschemes/Deadline Calendar.xcscheme": "fbf0a2f1491af2063ce0c885f5e8f7a884163cb3f126ce7f56e372131a9e5aaa",
+    "DeadlineCalendar/AddProjectView.swift": "64ef549379703ec9080a5732b2aa345ac722c1d68cd7f8879bf187420709773e",
+    "DeadlineCalendar/AddStandaloneDeadlineView.swift": "bd45cf5e608cccdff0f89d69ca93fa14214e264f60d34833b3d768a8ac13f255",
+    "DeadlineCalendar/BackupRestoreView.swift": "22bff65c5e202cdbfce764be47aec966093b7755eca624187d9f2e02a0998e27",
+    "DeadlineCalendar/BackupRestoreViewRedesigned.swift": "f77ee4d2c3144330ae95011c51b93cea279840397eaa589cb2f8a2ffe376d131",
+    "DeadlineCalendar/CompletedProjectsView.swift": "31f23ea0cefab4982f571c369ca1b7c4f456a66c72284ce2dcba4befdb8a3535",
+    "DeadlineCalendar/ContentView.swift": "dee63315abb55e77934d407a9c07da9cb4886e92d44da738644d33946a9cd3de",
+    "DeadlineCalendar/Deadline_CalendarApp.swift": "ab5aa5bd9ab729b5b2d5923063dd9f6b5ea5e5b9d2666c780abcb220cef6dbb2",
+    "DeadlineCalendar/ProjectDetailView.swift": "e699821cdbe58a93605dc8898b0a9a627826b07536fa153d9c4405f6613d484f",
+    "DeadlineCalendar/ProjectEditorView.swift": "a3b4fc503ee04eb8fa3270f50109a8add4272a8a1a7a49f0d41b7f8ada529ad3",
+    "DeadlineCalendar/SharedDataStore.swift": "2469d3b3adb6196e938c177f4eaa006032b0713a43c7b4fd217d7fdd2884bb9e",
+    "DeadlineCalendar/TemplateEditorView.swift": "384b554185186844703fbb9b376ee5f578a9c3023a8a620652d50fab0a6b3f20",
+    "DeadlineCalendar/iCloudBackupManager.swift": "1a6b1766a77c12e2765e6e5b3061dcdfd76c9c3620e7bc9b451e0d4ba231b0e9",
+    "DeadlineCalendarTests/Deadline_CalendarTests.swift": "b7c691eebbe355d2b7df4ead19f8c44fa054c430a9957d332505c93f46752200",
+    "deadline-cli/Package.swift": "730ae8b32416abc6686e9ec48f818bef175bd294a591dea734827ed1529342a9",
+    "deadline-cli/Sources/DataStore.swift": "bcd9c90d2e6b56f2eab42f0f28f70c01545885db2f184042d74159bc64a6bcf1",
+    "deadline-cli/Sources/DeadlineCLI.swift": "9e4c40fb01e3b6062e828f0494b2a8126a995a48fb092c2544a86e12a47e1368",
+    "deadline-cli/Sources/SnapshotFile.swift": "5c2ec4c25f83dc73130515cbbcbe196984a823e2c0a8fe276aad9d238f9be146",
+    "deadline-cli/Tests/DataStoreTests.swift": "b672a5e5b8c51977569b900619d8fe7882a5642f5c4bdb8e5c1d0b6a9149e878",
+    "deadline-cli/Tests/SnapshotFileTests.swift": "5585dab1354c371c2080cdbf7d219045a95886745334ea42b709d8be848109f6"
+  },
+  "executed_tests": false,
+  "visible_review": false
+}
