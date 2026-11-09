@@ -1,7 +1,7 @@
 # DeadlineCalendar
 
 ## Overview
-Work deadline management app. Enter one delivery date and the app auto-calculates all sub-deadlines (X days before delivery = milestone Y). Designed for recurring monthly project deliveries. Includes a widget for at-a-glance deadline visibility. Built as a native iOS app in SwiftUI with WidgetKit.
+Work deadline management app. Enter one delivery date and either use a template to calculate sub-deadlines from its offsets or add sub-deadlines manually. Designed for recurring monthly project deliveries. Includes a widget for at-a-glance deadline visibility. Built as a native iOS app in SwiftUI with WidgetKit.
 
 ## Phase
 Active / maintenance
