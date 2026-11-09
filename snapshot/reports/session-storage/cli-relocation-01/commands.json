@@ -1,0 +1,21 @@
+[
+  {
+    "argv": [
+      "/var/folders/4q/7s70w8ys4f5gwsf4grw_njlh0000gn/T/deadline-cli-relocated-en62xy6f/portable-cli",
+      "add",
+      "Synthetic",
+      "--date",
+      "2030-02-01",
+      "--project-id",
+      "00000000-0000-0000-0000-000000000001",
+      "--id",
+      "33333333-3333-4333-8333-333333333333",
+      "--data-file",
+      "/var/folders/4q/7s70w8ys4f5gwsf4grw_njlh0000gn/T/tmp7fzcra4_/fixture.json"
+    ],
+    "cwd": "/var/folders/4q/7s70w8ys4f5gwsf4grw_njlh0000gn/T/deadline-cli-relocated-en62xy6f",
+    "exit_code": 64,
+    "stdout": "",
+    "stderr": "Error: Obtain user approval before adding; then pass --approved.\nUsage: deadline-cli <subcommand>\n  See 'deadline-cli --help' for more information.\n"
+  }
+]

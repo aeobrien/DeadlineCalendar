@@ -1,0 +1,32 @@
+{
+  "verdict": "pass",
+  "checked_files": [
+    "DeadlineCalendar/AddProjectView.swift",
+    "DeadlineCalendar/AddStandaloneDeadlineView.swift",
+    "DeadlineCalendar/BackupRestoreView.swift",
+    "DeadlineCalendar/BackupRestoreViewRedesigned.swift",
+    "DeadlineCalendar/CompletedProjectsView.swift",
+    "DeadlineCalendar/ContentView.swift",
+    "DeadlineCalendar/Deadline_CalendarApp.swift",
+    "DeadlineCalendar/ProjectDetailView.swift",
+    "DeadlineCalendar/ProjectEditorView.swift",
+    "DeadlineCalendar/SharedDataStore.swift",
+    "DeadlineCalendar/TemplateEditorView.swift",
+    "DeadlineCalendar/iCloudBackupManager.swift",
+    "DeadlineCalendarTests/Deadline_CalendarTests.swift",
+    "deadline-cli/Package.swift",
+    "deadline-cli/Sources/DataStore.swift",
+    "deadline-cli/Sources/DeadlineCLI.swift",
+    "deadline-cli/Sources/SnapshotFile.swift",
+    "deadline-cli/Tests/DataStoreTests.swift",
+    "deadline-cli/Tests/SnapshotFileTests.swift",
+    "reports/session-storage/app_store_probe.swift",
+    "reports/session-storage/legacy_probe.swift",
+    "reports/session-storage/reviews/astra-probes/DateNoop.swift",
+    "reports/session-storage/reviews/astra-probes/ModelFinal.swift",
+    "reports/session-storage/reviews/astra-probes/StoreEdges.swift",
+    "reports/session-storage/reviews/astra-probes/StoreFinal.swift"
+  ],
+  "diagnostics": "",
+  "detail": "swiftc -parse exit 0 on 25 file(s) in 7 target group(s)"
+}
