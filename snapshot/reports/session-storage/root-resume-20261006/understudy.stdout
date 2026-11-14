@@ -1,0 +1,5 @@
+[UNDERSTUDY] cli-run PASS
+  exit_code:  0
+  duration:   50.841s
+  [ok] exit==  expected=0
+  [ok] stdout.contains  expected='"passedTests": 14'

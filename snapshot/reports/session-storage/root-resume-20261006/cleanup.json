@@ -1,0 +1,20 @@
+{
+  "owned_group": {
+    "pid": 19443,
+    "pgid": 19443
+  },
+  "residual_before_cleanup": [],
+  "residual_after_cleanup": [],
+  "simulator_before_shutdown": {
+    "udid": "DDCF7C0E-E17C-47E3-9FB9-43DC69B7970F",
+    "name": "DeadlineStorageFixtures",
+    "state": "Shutdown",
+    "isAvailable": true
+  },
+  "simulator_after_shutdown": {
+    "udid": "DDCF7C0E-E17C-47E3-9FB9-43DC69B7970F",
+    "name": "DeadlineStorageFixtures",
+    "state": "Shutdown",
+    "isAvailable": true
+  }
+}

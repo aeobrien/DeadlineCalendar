@@ -1,0 +1,42 @@
+{
+  "devicesAndConfigurations" : [
+    {
+      "device" : {
+        "architecture" : "arm64",
+        "deviceId" : "DDCF7C0E-E17C-47E3-9FB9-43DC69B7970F",
+        "deviceName" : "DeadlineStorageFixtures",
+        "modelName" : "iPhone 16 Pro",
+        "osBuildNumber" : "22E238",
+        "osVersion" : "18.4",
+        "platform" : "iOS Simulator"
+      },
+      "expectedFailures" : 0,
+      "failedTests" : 0,
+      "passedTests" : 7,
+      "skippedTests" : 0,
+      "testPlanConfiguration" : {
+        "configurationId" : "1",
+        "configurationName" : "Test Scheme Action"
+      }
+    }
+  ],
+  "environmentDescription" : "Deadline Calendar · Built with macOS 15.7.3",
+  "expectedFailures" : 0,
+  "failedTests" : 0,
+  "finishTime" : 1791287050.542,
+  "passedTests" : 7,
+  "result" : "Passed",
+  "skippedTests" : 0,
+  "startTime" : 1791286903.127,
+  "statistics" : [
+
+  ],
+  "testFailures" : [
+
+  ],
+  "title" : "Test - Deadline Calendar",
+  "topInsights" : [
+
+  ],
+  "totalTestCount" : 7
+}

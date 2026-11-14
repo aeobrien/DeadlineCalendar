@@ -1,0 +1,22 @@
+{
+  "ok": false,
+  "exit_code": 1,
+  "timed_out": false,
+  "duration_s": 2.54,
+  "stdout_tail": "",
+  "stderr_tail": "....F....\n======================================================================\nFAIL: test_empty_existing_store_can_add_standalone (__main__.CLI)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/Users/aidan/Dev/DeadlineCalendar-session-storage/reports/session-storage/cli_probe.py\", line 37, in test_empty_existing_store_can_add_standalone\n    self.call('add','First','--date','2030-02-01','--id',DID,'--approved')\n  File \"/Users/aidan/Dev/DeadlineCalendar-session-storage/reports/session-storage/cli_probe.py\", line 13, in call\n    if ok:self.assertEqual(q.returncode,0,q.stderr)\nAssertionError: 64 != 0 : Error: Project not found.\nUsage: deadline-cli <subcommand>\n  See 'deadline-cli --help' for more information.\n\n\n----------------------------------------------------------------------\nRan 9 tests in 2.383s\n\nFAILED (failures=1)\n",
+  "truncated": false,
+  "assertions": [
+    {
+      "kind": "exit==",
+      "expected": 0,
+      "actual": 1,
+      "ok": false
+    }
+  ],
+  "files": {
+    "created": [],
+    "modified": [],
+    "deleted": []
+  }
+}

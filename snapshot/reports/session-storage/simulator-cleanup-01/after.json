@@ -1,0 +1,18 @@
+{
+  "at": "2026-10-06T12:18:32.072450+00:00",
+  "owned_simulator": [
+    {
+      "lastBootedAt": "2026-10-06T11:57:35Z",
+      "dataPath": "/Users/aidan/Library/Developer/CoreSimulator/Devices/DDCF7C0E-E17C-47E3-9FB9-43DC69B7970F/data",
+      "dataPathSize": 919085056,
+      "logPath": "/Users/aidan/Library/Logs/CoreSimulator/DDCF7C0E-E17C-47E3-9FB9-43DC69B7970F",
+      "udid": "DDCF7C0E-E17C-47E3-9FB9-43DC69B7970F",
+      "isAvailable": true,
+      "logPathSize": 503808,
+      "deviceTypeIdentifier": "com.apple.CoreSimulator.SimDeviceType.iPhone-16-Pro",
+      "state": "Shutdown",
+      "name": "DeadlineStorageFixtures"
+    }
+  ],
+  "remaining_owned_launchd_or_direct_children": []
+}
