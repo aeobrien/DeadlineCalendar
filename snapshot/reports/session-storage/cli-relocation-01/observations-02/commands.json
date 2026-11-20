@@ -1,0 +1,424 @@
+[
+  {
+    "argv": [
+      "/var/folders/4q/7s70w8ys4f5gwsf4grw_njlh0000gn/T/deadline-cli-relocated-jg7h0kd3/portable-cli",
+      "add",
+      "Synthetic",
+      "--date",
+      "2030-02-01",
+      "--project-id",
+      "00000000-0000-0000-0000-000000000001",
+      "--id",
+      "33333333-3333-4333-8333-333333333333",
+      "--approved",
+      "--data-file",
+      "/var/folders/4q/7s70w8ys4f5gwsf4grw_njlh0000gn/T/tmpemuduxo9/fixture.json"
+    ],
+    "cwd": "/var/folders/4q/7s70w8ys4f5gwsf4grw_njlh0000gn/T/deadline-cli-relocated-jg7h0kd3",
+    "exit_code": 0,
+    "stdout": "{\n  \"date\" : \"2030-02-01T00:00:00Z\",\n  \"id\" : \"33333333-3333-4333-8333-333333333333\",\n  \"isCompleted\" : false,\n  \"subtasks\" : [\n\n  ],\n  \"title\" : \"Synthetic\"\n}\n",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/var/folders/4q/7s70w8ys4f5gwsf4grw_njlh0000gn/T/deadline-cli-relocated-jg7h0kd3/portable-cli",
+      "add",
+      "Synthetic",
+      "--date",
+      "2030-02-01",
+      "--project-id",
+      "00000000-0000-0000-0000-000000000001",
+      "--id",
+      "33333333-3333-4333-8333-333333333333",
+      "--approved",
+      "--data-file",
+      "/var/folders/4q/7s70w8ys4f5gwsf4grw_njlh0000gn/T/tmpemuduxo9/fixture.json"
+    ],
+    "cwd": "/var/folders/4q/7s70w8ys4f5gwsf4grw_njlh0000gn/T/deadline-cli-relocated-jg7h0kd3",
+    "exit_code": 0,
+    "stdout": "{\n  \"date\" : \"2030-02-01T00:00:00Z\",\n  \"id\" : \"33333333-3333-4333-8333-333333333333\",\n  \"isCompleted\" : false,\n  \"subtasks\" : [\n\n  ],\n  \"title\" : \"Synthetic\"\n}\n",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/var/folders/4q/7s70w8ys4f5gwsf4grw_njlh0000gn/T/deadline-cli-relocated-jg7h0kd3/portable-cli",
+      "export",
+      "--data-file",
+      "/var/folders/4q/7s70w8ys4f5gwsf4grw_njlh0000gn/T/tmpemuduxo9/fixture.json"
+    ],
+    "cwd": "/var/folders/4q/7s70w8ys4f5gwsf4grw_njlh0000gn/T/deadline-cli-relocated-jg7h0kd3",
+    "exit_code": 0,
+    "stdout": "{\n  \"appSettings\" : {\n    \"colorSettings\" : {\n      \"greenThreshold\" : 21,\n      \"orangeThreshold\" : 7,\n      \"redThreshold\" : 0\n    },\n    \"notificationFormatSettings\" : {\n      \"dateFormat\" : \"MMM d\",\n      \"itemFormat\" : \"{title}\",\n      \"maxItems\" : 3,\n      \"showDate\" : false,\n      \"showProjectName\" : true,\n      \"titleFormat\" : \"Upcoming\"\n    }\n  },\n  \"lastModified\" : \"2026-10-06T12:38:44Z\",\n  \"lastModifiedBy\" : \"cli\",\n  \"projects\" : [\n    {\n      \"finalDeadlineDate\" : \"2030-01-01T00:00:00Z\",\n      \"id\" : \"00000000-0000-0000-0000-000000000001\",\n      \"subDeadlines\" : [\n        {\n          \"date\" : \"2030-02-01T00:00:00Z\",\n          \"id\" : \"33333333-3333-4333-8333-333333333333\",\n          \"isCompleted\" : false,\n          \"subtasks\" : [\n\n          ],\n          \"title\" : \"Synthetic\"\n        }\n      ],\n      \"title\" : \"Standalone Deadlines\",\n      \"triggers\" : [\n\n      ]\n    }\n  ],\n  \"templates\" : [\n\n  ],\n  \"triggers\" : [\n\n  ]\n}\n",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/var/folders/4q/7s70w8ys4f5gwsf4grw_njlh0000gn/T/deadline-cli-relocated-jg7h0kd3/portable-cli",
+      "update",
+      "--project-id",
+      "00000000-0000-0000-0000-000000000001",
+      "--deadline-id",
+      "33333333-3333-4333-8333-333333333333",
+      "--title",
+      "Revised",
+      "--completed",
+      "true",
+      "--data-file",
+      "/var/folders/4q/7s70w8ys4f5gwsf4grw_njlh0000gn/T/tmpemuduxo9/fixture.json"
+    ],
+    "cwd": "/var/folders/4q/7s70w8ys4f5gwsf4grw_njlh0000gn/T/deadline-cli-relocated-jg7h0kd3",
+    "exit_code": 0,
+    "stdout": "{\n  \"date\" : \"2030-02-01T00:00:00Z\",\n  \"id\" : \"33333333-3333-4333-8333-333333333333\",\n  \"isCompleted\" : true,\n  \"subtasks\" : [\n\n  ],\n  \"title\" : \"Revised\"\n}\n",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/var/folders/4q/7s70w8ys4f5gwsf4grw_njlh0000gn/T/deadline-cli-relocated-jg7h0kd3/portable-cli",
+      "export",
+      "--data-file",
+      "/var/folders/4q/7s70w8ys4f5gwsf4grw_njlh0000gn/T/tmpemuduxo9/fixture.json"
+    ],
+    "cwd": "/var/folders/4q/7s70w8ys4f5gwsf4grw_njlh0000gn/T/deadline-cli-relocated-jg7h0kd3",
+    "exit_code": 0,
+    "stdout": "{\n  \"appSettings\" : {\n    \"colorSettings\" : {\n      \"greenThreshold\" : 21,\n      \"orangeThreshold\" : 7,\n      \"redThreshold\" : 0\n    },\n    \"notificationFormatSettings\" : {\n      \"dateFormat\" : \"MMM d\",\n      \"itemFormat\" : \"{title}\",\n      \"maxItems\" : 3,\n      \"showDate\" : false,\n      \"showProjectName\" : true,\n      \"titleFormat\" : \"Upcoming\"\n    }\n  },\n  \"lastModified\" : \"2026-10-06T12:38:44Z\",\n  \"lastModifiedBy\" : \"cli\",\n  \"projects\" : [\n    {\n      \"finalDeadlineDate\" : \"2030-01-01T00:00:00Z\",\n      \"id\" : \"00000000-0000-0000-0000-000000000001\",\n      \"subDeadlines\" : [\n        {\n          \"date\" : \"2030-02-01T00:00:00Z\",\n          \"id\" : \"33333333-3333-4333-8333-333333333333\",\n          \"isCompleted\" : true,\n          \"subtasks\" : [\n\n          ],\n          \"title\" : \"Revised\"\n        }\n      ],\n      \"title\" : \"Standalone Deadlines\",\n      \"triggers\" : [\n\n      ]\n    }\n  ],\n  \"templates\" : [\n\n  ],\n  \"triggers\" : [\n\n  ]\n}\n",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/var/folders/4q/7s70w8ys4f5gwsf4grw_njlh0000gn/T/deadline-cli-relocated-jg7h0kd3/portable-cli",
+      "delete",
+      "--project-id",
+      "00000000-0000-0000-0000-000000000001",
+      "--deadline-id",
+      "33333333-3333-4333-8333-333333333333",
+      "--preview",
+      "--data-file",
+      "/var/folders/4q/7s70w8ys4f5gwsf4grw_njlh0000gn/T/tmpemuduxo9/fixture.json"
+    ],
+    "cwd": "/var/folders/4q/7s70w8ys4f5gwsf4grw_njlh0000gn/T/deadline-cli-relocated-jg7h0kd3",
+    "exit_code": 0,
+    "stdout": "{\n  \"deadline\" : {\n    \"date\" : \"2030-02-01T00:00:00Z\",\n    \"id\" : \"33333333-3333-4333-8333-333333333333\",\n    \"isCompleted\" : true,\n    \"subtasks\" : [\n\n    ],\n    \"title\" : \"Revised\"\n  },\n  \"projectId\" : \"00000000-0000-0000-0000-000000000001\",\n  \"removesRecurrenceSiblings\" : false,\n  \"revision\" : \"f8101521ca86f568171dd1f4e827ecd2f5023c440838c20d1e1e0653a8ff25ed\"\n}\n",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/var/folders/4q/7s70w8ys4f5gwsf4grw_njlh0000gn/T/deadline-cli-relocated-jg7h0kd3/portable-cli",
+      "delete",
+      "--project-id",
+      "00000000-0000-0000-0000-000000000001",
+      "--deadline-id",
+      "33333333-3333-4333-8333-333333333333",
+      "--revision",
+      "f8101521ca86f568171dd1f4e827ecd2f5023c440838c20d1e1e0653a8ff25ed",
+      "--approved",
+      "--data-file",
+      "/var/folders/4q/7s70w8ys4f5gwsf4grw_njlh0000gn/T/tmpemuduxo9/fixture.json"
+    ],
+    "cwd": "/var/folders/4q/7s70w8ys4f5gwsf4grw_njlh0000gn/T/deadline-cli-relocated-jg7h0kd3",
+    "exit_code": 0,
+    "stdout": "Deadline removed.\n",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/var/folders/4q/7s70w8ys4f5gwsf4grw_njlh0000gn/T/deadline-cli-relocated-jg7h0kd3/portable-cli",
+      "export",
+      "--data-file",
+      "/var/folders/4q/7s70w8ys4f5gwsf4grw_njlh0000gn/T/tmpemuduxo9/fixture.json"
+    ],
+    "cwd": "/var/folders/4q/7s70w8ys4f5gwsf4grw_njlh0000gn/T/deadline-cli-relocated-jg7h0kd3",
+    "exit_code": 0,
+    "stdout": "{\n  \"appSettings\" : {\n    \"colorSettings\" : {\n      \"greenThreshold\" : 21,\n      \"orangeThreshold\" : 7,\n      \"redThreshold\" : 0\n    },\n    \"notificationFormatSettings\" : {\n      \"dateFormat\" : \"MMM d\",\n      \"itemFormat\" : \"{title}\",\n      \"maxItems\" : 3,\n      \"showDate\" : false,\n      \"showProjectName\" : true,\n      \"titleFormat\" : \"Upcoming\"\n    }\n  },\n  \"lastModified\" : \"2026-10-06T12:38:44Z\",\n  \"lastModifiedBy\" : \"cli\",\n  \"projects\" : [\n    {\n      \"finalDeadlineDate\" : \"2030-01-01T00:00:00Z\",\n      \"id\" : \"00000000-0000-0000-0000-000000000001\",\n      \"subDeadlines\" : [\n\n      ],\n      \"title\" : \"Standalone Deadlines\",\n      \"triggers\" : [\n\n      ]\n    }\n  ],\n  \"templates\" : [\n\n  ],\n  \"triggers\" : [\n\n  ]\n}\n",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/var/folders/4q/7s70w8ys4f5gwsf4grw_njlh0000gn/T/deadline-cli-relocated-jg7h0kd3/portable-cli",
+      "add",
+      "Synthetic",
+      "--date",
+      "2030-02-01",
+      "--project-id",
+      "00000000-0000-0000-0000-000000000001",
+      "--id",
+      "33333333-3333-4333-8333-333333333333",
+      "--data-file",
+      "/var/folders/4q/7s70w8ys4f5gwsf4grw_njlh0000gn/T/tmp80ghg0x1/fixture.json"
+    ],
+    "cwd": "/var/folders/4q/7s70w8ys4f5gwsf4grw_njlh0000gn/T/deadline-cli-relocated-jg7h0kd3",
+    "exit_code": 64,
+    "stdout": "",
+    "stderr": "Error: Obtain user approval before adding; then pass --approved.\nUsage: deadline-cli <subcommand>\n  See 'deadline-cli --help' for more information.\n"
+  },
+  {
+    "argv": [
+      "/var/folders/4q/7s70w8ys4f5gwsf4grw_njlh0000gn/T/deadline-cli-relocated-jg7h0kd3/portable-cli",
+      "add",
+      "Synthetic",
+      "--date",
+      "2030-02-01",
+      "--project-id",
+      "00000000-0000-0000-0000-000000000001",
+      "--id",
+      "33333333-3333-4333-8333-333333333333",
+      "--approved",
+      "--data-file",
+      "/var/folders/4q/7s70w8ys4f5gwsf4grw_njlh0000gn/T/tmpw3rjmu_n/fixture.json"
+    ],
+    "cwd": "/var/folders/4q/7s70w8ys4f5gwsf4grw_njlh0000gn/T/deadline-cli-relocated-jg7h0kd3",
+    "exit_code": 0,
+    "stdout": "{\n  \"date\" : \"2030-02-01T00:00:00Z\",\n  \"id\" : \"33333333-3333-4333-8333-333333333333\",\n  \"isCompleted\" : false,\n  \"subtasks\" : [\n\n  ],\n  \"title\" : \"Synthetic\"\n}\n",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/var/folders/4q/7s70w8ys4f5gwsf4grw_njlh0000gn/T/deadline-cli-relocated-jg7h0kd3/portable-cli",
+      "delete",
+      "--project-id",
+      "00000000-0000-0000-0000-000000000001",
+      "--deadline-id",
+      "33333333-3333-4333-8333-333333333333",
+      "--preview",
+      "--data-file",
+      "/var/folders/4q/7s70w8ys4f5gwsf4grw_njlh0000gn/T/tmpw3rjmu_n/fixture.json"
+    ],
+    "cwd": "/var/folders/4q/7s70w8ys4f5gwsf4grw_njlh0000gn/T/deadline-cli-relocated-jg7h0kd3",
+    "exit_code": 0,
+    "stdout": "{\n  \"deadline\" : {\n    \"date\" : \"2030-02-01T00:00:00Z\",\n    \"id\" : \"33333333-3333-4333-8333-333333333333\",\n    \"isCompleted\" : false,\n    \"subtasks\" : [\n\n    ],\n    \"title\" : \"Synthetic\"\n  },\n  \"projectId\" : \"00000000-0000-0000-0000-000000000001\",\n  \"removesRecurrenceSiblings\" : false,\n  \"revision\" : \"9f3c0077efa85a5781d56fd274aaea3fe1a386fb8e2add8640badbc0d23ab4f5\"\n}\n",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/var/folders/4q/7s70w8ys4f5gwsf4grw_njlh0000gn/T/deadline-cli-relocated-jg7h0kd3/portable-cli",
+      "update",
+      "--project-id",
+      "00000000-0000-0000-0000-000000000001",
+      "--deadline-id",
+      "33333333-3333-4333-8333-333333333333",
+      "--title",
+      "Changed",
+      "--data-file",
+      "/var/folders/4q/7s70w8ys4f5gwsf4grw_njlh0000gn/T/tmpw3rjmu_n/fixture.json"
+    ],
+    "cwd": "/var/folders/4q/7s70w8ys4f5gwsf4grw_njlh0000gn/T/deadline-cli-relocated-jg7h0kd3",
+    "exit_code": 0,
+    "stdout": "{\n  \"date\" : \"2030-02-01T00:00:00Z\",\n  \"id\" : \"33333333-3333-4333-8333-333333333333\",\n  \"isCompleted\" : false,\n  \"subtasks\" : [\n\n  ],\n  \"title\" : \"Changed\"\n}\n",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/var/folders/4q/7s70w8ys4f5gwsf4grw_njlh0000gn/T/deadline-cli-relocated-jg7h0kd3/portable-cli",
+      "delete",
+      "--project-id",
+      "00000000-0000-0000-0000-000000000001",
+      "--deadline-id",
+      "33333333-3333-4333-8333-333333333333",
+      "--revision",
+      "9f3c0077efa85a5781d56fd274aaea3fe1a386fb8e2add8640badbc0d23ab4f5",
+      "--approved",
+      "--data-file",
+      "/var/folders/4q/7s70w8ys4f5gwsf4grw_njlh0000gn/T/tmpw3rjmu_n/fixture.json"
+    ],
+    "cwd": "/var/folders/4q/7s70w8ys4f5gwsf4grw_njlh0000gn/T/deadline-cli-relocated-jg7h0kd3",
+    "exit_code": 1,
+    "stdout": "",
+    "stderr": "Error: Deadline data changed since it was loaded. Reload before applying this edit.\n"
+  },
+  {
+    "argv": [
+      "/var/folders/4q/7s70w8ys4f5gwsf4grw_njlh0000gn/T/deadline-cli-relocated-jg7h0kd3/portable-cli",
+      "add",
+      "Synthetic",
+      "--date",
+      "2030-02-01",
+      "--project-id",
+      "00000000-0000-0000-0000-000000000001",
+      "--id",
+      "33333333-3333-4333-8333-333333333333",
+      "--approved",
+      "--data-file",
+      "/var/folders/4q/7s70w8ys4f5gwsf4grw_njlh0000gn/T/tmpttu7miyq/fixture.json"
+    ],
+    "cwd": "/var/folders/4q/7s70w8ys4f5gwsf4grw_njlh0000gn/T/deadline-cli-relocated-jg7h0kd3",
+    "exit_code": 0,
+    "stdout": "{\n  \"date\" : \"2030-02-01T00:00:00Z\",\n  \"id\" : \"33333333-3333-4333-8333-333333333333\",\n  \"isCompleted\" : false,\n  \"subtasks\" : [\n\n  ],\n  \"title\" : \"Synthetic\"\n}\n",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/var/folders/4q/7s70w8ys4f5gwsf4grw_njlh0000gn/T/deadline-cli-relocated-jg7h0kd3/portable-cli",
+      "update",
+      "--project-id",
+      "00000000-0000-0000-0000-000000000001",
+      "--deadline-id",
+      "a80ce93b-e993-4b0f-b591-cca6c68b563e",
+      "--title",
+      "Wrong",
+      "--data-file",
+      "/var/folders/4q/7s70w8ys4f5gwsf4grw_njlh0000gn/T/tmpttu7miyq/fixture.json"
+    ],
+    "cwd": "/var/folders/4q/7s70w8ys4f5gwsf4grw_njlh0000gn/T/deadline-cli-relocated-jg7h0kd3",
+    "exit_code": 64,
+    "stdout": "",
+    "stderr": "Error: Deadline not found in this project.\nUsage: deadline-cli <subcommand>\n  See 'deadline-cli --help' for more information.\n"
+  },
+  {
+    "argv": [
+      "/var/folders/4q/7s70w8ys4f5gwsf4grw_njlh0000gn/T/deadline-cli-relocated-jg7h0kd3/portable-cli",
+      "add",
+      "Invalid",
+      "--date",
+      "2030-02-31",
+      "--approved",
+      "--data-file",
+      "/var/folders/4q/7s70w8ys4f5gwsf4grw_njlh0000gn/T/tmpttu7miyq/fixture.json"
+    ],
+    "cwd": "/var/folders/4q/7s70w8ys4f5gwsf4grw_njlh0000gn/T/deadline-cli-relocated-jg7h0kd3",
+    "exit_code": 64,
+    "stdout": "",
+    "stderr": "Error: Use a valid calendar date in YYYY-MM-DD format.\nUsage: deadline-cli <subcommand>\n  See 'deadline-cli --help' for more information.\n"
+  },
+  {
+    "argv": [
+      "/var/folders/4q/7s70w8ys4f5gwsf4grw_njlh0000gn/T/deadline-cli-relocated-jg7h0kd3/portable-cli",
+      "add",
+      "Synthetic",
+      "--date",
+      "2030-02-01",
+      "--project-id",
+      "00000000-0000-0000-0000-000000000001",
+      "--id",
+      "33333333-3333-4333-8333-333333333333",
+      "--approved",
+      "--data-file",
+      "/var/folders/4q/7s70w8ys4f5gwsf4grw_njlh0000gn/T/tmp3dytfq7g/fixture.json"
+    ],
+    "cwd": "/var/folders/4q/7s70w8ys4f5gwsf4grw_njlh0000gn/T/deadline-cli-relocated-jg7h0kd3",
+    "exit_code": 0,
+    "stdout": "{\n  \"date\" : \"2030-02-01T00:00:00Z\",\n  \"id\" : \"33333333-3333-4333-8333-333333333333\",\n  \"isCompleted\" : false,\n  \"subtasks\" : [\n\n  ],\n  \"title\" : \"Synthetic\"\n}\n",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/var/folders/4q/7s70w8ys4f5gwsf4grw_njlh0000gn/T/deadline-cli-relocated-jg7h0kd3/portable-cli",
+      "delete",
+      "--project-id",
+      "00000000-0000-0000-0000-000000000001",
+      "--deadline-id",
+      "33333333-3333-4333-8333-333333333333",
+      "--data-file",
+      "/var/folders/4q/7s70w8ys4f5gwsf4grw_njlh0000gn/T/tmp3dytfq7g/fixture.json"
+    ],
+    "cwd": "/var/folders/4q/7s70w8ys4f5gwsf4grw_njlh0000gn/T/deadline-cli-relocated-jg7h0kd3",
+    "exit_code": 64,
+    "stdout": "",
+    "stderr": "Error: Preview removal, obtain user approval, then pass --approved and --revision.\nUsage: deadline-cli <subcommand>\n  See 'deadline-cli --help' for more information.\n"
+  },
+  {
+    "argv": [
+      "/var/folders/4q/7s70w8ys4f5gwsf4grw_njlh0000gn/T/deadline-cli-relocated-jg7h0kd3/portable-cli",
+      "add",
+      "No",
+      "--date",
+      "2030-02-01",
+      "--approved",
+      "--data-file",
+      "/var/folders/4q/7s70w8ys4f5gwsf4grw_njlh0000gn/T/tmp3dytfq7g/fixture.json"
+    ],
+    "cwd": "/var/folders/4q/7s70w8ys4f5gwsf4grw_njlh0000gn/T/deadline-cli-relocated-jg7h0kd3",
+    "exit_code": 1,
+    "stdout": "",
+    "stderr": "Error: dataCorrupted(Swift.DecodingError.Context(codingPath: [], debugDescription: \"The given data was not valid JSON.\", underlyingError: Optional(Error Domain=NSCocoaErrorDomain Code=3840 \"Unexpected character 'b' around line 1, column 1.\" UserInfo={NSDebugDescription=Unexpected character 'b' around line 1, column 1., NSJSONSerializationErrorIndex=0})))\n"
+  },
+  {
+    "argv": [
+      "/var/folders/4q/7s70w8ys4f5gwsf4grw_njlh0000gn/T/deadline-cli-relocated-jg7h0kd3/portable-cli",
+      "add",
+      "No",
+      "--date",
+      "2030-02-01",
+      "--approved",
+      "--data-file",
+      "/var/folders/4q/7s70w8ys4f5gwsf4grw_njlh0000gn/T/tmp3dytfq7g/fixture.json"
+    ],
+    "cwd": "/var/folders/4q/7s70w8ys4f5gwsf4grw_njlh0000gn/T/deadline-cli-relocated-jg7h0kd3",
+    "exit_code": 1,
+    "stdout": "",
+    "stderr": "Error: The selected deadline file does not exist. No empty data was created.\n"
+  },
+  {
+    "argv": [
+      "/var/folders/4q/7s70w8ys4f5gwsf4grw_njlh0000gn/T/deadline-cli-relocated-jg7h0kd3/portable-cli",
+      "add",
+      "Synthetic",
+      "--date",
+      "2030-02-01",
+      "--project-id",
+      "00000000-0000-0000-0000-000000000001",
+      "--id",
+      "33333333-3333-4333-8333-333333333333",
+      "--approved",
+      "--data-file",
+      "/var/folders/4q/7s70w8ys4f5gwsf4grw_njlh0000gn/T/tmpj7oi1xn5/fixture.json"
+    ],
+    "cwd": "/var/folders/4q/7s70w8ys4f5gwsf4grw_njlh0000gn/T/deadline-cli-relocated-jg7h0kd3",
+    "exit_code": 0,
+    "stdout": "{\n  \"date\" : \"2030-02-01T00:00:00Z\",\n  \"id\" : \"33333333-3333-4333-8333-333333333333\",\n  \"isCompleted\" : false,\n  \"subtasks\" : [\n\n  ],\n  \"title\" : \"Synthetic\"\n}\n",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/var/folders/4q/7s70w8ys4f5gwsf4grw_njlh0000gn/T/deadline-cli-relocated-jg7h0kd3/portable-cli",
+      "delete",
+      "--project-id",
+      "00000000-0000-0000-0000-000000000001",
+      "--deadline-id",
+      "33333333-3333-4333-8333-333333333333",
+      "--preview",
+      "--data-file",
+      "/var/folders/4q/7s70w8ys4f5gwsf4grw_njlh0000gn/T/tmpj7oi1xn5/fixture.json"
+    ],
+    "cwd": "/var/folders/4q/7s70w8ys4f5gwsf4grw_njlh0000gn/T/deadline-cli-relocated-jg7h0kd3",
+    "exit_code": 0,
+    "stdout": "{\n  \"deadline\" : {\n    \"date\" : \"2030-02-01T00:00:00Z\",\n    \"id\" : \"33333333-3333-4333-8333-333333333333\",\n    \"isCompleted\" : false,\n    \"subtasks\" : [\n\n    ],\n    \"title\" : \"Synthetic\"\n  },\n  \"projectId\" : \"00000000-0000-0000-0000-000000000001\",\n  \"removesRecurrenceSiblings\" : false,\n  \"revision\" : \"3eb2659b02e58c9687de9aa5f60e0adf81a503da2264bdbdb055efa28b589e81\"\n}\n",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/var/folders/4q/7s70w8ys4f5gwsf4grw_njlh0000gn/T/deadline-cli-relocated-jg7h0kd3/portable-cli",
+      "delete",
+      "--project-id",
+      "00000000-0000-0000-0000-000000000001",
+      "--deadline-id",
+      "33333333-3333-4333-8333-333333333333",
+      "--revision",
+      "3eb2659b02e58c9687de9aa5f60e0adf81a503da2264bdbdb055efa28b589e81",
+      "--approved",
+      "--data-file",
+      "/var/folders/4q/7s70w8ys4f5gwsf4grw_njlh0000gn/T/tmpj7oi1xn5/fixture.json"
+    ],
+    "cwd": "/var/folders/4q/7s70w8ys4f5gwsf4grw_njlh0000gn/T/deadline-cli-relocated-jg7h0kd3",
+    "exit_code": 0,
+    "stdout": "Deadline removed.\n",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/var/folders/4q/7s70w8ys4f5gwsf4grw_njlh0000gn/T/deadline-cli-relocated-jg7h0kd3/portable-cli",
+      "delete",
+      "--project-id",
+      "00000000-0000-0000-0000-000000000001",
+      "--deadline-id",
+      "33333333-3333-4333-8333-333333333333",
+      "--revision",
+      "3eb2659b02e58c9687de9aa5f60e0adf81a503da2264bdbdb055efa28b589e81",
+      "--approved",
+      "--data-file",
+      "/var/folders/4q/7s70w8ys4f5gwsf4grw_njlh0000gn/T/tmpj7oi1xn5/fixture.json"
+    ],
+    "cwd": "/var/folders/4q/7s70w8ys4f5gwsf4grw_njlh0000gn/T/deadline-cli-relocated-jg7h0kd3",
+    "exit_code": 0,
+    "stdout": "Deadline is already absent; nothing changed.\n",
+    "stderr": ""
+  }
+]

@@ -1,0 +1,16 @@
+[
+  "understudy",
+  "cli-run",
+  "--cmd",
+  "python3 /Users/aidan/Dev/DeadlineCalendar-session-storage/reports/session-storage/root-resume-20261006/test_entry.py",
+  "--cwd",
+  "/Users/aidan/Dev/DeadlineCalendar-session-storage",
+  "--timeout",
+  "600",
+  "--expect-exit",
+  "0",
+  "--expect-stdout-contains",
+  "\"passedTests\": 14",
+  "--out",
+  "/Users/aidan/Dev/DeadlineCalendar-session-storage/reports/session-storage/root-resume-20261006/understudy-01"
+]

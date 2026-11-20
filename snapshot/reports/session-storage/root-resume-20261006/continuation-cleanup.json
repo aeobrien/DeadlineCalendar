@@ -1,0 +1,7 @@
+{
+  "completed_slice_only": true,
+  "original_sentinel_absent": true,
+  "broad_sessionmanual_goal_untouched": true,
+  "restricted_cleanup_attempt": "Swift mechanical check failed again under sandbox; one-shot pause retained gate. Same cleanup under approved normal host permissions reran successfully before releasing this slice.",
+  "latest_gate": "final-public-gate.txt"
+}

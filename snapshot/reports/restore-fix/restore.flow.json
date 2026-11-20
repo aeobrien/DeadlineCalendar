@@ -1,0 +1,122 @@
+[
+ {
+  "action": "waitfor",
+  "id": "Settings",
+  "timeout": 20
+ },
+ {
+  "action": "press",
+  "id": "Deadlines"
+ },
+ {
+  "action": "assert",
+  "id": "deadline-card-Placeholder item-2027-01-15",
+  "present": true
+ },
+ {
+  "action": "assert",
+  "id": "deadline-card-Month end-2027-01-31",
+  "present": false
+ },
+ {
+  "action": "press",
+  "id": "Settings"
+ },
+ {
+  "action": "press",
+  "id": "Data Management"
+ },
+ {
+  "action": "press",
+  "id": "iCloud Backup & Restore"
+ },
+ {
+  "action": "waitfor",
+  "id": "Restore",
+  "timeout": 15
+ },
+ {
+  "action": "press",
+  "id": "Restore"
+ },
+ {
+  "action": "waitfor",
+  "id": "Restore Backup?",
+  "timeout": 5
+ },
+ {
+  "action": "press",
+  "id": "Cancel"
+ },
+ {
+  "action": "assert",
+  "id": "Restore Backup?",
+  "present": false
+ },
+ {
+  "action": "screenshot",
+  "name": "03-after-cancel"
+ },
+ {
+  "action": "press",
+  "id": "Restore"
+ },
+ {
+  "action": "waitfor",
+  "id": "Restore Backup?",
+  "timeout": 5
+ },
+ {
+  "action": "press",
+  "id": "Restore"
+ },
+ {
+  "action": "sleep",
+  "seconds": 2
+ },
+ {
+  "action": "press",
+  "id": "Deadlines"
+ },
+ {
+  "action": "waitfor",
+  "id": "deadline-card-Month end-2027-01-31",
+  "timeout": 10
+ },
+ {
+  "action": "assert",
+  "id": "deadline-card-Placeholder item-2027-01-15",
+  "present": false
+ },
+ {
+  "action": "screenshot",
+  "name": "04-restored"
+ },
+ {
+  "action": "swipe",
+  "id": "deadline-card-Month end-2027-01-31",
+  "direction": "right"
+ },
+ {
+  "action": "press",
+  "id": "Complete"
+ },
+ {
+  "action": "sleep",
+  "seconds": 1
+ },
+ {
+  "action": "waitfor",
+  "id": "deadline-card-Month end-2027-03-31",
+  "timeout": 10
+ },
+ {
+  "action": "assert",
+  "id": "deadline-card-Month end-2027-01-31",
+  "present": false
+ },
+ {
+  "action": "screenshot",
+  "name": "05-next-month-made"
+ }
+]
