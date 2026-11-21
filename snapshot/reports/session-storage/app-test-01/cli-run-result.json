@@ -1,0 +1,22 @@
+{
+  "ok": false,
+  "exit_code": 66,
+  "timed_out": false,
+  "duration_s": 1.704,
+  "stdout_tail": "Command line invocation:\n    /Applications/Xcode.app/Contents/Developer/usr/bin/xcodebuild -project DeadlineCalendar.xcodeproj -scheme \"Deadline Calendar\" -destination \"platform=iOS Simulator,id=DDCF7C0E-E17C-47E3-9FB9-43DC69B7970F\" -derivedDataPath /private/tmp/deadline-storage-derived \"-only-testing:Deadline CalendarTests\" test CODE_SIGNING_ALLOWED=NO\n\nBuild settings from command line:\n    CODE_SIGNING_ALLOWED = NO\n\nResolve Package Graph\n\n\nResolved source packages:\n  SwiftSoup: https://github.com/scinfu/SwiftSoup @ 2.7.5\n\n",
+  "stderr_tail": "2026-10-06 12:31:23.155 xcodebuild[18757:79074044] Writing error result bundle to /var/folders/4q/7s70w8ys4f5gwsf4grw_njlh0000gn/T/ResultBundle_2026-06-10_12-31-0023.xcresult\nxcodebuild: error: Scheme Deadline Calendar is not currently configured for the test action.\n\n",
+  "truncated": false,
+  "assertions": [
+    {
+      "kind": "exit==",
+      "expected": 0,
+      "actual": 66,
+      "ok": false
+    }
+  ],
+  "files": {
+    "created": [],
+    "modified": [],
+    "deleted": []
+  }
+}

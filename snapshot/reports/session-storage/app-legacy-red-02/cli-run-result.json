@@ -1,0 +1,22 @@
+{
+  "ok": false,
+  "exit_code": 70,
+  "timed_out": false,
+  "duration_s": 19.104,
+  "stdout_tail": "Writing result bundle at path:\n\t/private/tmp/deadline-legacy-red-02.xcresult\n\n",
+  "stderr_tail": "--- xcodebuild: WARNING: Using the first of multiple matching destinations:\n{ platform:iOS Simulator, arch:arm64, id:DDCF7C0E-E17C-47E3-9FB9-43DC69B7970F, OS:18.4, name:DeadlineStorageFixtures }\n{ platform:iOS Simulator, arch:x86_64, id:DDCF7C0E-E17C-47E3-9FB9-43DC69B7970F, OS:18.4, name:DeadlineStorageFixtures }\nxcodebuild: error: Failed to build workspace DeadlineCalendar with scheme Deadline Calendar.: There are no test bundles available to test.\n",
+  "truncated": false,
+  "assertions": [
+    {
+      "kind": "exit==",
+      "expected": 0,
+      "actual": 70,
+      "ok": false
+    }
+  ],
+  "files": {
+    "created": [],
+    "modified": [],
+    "deleted": []
+  }
+}

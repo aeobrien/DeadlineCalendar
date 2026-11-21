@@ -1,0 +1,22 @@
+{
+  "ok": true,
+  "exit_code": 0,
+  "timed_out": false,
+  "duration_s": 49.363,
+  "stdout_tail": "Test Suite 'All tests' started at 2026-10-06 12:40:24.274.\nTest Suite 'deadline-cliPackageTests.xctest' started at 2026-10-06 12:40:24.283.\nTest Suite 'DataStoreTests' started at 2026-10-06 12:40:24.283.\nTest Case '-[DeadlineStorageTests.DataStoreTests testExplicitMissingNeverFallsBackOrCreates]' started.\nTest Case '-[DeadlineStorageTests.DataStoreTests testExplicitMissingNeverFallsBackOrCreates]' passed (0.039 seconds).\nTest Case '-[DeadlineStorageTests.DataStoreTests testThrowingTargetFailureDoesNotRewrite]' started.\nTest Case '-[DeadlineStorageTests.DataStoreTests testThrowingTargetFailureDoesNotRewrite]' passed (0.064 seconds).\nTest Suite 'DataStoreTests' passed at 2026-10-06 12:40:24.387.\n\t Executed 2 tests, with 0 failures (0 unexpected) in 0.103 (0.105) seconds\nTest Suite 'SnapshotFileTests' started at 2026-10-06 12:40:24.387.\nTest Case '-[DeadlineStorageTests.SnapshotFileTests testExpectedBytesRejectStaleSave]' started.\nTest Case '-[DeadlineStorageTests.SnapshotFileTests testExpectedBytesRejectStaleSave]' passed (0.065 seconds).\nTest Case '-[DeadlineStorageTests.SnapshotFileTests testFailedWriteAndLockSymlinkPreserveCurrentData]' started.\nTest Case '-[DeadlineStorageTests.SnapshotFileTests testFailedWriteAndLockSymlinkPreserveCurrentData]' passed (0.022 seconds).\nTest Case '-[DeadlineStorageTests.SnapshotFileTests testMissingReadDoesNotCreateAnything]' started.\nTest Case '-[DeadlineStorageTests.SnapshotFileTests testMissingReadDoesNotCreateAnything]' passed (0.022 seconds).\nTest Case '-[DeadlineStorageTests.SnapshotFileTests testNoopPreservesModificationTime]' started.\nTest Case '-[DeadlineStorageTests.SnapshotFileTests testNoopPreservesModificationTime]' passed (0.023 seconds).\nTest Case '-[DeadlineStorageTests.SnapshotFileTests testSymlinkCannotRedirectReadOrWrite]' started.\nTest Case '-[DeadlineStorageTests.SnapshotFileTests testSymlinkCannotRedirectReadOrWrite]' passed (0.013 seconds).\nTest Case '-[DeadlineStorageTests.SnapshotFileTests testThrowingMutationPreservesBytesAndReleasesLock]' started.\nTest Case '-[DeadlineStorageTests.SnapshotFileTests testThrowingMutationPreservesBytesAndReleasesLock]' passed (0.295 seconds).\nTest Case '-[DeadlineStorageTests.SnapshotFileTests testUnavailableMetadataRefusesBeforeMutationAndPreservesFile]' started.\nTest Case '-[DeadlineStorageTests.SnapshotFileTests testUnavailableMetadataRefusesBeforeMutationAndPreservesFile]' passed (0.009 seconds).\nTest Suite 'SnapshotFileTests' passed at 2026-10-06 12:40:24.841.\n\t Executed 7 tests, with 0 failures (0 unexpected) in 0.450 (0.453) seconds\nTest Suite 'deadline-cliPackageTests.xctest' passed at 2026-10-06 12:40:24.841.\n\t Executed 9 tests, with 0 failures (0 unexpected) in 0.553 (0.558) seconds\nTest Suite 'All tests' passed at 2026-10-06 12:40:24.841.\n\t Executed 9 tests, with 0 failures (0 unexpected) in 0.553 (0.566) seconds\n\u25c7 Test run started.\n\u21b3 Testing Library Version: 124\n\u21b3 Target Platform: arm64e-apple-macos14.0\n\u2714 Test run with 0 tests passed after 0.007 seconds.\n",
+  "stderr_tail": "[1/1] Compiling plugin GenerateManual\n[2/2] Compiling plugin GenerateDoccReference\nBuilding for debugging...\n[2/7] Write sources\n[3/7] Write swift-version--58304C5D6DBC2206.txt\n[5/7] Emitting module DeadlineStorageTests\n[6/7] Compiling DeadlineStorageTests SnapshotFileTests.swift\n[6/8] Write Objects.LinkFileList\n[7/8] Linking deadline-cliPackageTests\nBuild complete! (28.98s)\n",
+  "truncated": false,
+  "assertions": [
+    {
+      "kind": "exit==",
+      "expected": 0,
+      "actual": 0,
+      "ok": true
+    }
+  ],
+  "files": {
+    "created": [],
+    "modified": [],
+    "deleted": []
+  }
+}

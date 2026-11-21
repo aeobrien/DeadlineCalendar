@@ -1,0 +1,23 @@
+PASSED — every promised deliverable was found in committed code.
+
+Manifest: build-BUILD-SESSION-STORAGE-4d4889c6 (revision 1) — checked at ref HEAD
+Source: /Users/aidan/Dev/DeadlineCalendar-session-storage/docs/BUILD-SESSION-STORAGE.md
+Judged in: default (default) = /Users/aidan/Dev/DeadlineCalendar-session-storage
+
+Per-promise findings:
+  [PASS] The file `reports/session-storage/concurrency-red-01/cli-run-result.json` exists.
+          mechanical evidence present (judged phase waived by the sealed manifest: judged.required=false)
+  [PASS] The command `swift test --package-path deadline-cli` exits 0.
+          mechanical evidence present (judged phase waived by the sealed manifest: judged.required=false)
+  [PASS] The file `reports/session-storage/CLI-VALIDATION.md` exists.
+          mechanical evidence present (judged phase waived by the sealed manifest: judged.required=false)
+  [PASS] The file `reports/session-storage/APP-VALIDATION.md` exists.
+          mechanical evidence present (judged phase waived by the sealed manifest: judged.required=false)
+  [PASS] The file `reports/session-storage/DELIVERY.md` exists.
+          mechanical evidence present (judged phase waived by the sealed manifest: judged.required=false)
+
+
+NOTE: the target repo has uncommitted changes. The gate only trusts committed code — commit pending work, then re-run.
+
+Report generated 2026-10-06T18:22:24Z.
+
