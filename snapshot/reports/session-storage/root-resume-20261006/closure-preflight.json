@@ -1,0 +1,10 @@
+{
+  "build_id": "0ce3c0c89cab1aeb1740",
+  "manifest": "build-BUILD-SESSION-STORAGE-4d4889c6",
+  "cli_hashes_unchanged_since_candidate01": true,
+  "source_reviews": [
+    "reviews/astra-candidate03.md",
+    "fable-03/review.md"
+  ],
+  "source_edits": false
+}

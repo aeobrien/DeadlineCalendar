@@ -1,0 +1,17 @@
+{
+  "completed_at" : "2026-10-19T09:06:58.433Z",
+  "halted_at_step" : "step-1",
+  "overall_result" : "fail",
+  "run_uuid" : "e5abe5b0-0a7b-4e17-97ab-bba383cdd742",
+  "started_at" : "2026-10-19T06:37:07.839Z",
+  "steps" : [
+    {
+      "comment" : "Every time I open the app now I get a message saying “Deadline data needs attention. Could not load deadlines, existing data was preserved. Deadline data is not available locally. No data was changed. Reload closes open editors. A failed attempted change remains retained until a later save.” with two buttons saying “Reload current data” or “Keep editing” (which I’m not doing). Then when the app loads it says “No active deadlines”, even though there are some. So let’s fix this first please, then re-run this walkthrough.",
+      "duration_seconds" : 8991,
+      "id" : "step-1",
+      "result" : "fail"
+    }
+  ],
+  "test_id" : "2026-10-17-deadline-admin-create",
+  "title" : "Create the rolling monthly Admin project"
+}

@@ -1,0 +1,72 @@
+{
+  "build_id": "0ce3c0c89cab1aeb1740",
+  "cancel_requested": false,
+  "created_at": "2026-10-06T18:21:29Z",
+  "finished_at": "2026-10-06T18:21:30Z",
+  "log_paths": [],
+  "mode": "completion",
+  "outcome": "pass",
+  "pid": 38195,
+  "provider_results": [
+    {
+      "finished_at": "2026-10-06T18:21:29Z",
+      "items": [
+        {
+          "kind": "manifest",
+          "note": "sealed manifest build-BUILD-SESSION-STORAGE-4d4889c6 present + parseable"
+        },
+        {
+          "kind": "dirty_tree",
+          "note": "working tree dirty \u2014 evidence evaluated at HEAD only"
+        }
+      ],
+      "note": "",
+      "outcome": "pass",
+      "provider": "integrity",
+      "required": true
+    },
+    {
+      "finished_at": "2026-10-06T18:21:30Z",
+      "items": [],
+      "note": "report: /Users/aidan/.claude/done-gate/reports/build-BUILD-SESSION-STORAGE-4d4889c6-20261006T182130Z.md",
+      "outcome": "pass",
+      "provider": "mechanical",
+      "required": true
+    },
+    {
+      "finished_at": "2026-10-06T18:21:30Z",
+      "items": [],
+      "note": "no acceptance checks declared",
+      "outcome": "not_applicable",
+      "provider": "acceptance",
+      "required": false
+    },
+    {
+      "finished_at": "2026-10-06T18:21:30Z",
+      "items": [],
+      "note": "not required by current policy",
+      "outcome": "not_applicable",
+      "provider": "judged",
+      "required": false
+    },
+    {
+      "finished_at": "2026-10-06T18:21:30Z",
+      "items": [],
+      "note": "not required by current policy",
+      "outcome": "not_applicable",
+      "provider": "plan_end_audit",
+      "required": false
+    }
+  ],
+  "repository_root": "/Users/aidan/Dev/DeadlineCalendar-session-storage",
+  "required_providers": [
+    "integrity",
+    "mechanical"
+  ],
+  "run_id": "run-1791310889-38195",
+  "schema_version": 1,
+  "started_at": "2026-10-06T18:21:29Z",
+  "state": "complete",
+  "target_head": "c1f4def90e0e3140c51546b53bedd5bb49da2de6",
+  "updated_at": "2026-10-06T18:21:30Z"
+}

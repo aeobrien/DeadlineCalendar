@@ -1,0 +1,51 @@
+{
+  "test_id": "2026-10-17-deadline-admin-create",
+  "run_uuid": "e5abe5b0-0a7b-4e17-97ab-bba383cdd742",
+  "launched_at": "2026-10-17T15:25:00+01:00",
+  "title": "Create the rolling monthly Admin project",
+  "context": "This creates the first Admin month in Deadline Calendar. It uses the app's project form and monthly repeat setting, leaving this month and the next month visible together. This input is deliberately not launched.",
+  "steps": [
+    {
+      "id": "step-1",
+      "row": "deadline-admin-month",
+      "title": "Open Deadline Calendar",
+      "details": "On Mirador, open the app named Deadline Calendar. Go to the Projects screen if another screen is open.",
+      "expected": "You see the Projects heading and a circular + button at the lower right."
+    },
+    {
+      "id": "step-2",
+      "row": "deadline-admin-month",
+      "title": "Start a new project",
+      "details": "Tap the circular + button at the lower right of the Projects screen.",
+      "expected": "The form headed Add New Project opens, with Cancel and Save at the top."
+    },
+    {
+      "id": "step-3",
+      "row": "deadline-admin-month",
+      "title": "Name the Admin month",
+      "details": "In Project Title, enter Admin. Set Final Deadline Date to 31 October 2026.",
+      "expected": "The form shows Admin as the project title and 31 October 2026 as its final deadline."
+    },
+    {
+      "id": "step-4",
+      "row": "deadline-admin-month",
+      "title": "Add the three monthly tasks",
+      "details": "Turn off Use Template. Tap Add Sub-deadline Step three times. In the three rows, replace New Step with Payments, Expenses, and Timesheets. Set their dates to 23 October, 27 October, and 28 October 2026 respectively.",
+      "expected": "The Manual Sub-Deadlines section shows Payments on 23 October, Expenses on 27 October, and Timesheets on 28 October."
+    },
+    {
+      "id": "step-5",
+      "row": "deadline-admin-month",
+      "title": "Make the project roll monthly",
+      "details": "Under Repetition Settings, turn on Repeat Project. Leave Fixed Interval selected, set Every to 1 and Unit to Month(s). Turn on Limit occurrences and use the stepper until it says Max 2 occurrences.",
+      "expected": "Repetition Settings shows a one-month interval and Max 2 occurrences."
+    },
+    {
+      "id": "step-6",
+      "row": "deadline-admin-month",
+      "title": "Save and see the rolling pair",
+      "details": "Tap Save. Back on Projects, look for the Admin cards in this month and next month.",
+      "expected": "You see an Admin project ending 31 October and a second Admin project ending 30 November. Each has Payments, Expenses, and Timesheets on the 23rd, 27th, and 28th of its month."
+    }
+  ]
+}
